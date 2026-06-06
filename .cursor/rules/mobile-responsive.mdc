@@ -1,0 +1,45 @@
+---
+description: Mobile-first responsive UI — all screens must work on web and mobile
+alwaysApply: true
+---
+
+# Mobile Responsive
+
+Every screen must be usable at **375px** (phone), **768px** (tablet), and desktop.
+
+## Layout
+
+- **Mobile-first Tailwind**: base styles for small screens; enhance with `sm:`, `md:`, `lg:`
+- No fixed side-by-side layouts without a mobile fallback (`flex-col`, Sheet drawer, or hidden panel)
+- Side panels (preview, steps nav): **closed/hidden by default below `md`**; open via toggle/Sheet
+- Navigation below `lg`: **Sheet drawer** + menu button — not a persistent `w-64` sidebar
+- Use `min-w-0` and `truncate` in flex rows to prevent horizontal overflow
+
+## Spacing and touch
+
+- Page padding: `p-4 sm:p-6 md:p-8`
+- Card padding: `p-4 sm:p-6`
+- Primary controls: touch target ≥ 44px (`min-h-11`, `size-11`, or `py-3`)
+- Button groups on mobile: `flex-col-reverse sm:flex-row` with `w-full sm:w-auto` where helpful
+
+## Patterns
+
+| Pattern | Mobile | Desktop |
+|---------|--------|---------|
+| App sidebar | Sheet drawer (`< lg`) | Fixed sidebar (`lg+`) |
+| Step nav | Sheet / toggle (`< md`) | Fixed aside (`md+`) |
+| Editor preview | Sheet, closed default (`< md`) | Side panel (`md+`) |
+| Grids | 1 column base | `sm:` / `md:` columns |
+| Page headers | Stack title + CTA | `sm:flex-row` |
+
+## Copy and testing
+
+- All user-facing text via `src/lib/labels.ts` — English only
+- Before claiming done: verify layout at 375px, 768px, and 1280px
+- Avoid horizontal scroll; `overflow-x: hidden` on `body` is a safety net only
+
+## Reference
+
+- UI clarity: `.cursor/rules/ui-ux-clarity.mdc`
+- Shell: `src/components/layout/app-shell.tsx`
+- Sheet: `src/components/ui/sheet.tsx`

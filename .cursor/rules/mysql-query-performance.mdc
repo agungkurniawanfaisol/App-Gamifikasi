@@ -1,0 +1,37 @@
+---
+description: Prisma/MySQL query patterns — fast, no N+1
+alwaysApply: true
+---
+
+# MySQL Query Performance
+
+Keep Prisma queries fast. Slow or N+1 queries must be fixed before marking work complete.
+
+## Query rules
+
+- Use `select` to fetch only needed fields — avoid loading `LongText`/`Text` unless required
+- Never run database queries inside loops — batch with `findMany` + `in`, `include`, or `$transaction`
+- List endpoints must use `take`/`skip` or cursor pagination — no unbounded `findMany`
+- Prefer one query with `include` over N separate `findUnique` calls
+
+## Anti-patterns
+
+```typescript
+// BAD — N+1: fetches all groups N times
+groups.map(async (g) => canAccessGroup(userId, g.id, levelId))
+
+// GOOD — one fetch for groups + one batch fetch for progress
+const progress = await prisma.userProgress.findMany({
+  where: { userId, groupId: { in: groupIds } },
+})
+```
+
+## Before claiming done
+
+- Check for N+1 patterns in new or changed query code
+- For raw/complex SQL, recommend `EXPLAIN` to verify index usage
+- Large models (`Material.content`, `Question.question`): exclude from list queries
+
+## Reference
+
+See project skill `.cursor/skills/next-gamifikasi-mysql/` for schema-specific indexes and query templates.

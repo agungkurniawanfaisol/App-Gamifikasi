@@ -1,0 +1,108 @@
+"use client";
+
+import Link from "next/link";
+import { Menu } from "lucide-react";
+import {
+  Breadcrumb,
+  BreadcrumbEllipsis,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
+import { useBreadcrumbs } from "@/components/layout/breadcrumb-context";
+import {
+  UserProfileMenu,
+  type HeaderProfileUser,
+} from "@/components/layout/user-profile-menu";
+import { getResponsiveBreadcrumbItems } from "@/lib/breadcrumbs";
+import { labels } from "@/lib/labels";
+
+function BreadcrumbNav() {
+  const { items } = useBreadcrumbs();
+
+  if (items.length === 0) {
+    return (
+      <span className="truncate text-sm font-semibold">{labels.nav.brand}</span>
+    );
+  }
+
+  const { visible, collapsed } = getResponsiveBreadcrumbItems(items);
+
+  return (
+    <Breadcrumb className="min-w-0">
+      <BreadcrumbList className="flex-nowrap">
+        {collapsed.length > 0 && (
+          <>
+            <BreadcrumbItem className="hidden sm:inline-flex">
+              <BreadcrumbEllipsis className="size-7" />
+            </BreadcrumbItem>
+            <BreadcrumbSeparator className="hidden sm:inline-flex" />
+          </>
+        )}
+        {visible.map((item, index) => {
+          const isLast = index === visible.length - 1;
+          const showSeparator = index > 0 || collapsed.length > 0;
+
+          return (
+            <span key={`${item.label}-${index}`} className="contents">
+              {showSeparator && <BreadcrumbSeparator />}
+              <BreadcrumbItem className="min-w-0">
+                {isLast || item.isCurrent || !item.href ? (
+                  <BreadcrumbPage className="truncate max-w-[10rem] sm:max-w-[14rem]">
+                    {item.label}
+                  </BreadcrumbPage>
+                ) : (
+                  <BreadcrumbLink asChild>
+                    <Link
+                      href={item.href}
+                      className="truncate max-w-[8rem] sm:max-w-[12rem]"
+                    >
+                      {item.label}
+                    </Link>
+                  </BreadcrumbLink>
+                )}
+              </BreadcrumbItem>
+            </span>
+          );
+        })}
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+}
+
+export function AppTopHeader({
+  onMenuClick,
+  headerProfile,
+}: {
+  onMenuClick: () => void;
+  headerProfile?: HeaderProfileUser;
+}) {
+  const { actions } = useBreadcrumbs();
+
+  return (
+    <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-3 border-b border-border bg-background/95 px-4 backdrop-blur-sm supports-[backdrop-filter]:bg-background/80 sm:px-6">
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="size-10 shrink-0 lg:hidden"
+        aria-label={labels.nav.openMenu}
+        onClick={onMenuClick}
+      >
+        <Menu className="size-5" />
+      </Button>
+
+      <div className="min-w-0 flex-1">
+        <BreadcrumbNav />
+      </div>
+
+      <div className="flex shrink-0 items-center gap-2">
+        {actions}
+        {headerProfile && <UserProfileMenu user={headerProfile} />}
+      </div>
+    </header>
+  );
+}

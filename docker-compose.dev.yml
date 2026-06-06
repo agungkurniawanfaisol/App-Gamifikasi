@@ -1,0 +1,45 @@
+# =============================================================================
+# docker-compose.dev.yml — Development overlay with hot reload
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+# Disables production nextjs and runs nextjs-dev with bind-mounted source
+# =============================================================================
+
+services:
+  # Disable production Next.js service in dev mode
+  nextjs:
+    profiles:
+      - production-only
+
+  # Development Next.js with hot module replacement (HMR)
+  nextjs-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: gamifikasi-nextjs-dev
+    restart: unless-stopped
+    ports:
+      - "5174:5174"
+    env_file: .env
+    environment:
+      NODE_ENV: development
+      PORT: 5174
+      DATABASE_URL: ${DATABASE_URL}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_URL: ${NEXTAUTH_URL}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL}
+      OLLAMA_MODEL: ${OLLAMA_MODEL}
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      mysql:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+      ollama-pull:
+        condition: service_completed_successfully
+    networks:
+      - app_network
+    command: sh -c "npx prisma migrate deploy && npx prisma generate && npm run dev -- -H 0.0.0.0 -p 5174"

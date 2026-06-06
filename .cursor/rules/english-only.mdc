@@ -1,0 +1,31 @@
+---
+description: All UI copy and Ollama AI responses must be in English
+alwaysApply: true
+---
+
+# English Only
+
+All user-facing text and AI-generated content in this project **must be in English**.
+
+## UI copy
+
+- Every visible string goes in `src/lib/labels.ts` — no hardcoded UI text in components or pages
+- No Indonesian (or other language) labels, placeholders, buttons, headings, or error messages
+- Level names use English keys in `labels.levels` (`Basic`, `Intermediate`, `Advanced`)
+
+## Ollama / AI
+
+- System prompts in `src/lib/ollama.ts` must instruct the model to respond in **English**
+- Quiz feedback prompts (`buildFeedbackPrompt`) must be written in English
+- Chat route (`src/app/api/ai/chat/route.ts`) must use `CHAT_SYSTEM_PROMPT` from `lib/ollama.ts`
+- AI fallback messages (when generation fails) must be in English
+
+## Seed & sample content
+
+- Default titles, descriptions, and demo content in `prisma/seed.ts` or migrations should be English
+
+## When adding features
+
+1. Add new strings to `labels.ts` first
+2. Import `labels` in the component — never inline copy
+3. For new AI endpoints, reuse or extend English prompts in `lib/ollama.ts`

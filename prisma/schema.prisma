@@ -1,0 +1,489 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "linux-musl"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  STUDENT
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum LevelName {
+  BASIC
+  INTERMEDIATE
+  HARD
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+}
+
+enum ContentItemType {
+  MATERIAL
+  QUESTION
+}
+
+enum QuestionSkill {
+  SPEAKING
+  READING
+  WRITING
+  LISTENING
+}
+
+enum QuestionFormat {
+  MULTIPLE_CHOICE
+  YES_NO
+  ESSAY
+  SPEECH_RECOGNITION
+}
+
+enum AssessmentPhase {
+  PRETEST
+  POSTTEST
+}
+
+enum PointEventType {
+  MATERIAL_COMPLETE
+  CORRECT_ANSWER
+  ON_TIME_BONUS
+  DISCUSSION_MILESTONE
+  GROUP_COMPLETE
+  PROFICIENCY_LEVEL_UP
+  CHALLENGE_REWARD
+  ACHIEVEMENT_BONUS
+}
+
+enum AchievementTriggerType {
+  GROUP_COMPLETE
+  LEVEL_COMPLETE
+  PROFICIENCY_REACH
+}
+
+enum RewardType {
+  BONUS_POINTS
+  CERTIFICATE
+  PREMIUM_UNLOCK
+}
+
+enum ChallengeRecurrence {
+  DAILY
+  WEEKLY
+}
+
+enum UserChallengeStatus {
+  IN_PROGRESS
+  COMPLETED
+  REWARDED
+}
+
+enum ProficiencyLevelName {
+  BEGINNER
+  ELEMENTARY
+  INTERMEDIATE
+  UPPER_INTERMEDIATE
+  ADVANCED
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  name          String
+  email         String    @unique
+  password      String
+  role          Role      @default(STUDENT)
+  phone         String?
+  dateOfBirth   DateTime? @map("date_of_birth") @db.Date
+  gender        Gender?
+  institution   String?
+  studentId     String?   @map("student_id")
+  isActive      Boolean   @default(true) @map("is_active")
+  points        Int       @default(0)
+  proficiencyScore Int    @default(0) @map("proficiency_score")
+  profileImageUrl String? @map("profile_image_url")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  progress          UserProgress[]
+  answers           UserAnswer[]
+  assessmentAnswers UserAssessmentAnswer[]
+  chatHistory       ChatHistory[]
+  badges            UserBadge[]
+  pointEvents       UserPointEvent[]
+  challengeProgress UserChallengeProgress[]
+  dailyChallengeQuestions UserDailyChallengeQuestion[]
+  achievements        UserAchievement[]
+  certificates        UserCertificate[]
+  premiumUnlocks      UserPremiumUnlock[]
+
+  @@index([role])
+  @@index([institution])
+  @@index([studentId])
+  @@map("users")
+}
+
+model Level {
+  id          Int       @id @default(autoincrement())
+  name        LevelName @unique
+  description String?
+  order       Int       @unique @map("order_index")
+
+  groups LearningGroup[]
+  certificateTemplates CertificateTemplate[]
+
+  @@map("levels")
+}
+
+model LearningGroup {
+  id          Int       @id @default(autoincrement())
+  levelId     Int       @map("level_id")
+  title       String
+  order       Int       @map("order_index")
+  dueAt       DateTime? @map("due_at")
+  isPublished Boolean   @default(false) @map("is_published")
+  isPremium   Boolean   @default(false) @map("is_premium")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  level               Level                      @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  contentItems        GroupContentItem[]
+  assessmentQuestions GroupAssessmentQuestion[]
+  progress            UserProgress[]
+  chatHistory         ChatHistory[]
+
+  @@index([levelId, isPublished, order])
+  @@map("learning_groups")
+}
+
+model GroupContentItem {
+  id      Int             @id @default(autoincrement())
+  groupId Int             @map("group_id")
+  type    ContentItemType
+  order   Int             @map("order_index")
+
+  title   String?
+  content String? @db.LongText
+
+  questionText   String?         @map("question_text") @db.Text
+  skill          QuestionSkill?
+  format         QuestionFormat?
+  options        Json?
+  correctAnswer  String?         @map("correct_answer")
+  expectedSpeech String?         @map("expected_speech") @db.Text
+  audioUrl       String?         @map("audio_url")
+  explanation    String?         @db.Text
+  essayRubric    String?         @map("essay_rubric") @db.Text
+  subQuestions   Json?           @map("sub_questions")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  group   LearningGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  answers UserAnswer[]
+  dailyChallengeQuestions UserDailyChallengeQuestion[]
+
+  @@index([groupId, order])
+  @@map("group_content_items")
+}
+
+model UserProgress {
+  id                     Int       @id @default(autoincrement())
+  userId                 Int       @map("user_id")
+  groupId                Int       @map("group_id")
+  lastContentItemId      Int?      @map("last_content_item_id")
+  isGroupCompleted       Boolean   @default(false) @map("is_group_completed")
+  groupScorePercent      Int?      @map("group_score_percent")
+  aiCompletionFeedback   String?   @map("ai_completion_feedback") @db.Text
+  testimonialRating      Int?      @map("testimonial_rating")
+  testimonialText        String?   @map("testimonial_text") @db.Text
+  testimonialSubmittedAt DateTime? @map("testimonial_submitted_at")
+  startedAt              DateTime  @default(now()) @map("started_at")
+  completedAt            DateTime? @map("completed_at")
+
+  user  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group LearningGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
+  @@index([userId, isGroupCompleted])
+  @@index([testimonialSubmittedAt])
+  @@map("user_progress")
+}
+
+model GroupAssessmentQuestion {
+  id           Int             @id @default(autoincrement())
+  groupId      Int             @map("group_id")
+  phase        AssessmentPhase
+  order        Int             @map("order_index")
+  questionText String          @map("question_text") @db.Text
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+
+  group   LearningGroup          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  answers UserAssessmentAnswer[]
+
+  @@index([groupId, phase, order])
+  @@map("group_assessment_questions")
+}
+
+model UserAssessmentAnswer {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  questionId Int      @map("question_id")
+  value      Int
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user     User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question GroupAssessmentQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, questionId])
+  @@index([userId, questionId])
+  @@map("user_assessment_answers")
+}
+
+model UserAnswer {
+  id               Int      @id @default(autoincrement())
+  userId           Int      @map("user_id")
+  contentItemId    Int      @map("content_item_id")
+  subQuestionIndex Int      @default(0) @map("sub_question_index")
+  answer           String   @db.Text
+  isCorrect        Boolean  @map("is_correct")
+  scorePercent     Int?     @map("score_percent")
+  aiFeedback       String?  @map("ai_feedback") @db.Text
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentItem GroupContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, contentItemId, subQuestionIndex])
+  @@index([userId, contentItemId])
+  @@map("user_answers")
+}
+
+model UserBadge {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  badgeKey  String   @map("badge_key")
+  unlockedAt DateTime @default(now()) @map("unlocked_at")
+  notified  Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeKey])
+  @@index([userId])
+  @@map("user_badges")
+}
+
+model ChatHistory {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  groupId   Int?     @map("group_id")
+  role      ChatRole
+  message   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group LearningGroup? @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, groupId, createdAt])
+  @@map("chat_history")
+}
+
+model UserPointEvent {
+  id        Int            @id @default(autoincrement())
+  userId    Int            @map("user_id")
+  eventType PointEventType @map("event_type")
+  eventKey  String         @map("event_key")
+  points    Int
+  metadata  Json?
+  createdAt DateTime       @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventKey])
+  @@index([userId, eventType])
+  @@map("user_point_events")
+}
+
+model ChallengeTemplate {
+  id          Int                 @id @default(autoincrement())
+  slug        String              @unique
+  title       String
+  description String              @db.Text
+  recurrence  ChallengeRecurrence
+  iconKey     String              @default("target") @map("icon_key")
+  objectives  Json
+  pointReward Int                 @default(20) @map("point_reward")
+  isActive    Boolean             @default(true) @map("is_active")
+  sortOrder   Int                 @default(0) @map("sort_order")
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+
+  periods ChallengePeriod[]
+
+  @@map("challenge_templates")
+}
+
+model ChallengePeriod {
+  id         Int      @id @default(autoincrement())
+  templateId Int      @map("template_id")
+  periodKey  String   @map("period_key")
+  startsAt   DateTime @map("starts_at")
+  endsAt     DateTime @map("ends_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  template ChallengeTemplate       @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  progress UserChallengeProgress[]
+  dailyQuestions UserDailyChallengeQuestion[]
+
+  @@unique([templateId, periodKey])
+  @@index([startsAt, endsAt])
+  @@map("challenge_periods")
+}
+
+model UserChallengeProgress {
+  id              Int                 @id @default(autoincrement())
+  userId          Int                 @map("user_id")
+  periodId        Int                 @map("period_id")
+  objectiveCounts Json                @default("{}") @map("objective_counts")
+  status          UserChallengeStatus @default(IN_PROGRESS)
+  completedAt     DateTime?           @map("completed_at")
+  rewardedAt      DateTime?           @map("rewarded_at")
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  period ChallengePeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, periodId])
+  @@index([userId, status])
+  @@map("user_challenge_progress")
+}
+
+model UserDailyChallengeQuestion {
+  id               Int       @id @default(autoincrement())
+  userId           Int       @map("user_id")
+  periodId         Int       @map("period_id")
+  contentItemId    Int       @map("content_item_id")
+  subQuestionIndex Int       @default(0) @map("sub_question_index")
+  orderIndex       Int       @map("order_index")
+  isAnswered       Boolean   @default(false) @map("is_answered")
+  isCorrect        Boolean?  @map("is_correct")
+  answeredAt       DateTime? @map("answered_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  period      ChallengePeriod  @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  contentItem GroupContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, periodId, contentItemId, subQuestionIndex], map: "udcq_user_period_item_sub_key")
+  @@index([userId, periodId])
+  @@map("user_daily_challenge_questions")
+}
+
+model AchievementDefinition {
+  id            Int                    @id @default(autoincrement())
+  slug          String                 @unique
+  title         String
+  description   String                 @db.Text
+  triggerType   AchievementTriggerType @map("trigger_type")
+  triggerConfig Json                   @map("trigger_config")
+  iconKey       String                 @default("trophy") @map("icon_key")
+  isActive      Boolean                @default(true) @map("is_active")
+  sortOrder     Int                    @default(0) @map("sort_order")
+  createdAt     DateTime               @default(now()) @map("created_at")
+  updatedAt     DateTime               @updatedAt @map("updated_at")
+
+  rewards           AchievementReward[]
+  userAchievements  UserAchievement[]
+  userCertificates  UserCertificate[]
+  premiumUnlocks    UserPremiumUnlock[]
+
+  @@map("achievement_definitions")
+}
+
+model AchievementReward {
+  id            Int          @id @default(autoincrement())
+  achievementId Int          @map("achievement_id")
+  rewardType    RewardType   @map("reward_type")
+  rewardConfig  Json         @map("reward_config")
+  sortOrder     Int          @default(0) @map("sort_order")
+
+  achievement AchievementDefinition @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@index([achievementId])
+  @@map("achievement_rewards")
+}
+
+model UserAchievement {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @map("user_id")
+  achievementId Int      @map("achievement_id")
+  unlockedAt    DateTime @default(now()) @map("unlocked_at")
+  notified      Boolean  @default(false)
+
+  user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement AchievementDefinition @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@map("user_achievements")
+}
+
+model CertificateTemplate {
+  id            Int      @id @default(autoincrement())
+  slug          String   @unique
+  title         String
+  subtitle      String   @default("Certificate of Completion")
+  levelId       Int?     @map("level_id")
+  designVariant String   @default("classic") @map("design_variant")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  level        Level?            @relation(fields: [levelId], references: [id], onDelete: SetNull)
+  certificates UserCertificate[]
+
+  @@map("certificate_templates")
+}
+
+model UserCertificate {
+  id                Int      @id @default(autoincrement())
+  userId            Int      @map("user_id")
+  templateId        Int      @map("template_id")
+  achievementId     Int?     @map("achievement_id")
+  certificateNumber String   @unique @map("certificate_number")
+  metadata          Json
+  issuedAt          DateTime @default(now()) @map("issued_at")
+
+  user        User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template    CertificateTemplate    @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  achievement AchievementDefinition? @relation(fields: [achievementId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@map("user_certificates")
+}
+
+model UserPremiumUnlock {
+  id                  Int      @id @default(autoincrement())
+  userId              Int      @map("user_id")
+  levelId             Int      @map("level_id")
+  sourceAchievementId Int      @map("source_achievement_id")
+  unlockedAt          DateTime @default(now()) @map("unlocked_at")
+
+  user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement AchievementDefinition @relation(fields: [sourceAchievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, levelId])
+  @@index([userId])
+  @@map("user_premium_unlocks")
+}

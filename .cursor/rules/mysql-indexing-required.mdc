@@ -1,0 +1,32 @@
+---
+description: Wajibkan indexing pada setiap tabel MySQL/Prisma
+alwaysApply: true
+---
+
+# MySQL Indexing Required
+
+Every table in `prisma/schema.prisma` must have indexes for all access patterns.
+
+## Mandatory indexes
+
+1. **Primary key** — automatic via `@id`
+2. **Foreign keys** — every relation field (`levelId`, `groupId`, `userId`, `questionId`, etc.)
+3. **Unique business keys** — `email`, enum uniqueness (`@@unique`)
+4. **Query patterns** — columns used in `WHERE`, `JOIN`, `ORDER BY`, or `GROUP BY`
+
+## Composite index rules
+
+- Column order: **equality columns first → range/sort columns last** (leftmost prefix rule)
+- Match index order to actual query filter + sort order
+- Example: `where: { levelId, isPublished }` + `orderBy: { order }` → `@@index([levelId, isPublished, order])`
+
+## Prisma workflow
+
+- Declare indexes with `@@index([...])` in `prisma/schema.prisma`
+- Generate migration: `npx prisma migrate dev --name <name>`
+- Never add indexes only in raw SQL without updating the Prisma schema
+
+## Do not merge if
+
+- A new query filters/joins/sorts a column without a supporting index
+- A migration adds tables or FKs without corresponding indexes

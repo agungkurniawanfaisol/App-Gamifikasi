@@ -1,0 +1,37 @@
+# Dependencies — installed inside Docker build stages
+node_modules
+npm-debug.log*
+
+# Next.js build output
+.next
+out
+
+# Git
+.git
+.gitignore
+
+# Environment files with secrets
+.env
+.env*.local
+
+# Docker compose files (not needed in build context)
+docker-compose*.yml
+Dockerfile.dev
+
+# IDE and OS
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+
+# Documentation and plans
+docs
+*.md
+.cursor
+
+# Test and coverage
+coverage
+*.test.ts
+*.test.tsx
+__tests__

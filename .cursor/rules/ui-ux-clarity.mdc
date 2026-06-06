@@ -1,0 +1,44 @@
+---
+description: UI/UX clarity — interfaces must be easy to understand, not confusing
+alwaysApply: true
+---
+
+# UI/UX Clarity
+
+Every screen must answer: **Where am I? What can I do? What happens next?**
+
+## Navigation
+
+- **Desktop (`lg+`)**: persistent sidebar for admin and student; never hide primary nav on scroll
+- **Mobile (`< lg`)**: full-width content; primary nav in Sheet drawer via menu button (see `mobile-responsive.mdc`)
+- **Sticky `AppTopHeader`** on all breakpoints: breadcrumbs for wayfinding; menu button on mobile only
+- Dynamic breadcrumb labels via `SetBreadcrumbs` in nested layouts (level name, group title)
+- One clear page title per view (`PageHeader` with accent border); subtitle only when it adds context
+- Back links only inside multi-step flows (quiz completion); prefer breadcrumbs for page-level navigation
+- Active nav state must be visible (`NavLink` active indicator with left accent bar)
+
+## Visual hierarchy
+
+- One primary action per section (filled button); secondary actions use `outline` or `ghost`
+- Group related controls; separate destructive actions (Delete) visually
+- Status badges: use consistent variants (`notStarted` → outline, `inProgress` → secondary, `completed` → default)
+- Show progress (bars, percent, points) before action buttons on learning flows
+
+## Copy & labels
+
+- All user-facing text via `src/lib/labels.ts` — **English only** (see `english-only.mdc`)
+- Buttons use verbs: "Start Learning", "Save Material", not vague "OK" or "Submit" alone
+- Empty states explain what to do next, not just "No data"
+- Errors state what failed and how to retry
+
+## Avoid confusion
+
+- Do not repeat the same information (title + subtitle saying the same thing)
+- Do not add more than one competing primary CTA per card
+- Loading: show spinner or skeleton; disabled buttons during async actions
+- Theme toggle must stay visible in sidebar footer (Light / Dark / System)
+
+## Reference
+
+Project skill: `.cursor/skills/next-gamifikasi-ui-ux/SKILL.md`
+Global skills: `web-design-guidelines`, `accessibility`, `ux-audit`, `frontend-design`

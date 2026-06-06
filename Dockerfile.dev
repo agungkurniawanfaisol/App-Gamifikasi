@@ -1,0 +1,22 @@
+# =============================================================================
+# Development Dockerfile — hot reload with bind-mounted source code
+# Used by docker-compose.dev.yml, not for production builds
+# =============================================================================
+
+FROM node:20-alpine
+
+RUN apk add --no-cache libc6-compat openssl
+
+WORKDIR /app
+
+ENV NEXT_TELEMETRY_DISABLED=1
+
+COPY package.json package-lock.json* ./
+COPY prisma ./prisma
+RUN npm ci
+RUN npx prisma generate
+
+EXPOSE 5174
+
+# Source code is bind-mounted at runtime; next dev provides HMR
+CMD ["npm", "run", "dev", "--", "-H", "0.0.0.0", "-p", "5174"]

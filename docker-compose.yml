@@ -1,0 +1,112 @@
+# =============================================================================
+# docker-compose.yml — Production stack for Next-Gamifikasi
+# Services: mysql, ollama, ollama-pull (init), nextjs
+# Usage: docker compose up -d --build
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # MySQL 8.0 — primary database for Prisma ORM
+  # ---------------------------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: gamifikasi-mysql
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # Ollama — local LLM server for AI feedback and chat
+  # ---------------------------------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    container_name: gamifikasi-ollama
+    restart: unless-stopped
+    mem_limit: 4g
+    mem_reservation: 3g
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - app_network
+    healthcheck:
+      # ollama list calls GET /api/tags; curl/wget are not in the ollama image
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # ollama-pull — one-shot init container to download the LLM model
+  # ---------------------------------------------------------------------------
+  ollama-pull:
+    image: ollama/ollama:latest
+    container_name: gamifikasi-ollama-pull
+    restart: "no"
+    depends_on:
+      ollama:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c", "OLLAMA_HOST=http://ollama:11434 ollama pull ${OLLAMA_MODEL:-qwen2.5:3b}"]
+    env_file: .env
+    networks:
+      - app_network
+
+  # ---------------------------------------------------------------------------
+  # Next.js — production app (standalone build, port 5174)
+  # ---------------------------------------------------------------------------
+  nextjs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gamifikasi-nextjs
+    restart: unless-stopped
+    mem_limit: 1g
+    ports:
+      - "5174:5174"
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      PORT: 5174
+      DATABASE_URL: ${DATABASE_URL}
+      AUTH_SECRET: ${AUTH_SECRET:-${NEXTAUTH_SECRET}}
+      AUTH_URL: ${AUTH_URL:-${NEXTAUTH_URL}}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_URL: ${NEXTAUTH_URL}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL}
+      OLLAMA_MODEL: ${OLLAMA_MODEL}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+      ollama-pull:
+        condition: service_completed_successfully
+    volumes:
+      - uploads_data:/app/public/uploads
+    networks:
+      - app_network
+
+# Internal bridge network — all services communicate via service names
+networks:
+  app_network:
+    driver: bridge
+
+# Persistent volumes for database and LLM models
+volumes:
+  mysql_data:
+  ollama_data:
+  uploads_data:

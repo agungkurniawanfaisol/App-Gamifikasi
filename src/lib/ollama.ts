@@ -1,0 +1,201 @@
+function getOllamaConfig(): { baseUrl: string; model: string } {
+  const baseUrl = process.env.OLLAMA_BASE_URL;
+  const model = process.env.OLLAMA_MODEL;
+  if (!baseUrl) throw new Error("OLLAMA_BASE_URL is not set");
+  if (!model) throw new Error("OLLAMA_MODEL is not set");
+  return { baseUrl, model };
+}
+
+export const CHAT_SYSTEM_PROMPT =
+  "You are a learning assistant that helps students understand course materials. Always respond in English.";
+
+export type LearnChatPhase = "pretest" | "content" | "posttest";
+
+export type LearnChatContextInput = {
+  groupTitle: string;
+  levelName: string;
+  phase: LearnChatPhase;
+  stepLabel: string;
+  stepContent?: string | null;
+};
+
+export function buildLearnChatSystemPrompt(ctx: LearnChatContextInput): string {
+  const contentBlock = ctx.stepContent?.trim()
+    ? `\nCurrent step content excerpt:\n${ctx.stepContent.trim()}`
+    : "";
+
+  return `${CHAT_SYSTEM_PROMPT}
+
+You are helping a student in the learning group "${ctx.groupTitle}" (${ctx.levelName} level).
+Current phase: ${ctx.phase}.
+Current step: ${ctx.stepLabel}.${contentBlock}
+
+Guidelines:
+- Always respond in English.
+- Help the student understand the material; use hints and explanations first.
+- Do not give direct answers to quiz or test questions unless the student has already attempted them and needs clarification.
+- Keep responses concise and encouraging (2–5 short paragraphs max unless asked for more).`;
+}
+
+export function buildFeedbackPrompt(
+  question: string,
+  userAnswer: string,
+  correctAnswer: string,
+  explanation?: string | null
+): string {
+  const explainPart = explanation ? ` Explanation: ${explanation}.` : "";
+  return `The student answered "${userAnswer}" for the question: "${question}". The correct answer is "${correctAnswer}".${explainPart} Provide brief feedback in English (maximum 3 sentences) that helps the student understand why their answer was correct or incorrect.`;
+}
+
+export type GroupCompletionPromptInput = {
+  groupTitle: string;
+  levelLabel: string;
+  scorePercent: number;
+  totalQuestions: number;
+  answeredQuestions: number;
+  correctSubAnswers: number;
+  totalSubAnswers: number;
+  skillSummary: Record<string, { correct: number; total: number }>;
+};
+
+export function buildGroupCompletionPrompt(
+  input: GroupCompletionPromptInput
+): string {
+  const skillLines = Object.entries(input.skillSummary)
+    .map(
+      ([skill, stats]) =>
+        `- ${skill}: ${stats.correct}/${stats.total} sub-questions correct`
+    )
+    .join("\n");
+
+  const skillBlock = skillLines ? `\nSkill breakdown:\n${skillLines}` : "";
+
+  return `You are an English learning coach. A student just finished the learning group "${input.groupTitle}" (${input.levelLabel} level).
+
+Overall score: ${input.scorePercent}%
+Questions answered: ${input.answeredQuestions}/${input.totalQuestions}
+Sub-questions correct: ${input.correctSubAnswers}/${input.totalSubAnswers}${skillBlock}
+
+Write encouraging completion feedback in English (3–5 short sentences). Mention their score, highlight one strength, and give one concrete tip to improve. Do not use bullet points.`;
+}
+
+export async function generateFeedback(prompt: string): Promise<string> {
+  try {
+    const { baseUrl, model } = getOllamaConfig();
+    const response = await fetch(`${baseUrl}/api/generate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model, prompt, stream: false }),
+    });
+    if (!response.ok) {
+      throw new Error(`Ollama error ${response.status}`);
+    }
+    const data = (await response.json()) as { response?: string };
+    return data.response ?? "Unable to generate feedback right now.";
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Failed to generate feedback: ${error.message}`);
+    }
+    throw new Error("Failed to generate feedback");
+  }
+}
+
+export async function streamChat(
+  prompt: string,
+  onChunk: (text: string) => void,
+  systemPrompt = CHAT_SYSTEM_PROMPT
+): Promise<void> {
+  try {
+    const { baseUrl, model } = getOllamaConfig();
+    const response = await fetch(`${baseUrl}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: prompt },
+        ],
+        stream: true,
+      }),
+    });
+    if (!response.ok || !response.body) {
+      throw new Error(`Ollama chat error ${response.status}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        try {
+          const chunk = JSON.parse(trimmed) as {
+            message?: { content?: string };
+          };
+          if (chunk.message?.content) onChunk(chunk.message.content);
+        } catch {
+          /* skip malformed */
+        }
+      }
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Failed to stream chat: ${error.message}`);
+    }
+    throw new Error("Failed to stream chat");
+  }
+}
+
+export async function streamChatWithHistory(
+  messages: Array<{ role: "user" | "assistant" | "system"; content: string }>,
+  onChunk: (text: string) => void
+): Promise<void> {
+  const { baseUrl, model } = getOllamaConfig();
+  const response = await fetch(`${baseUrl}/api/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: CHAT_SYSTEM_PROMPT },
+        ...messages,
+      ],
+      stream: true,
+    }),
+  });
+  if (!response.ok || !response.body) {
+    throw new Error(`Ollama chat error ${response.status}`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      try {
+        const chunk = JSON.parse(trimmed) as {
+          message?: { content?: string };
+        };
+        if (chunk.message?.content) onChunk(chunk.message.content);
+      } catch {
+        /* skip */
+      }
+    }
+  }
+}
