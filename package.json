@@ -12,6 +12,7 @@
     "lint": "next lint",
     "postinstall": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:unipda-faq": "tsx prisma/seed/run-unipda-faq-import.ts",
     "db:reset": "prisma migrate reset --force"
   },
   "prisma": {

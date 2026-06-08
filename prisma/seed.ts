@@ -6,6 +6,7 @@ import { seedLevels } from "./seed/seed-levels";
 import { seedStudentProgress } from "./seed/seed-progress";
 import { seedRewards } from "./seed/seed-rewards";
 import { seedAssistantKnowledge } from "./seed/seed-assistant-knowledge";
+import { seedUnipdaFaqKnowledge } from "./seed/seed-unipda-faq-knowledge";
 import { seedUsers } from "./seed/seed-users";
 
 const prisma = new PrismaClient();
@@ -15,6 +16,7 @@ async function main() {
 
   await seedUsers(prisma);
   await seedAssistantKnowledge(prisma);
+  await seedUnipdaFaqKnowledge(prisma);
   await seedLeaderboardDemo(prisma);
   const stats = await seedLevels(prisma);
   await seedGroupAssessments(prisma);
