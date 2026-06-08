@@ -25,6 +25,16 @@ export type AssistantKnowledgeResult = {
 const INSTANT_THRESHOLD = 0.65;
 const REFERENCE_MIN_SCORE = 0.25;
 const MAX_REFERENCE_ENTRIES = 3;
+const PUBLISHED_CACHE_TTL_MS = 60_000;
+
+let publishedCache: {
+  entries: AssistantKnowledgeEntry[];
+  fetchedAt: number;
+} | null = null;
+
+export function invalidateAssistantKnowledgeCache(): void {
+  publishedCache = null;
+}
 
 const INDONESIAN_HINTS = [
   "siapa",
@@ -144,6 +154,13 @@ export async function isAssistantKnowledgeTableReady(): Promise<boolean> {
 export async function listPublishedAssistantKnowledge(): Promise<
   AssistantKnowledgeEntry[]
 > {
+  if (
+    publishedCache &&
+    Date.now() - publishedCache.fetchedAt < PUBLISHED_CACHE_TTL_MS
+  ) {
+    return publishedCache.entries;
+  }
+
   if (!(await isAssistantKnowledgeTableReady())) return [];
 
   const rows = await prisma.assistantKnowledge.findMany({
@@ -161,10 +178,13 @@ export async function listPublishedAssistantKnowledge(): Promise<
     },
   });
 
-  return rows.map((row) => ({
+  const entries = rows.map((row) => ({
     ...row,
     keywords: parseKeywords(row.keywords),
   }));
+
+  publishedCache = { entries, fetchedAt: Date.now() };
+  return entries;
 }
 
 export function matchAssistantKnowledge(

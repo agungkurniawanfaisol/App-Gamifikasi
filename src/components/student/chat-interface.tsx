@@ -208,10 +208,15 @@ export function ChatInterface({
             >
               {msg.message ||
                 (loading && msg.role === "ASSISTANT" ? (
-                  <span className="inline-flex gap-1">
-                    <span className="animate-pulse">●</span>
-                    <span className="animate-pulse delay-100">●</span>
-                    <span className="animate-pulse delay-200">●</span>
+                  <span className="inline-flex items-center gap-2 text-muted-foreground">
+                    <span className="text-foreground/80">
+                      {labels.student.chatGenerating}
+                    </span>
+                    <span className="inline-flex gap-0.5" aria-hidden>
+                      <span className="animate-pulse">●</span>
+                      <span className="animate-pulse delay-100">●</span>
+                      <span className="animate-pulse delay-200">●</span>
+                    </span>
                   </span>
                 ) : (
                   ""

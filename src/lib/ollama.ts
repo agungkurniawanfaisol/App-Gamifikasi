@@ -9,6 +9,18 @@ function getOllamaConfig(): { baseUrl: string; model: string } {
 /** Ollama default is 5m; longer keep_alive avoids cold reload between chat turns. */
 const DEFAULT_OLLAMA_KEEP_ALIVE = "30m";
 
+/** Cap learn-step excerpt size to keep chat prompts fast. */
+export const MAX_LEARN_STEP_CONTENT_CHARS = 2_500;
+
+export const CHAT_HISTORY_LIMIT = 12;
+
+export function trimLearnStepContent(content?: string | null): string | null {
+  const trimmed = content?.trim();
+  if (!trimmed) return null;
+  if (trimmed.length <= MAX_LEARN_STEP_CONTENT_CHARS) return trimmed;
+  return `${trimmed.slice(0, MAX_LEARN_STEP_CONTENT_CHARS)}…`;
+}
+
 export function getOllamaKeepAlive(): string {
   const raw = process.env.OLLAMA_KEEP_ALIVE?.trim();
   return raw || DEFAULT_OLLAMA_KEEP_ALIVE;
@@ -43,8 +55,9 @@ export function buildLearnChatSystemPrompt(
   ctx: LearnChatContextInput,
   referenceFacts?: string | null
 ): string {
-  const contentBlock = ctx.stepContent?.trim()
-    ? `\nCurrent step content excerpt:\n${ctx.stepContent.trim()}`
+  const stepExcerpt = trimLearnStepContent(ctx.stepContent);
+  const contentBlock = stepExcerpt
+    ? `\nCurrent step content excerpt:\n${stepExcerpt}`
     : "";
 
   return `${buildBraderSystemPrompt(referenceFacts)}

@@ -4,7 +4,10 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-helpers";
-import { isAssistantKnowledgeTableReady } from "@/lib/assistant-knowledge";
+import {
+  invalidateAssistantKnowledgeCache,
+  isAssistantKnowledgeTableReady,
+} from "@/lib/assistant-knowledge";
 import {
   ASSISTANT_KNOWLEDGE_PAGE_SIZE,
   type AssistantKnowledgeListItem,
@@ -171,6 +174,7 @@ export async function createAssistantKnowledgeEntry(
     return { ok: false, error: "Could not create entry. Slug may already exist." };
   }
 
+  invalidateAssistantKnowledgeCache();
   revalidatePath("/admin/assistant-knowledge");
   return { ok: true };
 }
@@ -225,6 +229,7 @@ export async function updateAssistantKnowledgeEntry(
     return { ok: false, error: "Could not update entry. Slug may already exist." };
   }
 
+  invalidateAssistantKnowledgeCache();
   revalidatePath("/admin/assistant-knowledge");
   return { ok: true };
 }
@@ -240,6 +245,7 @@ export async function deleteAssistantKnowledgeEntry(
     return { ok: false, error: "Could not delete entry." };
   }
 
+  invalidateAssistantKnowledgeCache();
   revalidatePath("/admin/assistant-knowledge");
   return { ok: true };
 }
@@ -259,6 +265,7 @@ export async function toggleAssistantKnowledgePublish(
     return { ok: false, error: "Could not update publish status." };
   }
 
+  invalidateAssistantKnowledgeCache();
   revalidatePath("/admin/assistant-knowledge");
   return { ok: true };
 }

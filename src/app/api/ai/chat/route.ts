@@ -6,11 +6,16 @@ import { createPlainTextStream } from "@/lib/instant-chat-stream";
 import {
   buildBraderSystemPrompt,
   buildLearnChatSystemPrompt,
+  CHAT_HISTORY_LIMIT,
   getOllamaKeepAlive,
+  trimLearnStepContent,
   type LearnChatContextInput,
 } from "@/lib/ollama";
 import { awardDiscussionMilestone } from "@/lib/point-service";
-import { recordChallengeEvent } from "@/lib/challenge-service";
+import {
+  recordChallengeEvent,
+  type ChallengeCompletionResult,
+} from "@/lib/challenge-service";
 import { ChatRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
@@ -22,6 +27,52 @@ type ChatRequestBody = {
     levelName?: string;
   };
 };
+
+type GamificationResult = {
+  discussionAward: Awaited<ReturnType<typeof awardDiscussionMilestone>>;
+  challengeCompletions: ChallengeCompletionResult[];
+};
+
+async function resolveChatGamification(
+  userId: number,
+  groupId: number | null
+): Promise<GamificationResult> {
+  const [discussionAward, challengeCompletions] = await Promise.all([
+    awardDiscussionMilestone(userId, groupId),
+    recordChallengeEvent(userId, { kind: "CHAT_MESSAGE" }),
+  ]);
+
+  if (discussionAward.awarded > 0 || challengeCompletions.length > 0) {
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/chat");
+    revalidatePath("/dashboard/challenges");
+    if (groupId != null) {
+      revalidatePath("/dashboard/learn");
+    }
+  }
+
+  return { discussionAward, challengeCompletions };
+}
+
+function buildResponseHeaders({
+  discussionAward,
+  challengeCompletions,
+}: GamificationResult): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": "text/plain; charset=utf-8",
+    "Transfer-Encoding": "chunked",
+  };
+
+  if (discussionAward.awarded > 0) {
+    headers["X-Points-Awarded"] = String(discussionAward.awarded);
+  }
+
+  if (challengeCompletions.length > 0) {
+    headers["X-Challenge-Completions"] = JSON.stringify(challengeCompletions);
+  }
+
+  return headers;
+}
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -37,89 +88,76 @@ export async function POST(request: Request) {
   }
 
   const groupId = body.groupId ?? null;
-  const knowledge = await resolveAssistantKnowledge(message);
+
+  const [knowledge, group] = await Promise.all([
+    resolveAssistantKnowledge(message),
+    groupId != null
+      ? prisma.learningGroup.findFirst({
+          where: { id: groupId, isPublished: true },
+          include: { level: { select: { name: true } } },
+        })
+      : Promise.resolve(null),
+  ]);
+
+  if (groupId != null && !group) {
+    return new Response("Group not found", { status: 404 });
+  }
 
   let systemPrompt = buildBraderSystemPrompt(knowledge.referenceFacts);
 
-  if (groupId != null) {
-    const group = await prisma.learningGroup.findFirst({
-      where: { id: groupId, isPublished: true },
-      include: { level: { select: { name: true } } },
-    });
-    if (!group) {
-      return new Response("Group not found", { status: 404 });
-    }
-
-    if (body.context?.phase && body.context.stepLabel) {
-      systemPrompt = buildLearnChatSystemPrompt(
-        {
-          groupTitle: body.context.groupTitle ?? group.title,
-          levelName: body.context.levelName ?? group.level.name,
-          phase: body.context.phase,
-          stepLabel: body.context.stepLabel,
-          stepContent: body.context.stepContent,
-        },
-        knowledge.referenceFacts
-      );
-    }
-  }
-
-  await prisma.chatHistory.create({
-    data: {
-      userId,
-      groupId,
-      role: ChatRole.USER,
-      message,
-    },
-  });
-
-  const discussionAward = await awardDiscussionMilestone(userId, groupId);
-  const challengeCompletions = await recordChallengeEvent(userId, {
-    kind: "CHAT_MESSAGE",
-  });
-  if (discussionAward.awarded > 0 || challengeCompletions.length > 0) {
-    revalidatePath("/dashboard");
-    revalidatePath("/dashboard/chat");
-    revalidatePath("/dashboard/challenges");
-    if (groupId != null) {
-      revalidatePath(`/dashboard/learn`);
-    }
-  }
-
-  const headers: Record<string, string> = {
-    "Content-Type": "text/plain; charset=utf-8",
-    "Transfer-Encoding": "chunked",
-  };
-
-  if (discussionAward.awarded > 0) {
-    headers["X-Points-Awarded"] = String(discussionAward.awarded);
-  }
-
-  if (challengeCompletions.length > 0) {
-    headers["X-Challenge-Completions"] = JSON.stringify(challengeCompletions);
+  if (group && body.context?.phase && body.context.stepLabel) {
+    systemPrompt = buildLearnChatSystemPrompt(
+      {
+        groupTitle: body.context.groupTitle ?? group.title,
+        levelName: body.context.levelName ?? group.level.name,
+        phase: body.context.phase,
+        stepLabel: body.context.stepLabel,
+        stepContent: trimLearnStepContent(body.context.stepContent),
+      },
+      knowledge.referenceFacts
+    );
   }
 
   if (knowledge.instantAnswer) {
     const instantAnswer = knowledge.instantAnswer;
-    await prisma.chatHistory.create({
-      data: {
-        userId,
-        groupId,
-        role: ChatRole.ASSISTANT,
-        message: instantAnswer,
-      },
-    });
 
-    return new Response(createPlainTextStream(instantAnswer), { headers });
+    const [, gamification] = await Promise.all([
+      prisma.$transaction(async (tx) => {
+        await tx.chatHistory.create({
+          data: { userId, groupId, role: ChatRole.USER, message },
+        });
+        await tx.chatHistory.create({
+          data: {
+            userId,
+            groupId,
+            role: ChatRole.ASSISTANT,
+            message: instantAnswer,
+          },
+        });
+      }),
+      resolveChatGamification(userId, groupId),
+    ]);
+
+    return new Response(createPlainTextStream(instantAnswer), {
+      headers: buildResponseHeaders(gamification),
+    });
   }
 
-  const history = await prisma.chatHistory.findMany({
-    where: { userId },
-    orderBy: { createdAt: "asc" },
-    take: 20,
+  await prisma.chatHistory.create({
+    data: { userId, groupId, role: ChatRole.USER, message },
   });
 
-  const messages = history.map((h) => ({
+  const [historyRows, gamification] = await Promise.all([
+    prisma.chatHistory.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      take: CHAT_HISTORY_LIMIT,
+      select: { role: true, message: true },
+    }),
+    resolveChatGamification(userId, groupId),
+  ]);
+
+  const messages = [...historyRows].reverse().map((h) => ({
     role: h.role === ChatRole.USER ? ("user" as const) : ("assistant" as const),
     content: h.message,
   }));
@@ -200,5 +238,5 @@ export async function POST(request: Request) {
     },
   });
 
-  return new Response(stream, { headers });
+  return new Response(stream, { headers: buildResponseHeaders(gamification) });
 }

@@ -645,6 +645,7 @@ export const labels = {
       "Learning assistant to help you understand course materials.",
     chatPlaceholder: "Type your question...",
     chatSend: "Send",
+    chatGenerating: "Generating answer…",
     chatError: "Sorry, something went wrong. Please try again later.",
     aiAssistantTitle: "AI Assistant",
     aiAssistantOpen: "Open AI Assistant",
