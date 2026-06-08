@@ -5,6 +5,7 @@ import { seedLeaderboardDemo } from "./seed/seed-leaderboard";
 import { seedLevels } from "./seed/seed-levels";
 import { seedStudentProgress } from "./seed/seed-progress";
 import { seedRewards } from "./seed/seed-rewards";
+import { seedAssistantKnowledge } from "./seed/seed-assistant-knowledge";
 import { seedUsers } from "./seed/seed-users";
 
 const prisma = new PrismaClient();
@@ -13,6 +14,7 @@ async function main() {
   console.log("🌱 Seeding database...");
 
   await seedUsers(prisma);
+  await seedAssistantKnowledge(prisma);
   await seedLeaderboardDemo(prisma);
   const stats = await seedLevels(prisma);
   await seedGroupAssessments(prisma);

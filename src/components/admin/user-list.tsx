@@ -10,10 +10,14 @@ import {
   School,
   Search,
   Trash2,
+  Sparkles,
+  TrendingUp,
   UserCircle,
 } from "lucide-react";
 import { Role } from "@prisma/client";
 import { deleteUser, type UserListItem } from "@/actions/admin/users";
+import type { UserProgressListSummary } from "@/lib/admin-user-progress";
+import { getLevelLabel, labels } from "@/lib/labels";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,11 +31,34 @@ import {
 import { EmptyState } from "@/components/ui/empty-state";
 import { IconButtonTooltip } from "@/components/ui/icon-button-tooltip";
 import { Input } from "@/components/ui/input";
-import { labels } from "@/lib/labels";
 
 type RoleFilter = "ALL" | Role;
 
-export function UserList({ users }: { users: UserListItem[] }) {
+function formatProgressSummary(summary: UserProgressListSummary): string {
+  if (summary.statusLabel === "notStarted") {
+    return labels.admin.userProgress.listNotStarted;
+  }
+  if (summary.statusLabel === "completed") {
+    return labels.admin.userProgress.listCompleted;
+  }
+  if (summary.currentLevelName) {
+    return labels.admin.userProgress.listInProgress(
+      getLevelLabel(summary.currentLevelName)
+    );
+  }
+  return labels.admin.userProgress.listProgress(
+    summary.completedGroups,
+    summary.totalGroups
+  );
+}
+
+export function UserList({
+  users,
+  progressSummaries,
+}: {
+  users: UserListItem[];
+  progressSummaries: Record<number, UserProgressListSummary>;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [pending, startTransition] = useTransition();
@@ -152,9 +179,39 @@ export function UserList({ users }: { users: UserListItem[] }) {
                         {user.studentId ? ` · ${user.studentId}` : ""}
                       </span>
                     )}
+                    {user.role === Role.STUDENT && progressSummaries[user.id] && (
+                      <Link
+                        href={`/admin/users/${user.id}?tab=progress`}
+                        className="flex items-center gap-2 text-primary hover:underline"
+                      >
+                        <TrendingUp className="size-3.5 shrink-0" />
+                        <span>
+                          {labels.admin.userProgress.listProgress(
+                            progressSummaries[user.id].completedGroups,
+                            progressSummaries[user.id].totalGroups
+                          )}
+                          {" · "}
+                          {formatProgressSummary(progressSummaries[user.id])}
+                        </span>
+                      </Link>
+                    )}
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2 self-end sm:self-auto">
+                  <IconButtonTooltip label={labels.admin.userProgress.tabProgress}>
+                    <Button asChild size="icon" variant="outline" aria-label={labels.admin.userProgress.tabProgress} className="size-11">
+                      <Link href={`/admin/users/${user.id}?tab=progress`}>
+                        <TrendingUp className="size-4" />
+                      </Link>
+                    </Button>
+                  </IconButtonTooltip>
+                  <IconButtonTooltip label={labels.admin.userProgress.tabFeedback}>
+                    <Button asChild size="icon" variant="outline" aria-label={labels.admin.userProgress.tabFeedback} className="size-11">
+                      <Link href={`/admin/users/${user.id}?tab=feedback`}>
+                        <Sparkles className="size-4" />
+                      </Link>
+                    </Button>
+                  </IconButtonTooltip>
                   <IconButtonTooltip label={labels.common.edit}>
                     <Button asChild size="icon" variant="outline" aria-label={labels.common.edit} className="size-11">
                       <Link href={`/admin/users/${user.id}`}>

@@ -1,9 +1,11 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getUserId } from "@/lib/auth-helpers";
+import { resolveAssistantKnowledge } from "@/lib/assistant-knowledge";
+import { createPlainTextStream } from "@/lib/instant-chat-stream";
 import {
+  buildBraderSystemPrompt,
   buildLearnChatSystemPrompt,
-  CHAT_SYSTEM_PROMPT,
   type LearnChatContextInput,
 } from "@/lib/ollama";
 import { awardDiscussionMilestone } from "@/lib/point-service";
@@ -34,7 +36,9 @@ export async function POST(request: Request) {
   }
 
   const groupId = body.groupId ?? null;
-  let systemPrompt = CHAT_SYSTEM_PROMPT;
+  const knowledge = await resolveAssistantKnowledge(message);
+
+  let systemPrompt = buildBraderSystemPrompt(knowledge.referenceFacts);
 
   if (groupId != null) {
     const group = await prisma.learningGroup.findFirst({
@@ -46,13 +50,16 @@ export async function POST(request: Request) {
     }
 
     if (body.context?.phase && body.context.stepLabel) {
-      systemPrompt = buildLearnChatSystemPrompt({
-        groupTitle: body.context.groupTitle ?? group.title,
-        levelName: body.context.levelName ?? group.level.name,
-        phase: body.context.phase,
-        stepLabel: body.context.stepLabel,
-        stepContent: body.context.stepContent,
-      });
+      systemPrompt = buildLearnChatSystemPrompt(
+        {
+          groupTitle: body.context.groupTitle ?? group.title,
+          levelName: body.context.levelName ?? group.level.name,
+          phase: body.context.phase,
+          stepLabel: body.context.stepLabel,
+          stepContent: body.context.stepContent,
+        },
+        knowledge.referenceFacts
+      );
     }
   }
 
@@ -76,6 +83,33 @@ export async function POST(request: Request) {
     if (groupId != null) {
       revalidatePath(`/dashboard/learn`);
     }
+  }
+
+  const headers: Record<string, string> = {
+    "Content-Type": "text/plain; charset=utf-8",
+    "Transfer-Encoding": "chunked",
+  };
+
+  if (discussionAward.awarded > 0) {
+    headers["X-Points-Awarded"] = String(discussionAward.awarded);
+  }
+
+  if (challengeCompletions.length > 0) {
+    headers["X-Challenge-Completions"] = JSON.stringify(challengeCompletions);
+  }
+
+  if (knowledge.instantAnswer) {
+    const instantAnswer = knowledge.instantAnswer;
+    await prisma.chatHistory.create({
+      data: {
+        userId,
+        groupId,
+        role: ChatRole.ASSISTANT,
+        message: instantAnswer,
+      },
+    });
+
+    return new Response(createPlainTextStream(instantAnswer), { headers });
   }
 
   const history = await prisma.chatHistory.findMany({
@@ -106,6 +140,7 @@ export async function POST(request: Request) {
       model,
       messages: [{ role: "system", content: systemPrompt }, ...messages],
       stream: true,
+      options: { num_predict: 256, temperature: 0.3 },
     }),
   });
 
@@ -162,19 +197,6 @@ export async function POST(request: Request) {
       }
     },
   });
-
-  const headers: Record<string, string> = {
-    "Content-Type": "text/plain; charset=utf-8",
-    "Transfer-Encoding": "chunked",
-  };
-
-  if (discussionAward.awarded > 0) {
-    headers["X-Points-Awarded"] = String(discussionAward.awarded);
-  }
-
-  if (challengeCompletions.length > 0) {
-    headers["X-Challenge-Completions"] = JSON.stringify(challengeCompletions);
-  }
 
   return new Response(stream, { headers });
 }

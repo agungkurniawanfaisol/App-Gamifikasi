@@ -32,7 +32,8 @@ import {
 import { labels } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
-export type LearningPhase = "pretest" | "content" | "posttest" | "finished";
+import type { LearningPhase } from "@/lib/learning-phase";
+export type { LearningPhase } from "@/lib/learning-phase";
 
 type StepKind = "pretest" | "material" | "question" | "posttest";
 

@@ -61,8 +61,60 @@ function buildAdminBreadcrumbs(segments: string[]): BreadcrumbItem[] {
     return items;
   }
 
+  if (segments[0] === "analytics") {
+    items.push(crumb(labels.nav.breadcrumb.analytics, undefined, true));
+    return items;
+  }
+
+  if (segments[0] === "gamification") {
+    items.push(crumb(labels.nav.breadcrumb.gamification, undefined, true));
+    return items;
+  }
+
+  if (segments[0] === "announcements") {
+    items.push(crumb(labels.nav.breadcrumb.announcements, undefined, true));
+    return items;
+  }
+
+  if (segments[0] === "chat") {
+    items.push(crumb(labels.nav.breadcrumb.chatMonitor, undefined, true));
+    return items;
+  }
+
+  if (segments[0] === "settings") {
+    items.push(crumb(labels.nav.breadcrumb.settings, undefined, true));
+    return items;
+  }
+
   if (segments[0] === "testimonials") {
     items.push(crumb(labels.nav.breadcrumb.testimonials, undefined, true));
+    return items;
+  }
+
+  if (segments[0] === "api-tokens") {
+    items.push(crumb(labels.nav.breadcrumb.apiTokens, "/admin/api-tokens"));
+
+    if (segments[1] === "audit" && !segments[2]) {
+      items[items.length - 1]!.href = "/admin/api-tokens";
+      items.push(crumb(labels.nav.breadcrumb.apiTokensAllActivity, undefined, true));
+      return items;
+    }
+
+    const tokenId = segments[1];
+    if (tokenId && /^\d+$/.test(tokenId) && segments[2] === "audit") {
+      items[items.length - 1]!.href = "/admin/api-tokens";
+      items.push(
+        crumb(labels.nav.breadcrumb.apiTokenAudit, undefined, true)
+      );
+      return items;
+    }
+
+    items[items.length - 1]!.isCurrent = true;
+    return items;
+  }
+
+  if (segments[0] === "assistant-knowledge") {
+    items.push(crumb(labels.nav.breadcrumb.assistantKnowledge, undefined, true));
     return items;
   }
 

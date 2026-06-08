@@ -1,6 +1,7 @@
 export const labels = {
   auth: {
     signIn: "Sign In",
+    signUp: "Sign Up",
     signingIn: "Signing in...",
     signOut: "Sign Out",
     email: "Email",
@@ -16,6 +17,11 @@ export const labels = {
     dashboard: "Dashboard",
     levels: "Levels",
     users: "Users",
+    analytics: "Analytics",
+    gamification: "Gamification",
+    announcements: "Announcements",
+    chatMonitor: "Chat Monitor",
+    settings: "Settings",
     breadcrumb: {
       dashboard: "Dashboard",
       users: "Users",
@@ -43,6 +49,16 @@ export const labels = {
       speechRecognition: "Speech Recognition",
       profile: "Profile",
       testimonials: "Testimonials",
+      apiTokens: "API Tokens",
+      apiTokensAudit: "Audit",
+      apiTokensAllActivity: "All activity",
+      apiTokenAudit: "Token audit",
+      assistantKnowledge: "Assistant Knowledge",
+      analytics: "Analytics",
+      gamification: "Gamification",
+      announcements: "Announcements",
+      chatMonitor: "Chat Monitor",
+      settings: "Settings",
     },
     adminPanel: "Admin Panel",
     learning: "Learning Hub",
@@ -58,6 +74,8 @@ export const labels = {
     challenges: "Challenges",
     rewards: "Rewards",
     testimonials: "Testimonials",
+    apiTokens: "API Tokens",
+    assistantKnowledge: "Assistant Knowledge",
     points: (pts: number) => `${pts} pts`,
   },
   theme: {
@@ -89,6 +107,13 @@ export const labels = {
     content: "Content",
     correct: "Correct",
     search: "Search",
+    paginationNav: "Pagination",
+    paginationPrevious: "Previous",
+    paginationNext: "Next",
+    paginationShowing: (from: number, to: number, total: number) =>
+      `Showing ${from}–${to} of ${total}`,
+    paginationPage: (page: number, totalPages: number) =>
+      `Page ${page} of ${totalPages}`,
   },
   admin: {
     dashboardTitle: "Admin Dashboard",
@@ -263,6 +288,302 @@ export const labels = {
     noPosttestQuestions: "No posttest questions yet.",
     assessmentScaleHint: "Students answer with a 1–5 slider only.",
     deleteAssessmentQuestion: "Delete question",
+    apiTokensTitle: "API Tokens",
+    apiTokensDescription:
+      "Manage Bearer tokens for external apps calling the Ollama gateway.",
+    apiTokensTabTokens: "Tokens",
+    apiTokensTabConsole: "API Console",
+    apiTokensTabDocs: "Documentation",
+    apiTokensCreate: "Create Token",
+    apiTokensName: "Token name",
+    apiTokensNamePlaceholder: "e.g. Production backend",
+    apiTokensPrefix: "Prefix",
+    apiTokensLastUsed: "Last used",
+    apiTokensExpires: "Expires",
+    apiTokensNever: "Never",
+    apiTokensRevoke: "Revoke",
+    apiTokensActivate: "Activate",
+    apiTokensRotate: "Rotate",
+    apiTokensDelete: "Delete",
+    apiTokensEmpty: "No API tokens yet. Create one for your external app.",
+    apiTokensCreatedTitle: "Token created",
+    apiTokensCreatedHint:
+      "Copy this token now. It will not be shown again.",
+    apiTokensRotatedTitle: "Token rotated",
+    apiTokensRotatedHint:
+      "Copy the new token now. The previous token is invalid.",
+    apiTokensCopy: "Copy token",
+    apiTokensCopied: "Copied!",
+    apiTokensClose: "Close",
+    apiTokensUseInConsole: "Use in console",
+    apiTokensScopes: "Scopes",
+    apiTokensScopeChat: "Chat",
+    apiTokensScopeGenerate: "Generate",
+    apiTokensScopeModels: "Models",
+    apiTokensAllowedOrigins: "Allowed origins (optional)",
+    apiTokensAllowedOriginsHint:
+      "Comma-separated URLs for browser apps. Leave empty to use the global CORS allowlist.",
+    apiTokensAllowedOriginsPlaceholder: "https://app.example.com, http://localhost:3000",
+    apiTokensExpiry: "Expiry (optional)",
+    apiTokensExpiryHint: "Leave empty for no expiry.",
+    apiTokensSecurityWarning:
+      "Treat API tokens like passwords. Secrets are encrypted in the database and can be revealed by admins. Restrict admin access and rotate tokens if leaked.",
+    apiTokensShowToken: "Show token",
+    apiTokensRevealedTitle: "Stored token",
+    apiTokensRevealedHint:
+      "This token is stored encrypted. Copy it now if you need it elsewhere.",
+    apiTokensRevealUnavailable:
+      "No stored secret for this token. Rotate to generate a new recoverable token.",
+    apiTokensAuditTitle: "Recent requests",
+    apiTokensAuditEmpty: "No requests logged yet.",
+    apiTokensAuditEndpoint: "Endpoint",
+    apiTokensAuditStatus: "Status",
+    apiTokensAuditIp: "IP",
+    apiTokensAuditTime: "Time",
+    apiTokensTimezoneNote: "Times shown in WIB (Western Indonesian Time).",
+    apiTokensCorsTitle: "Global CORS allowlist",
+    apiTokensCorsHint:
+      "Origins allowed for browser clients when a token has no per-token origins.",
+    apiTokensCorsSave: "Save CORS allowlist",
+    apiTokensCorsSaved: "CORS allowlist saved.",
+    apiTokensAudit: "View audit",
+    apiTokensAllActivity: "All activity",
+    apiTokensAuditPageTitle: "Token audit",
+    apiTokensAllActivityTitle: "API activity",
+    apiTokensAllActivityDescription:
+      "Review requests across all tokens. Filter by token to focus on one client.",
+    apiTokensAuditDescription:
+      "Usage chart, daily quota, and request history for this token.",
+    apiTokensDailyQuota: "Daily quota",
+    apiTokensDailyQuotaHint:
+      "Maximum API requests per calendar day (WIB). Leave empty for unlimited.",
+    apiTokensDailyQuotaPlaceholder: "e.g. 500",
+    apiTokensDailyQuotaUnlimited: "Unlimited",
+    apiTokensDailyQuotaSave: "Save daily quota",
+    apiTokensUsageToday: (used: number, limit: number | null) =>
+      limit != null ? `${used} / ${limit} requests today` : `${used} requests today (unlimited)`,
+    apiTokensUsageChartTitle: "Request volume",
+    apiTokensUsageChart7Days: "7 days",
+    apiTokensUsageChart30Days: "30 days",
+    apiTokensUsageChartSuccess: "Success (2xx)",
+    apiTokensUsageChartClientError: "Client errors (4xx)",
+    apiTokensUsageChartRateLimited: "Rate limited (429)",
+    apiTokensAuditTokenColumn: "Token",
+    apiTokensAuditFilterAll: "All tokens",
+    apiTokensAuditFilterLabel: "Filter by token",
+    apiTokensBackToTokens: "Back to tokens",
+    apiTokensQuotaRemaining: (remaining: number) => `${remaining} remaining today`,
+    assistantKnowledgeTitle: "Assistant Knowledge",
+    assistantKnowledgeDescription:
+      "Manage Brader Saintek Unipda FAQ entries for instant answers about identity and campus facts.",
+    assistantKnowledgeHint:
+      "Published entries with matching keywords return instantly without calling Ollama. Higher priority wins ties.",
+    assistantKnowledgeAdd: "Add Entry",
+    assistantKnowledgeCreate: "Create Entry",
+    assistantKnowledgeCreateTitle: "New knowledge entry",
+    assistantKnowledgeEditTitle: "Edit knowledge entry",
+    assistantKnowledgeSave: "Save Entry",
+    assistantKnowledgeEmpty: "No knowledge entries yet.",
+    assistantKnowledgeEmptyHint:
+      "Add FAQ entries for Brader Saintek Unipda (identity, Unipda facts, developer team).",
+    assistantKnowledgeSlug: "Slug",
+    assistantKnowledgeSlugPlaceholder: "about-unipda",
+    assistantKnowledgePriority: "Priority",
+    assistantKnowledgePriorityValue: (value: number) => `Priority ${value}`,
+    assistantKnowledgeKeywords: "Keywords",
+    assistantKnowledgeKeywordsPlaceholder: "unipda, universitas pgri delta, apa itu unipda",
+    assistantKnowledgeKeywordsHint:
+      "Comma-separated phrases used to match user questions. Multi-word phrases work best.",
+    assistantKnowledgeQuestionEn: "Sample question (English)",
+    assistantKnowledgeQuestionId: "Sample question (Indonesian)",
+    assistantKnowledgeAnswerEn: "Answer (English)",
+    assistantKnowledgeAnswerId: "Answer (Indonesian)",
+    assistantKnowledgePublished: "Published",
+    assistantKnowledgePublish: "Publish",
+    assistantKnowledgeUnpublish: "Unpublish",
+    assistantKnowledgeUpdated: "Updated",
+    assistantKnowledgeDeleteConfirm:
+      "Delete this knowledge entry? Brader will no longer use it for instant answers.",
+    assistantKnowledgeSearchPlaceholder: "Search slug, questions, or answers",
+    assistantKnowledgeSearchEmpty: "No matching entries",
+    assistantKnowledgeSearchEmptyHint:
+      "Try a different search term or clear the filter to see all entries.",
+    apiConsoleTitle: "API Console",
+    apiConsoleDescription:
+      "Test External API endpoints with your Bearer token.",
+    apiConsoleOverview:
+      "The External API is a secure HTTP gateway that proxies requests to the local Ollama AI server. Use it from backend apps (Python, Node, Laravel) or browser apps (with CORS) to run chat completions, text generation, and list models — without exposing Ollama directly to the internet.",
+    apiConsolePurposeLabel: "What it does",
+    apiConsoleAuthLabel: "Authentication",
+    apiConsolePayloadLabel: "Request payload",
+    apiConsoleResponseLabel: "Response",
+    apiConsoleExamplePayloadLabel: "Example JSON",
+    apiConsoleCurlLabel: "curl command",
+    apiConsoleCurlHint:
+      "Uses your Bearer token and request body when set. Paste into a terminal to run the same request outside the browser.",
+    apiConsoleScopeRequired: (scope: string) => `Required token scope: ${scope}`,
+    apiConsoleScopePublic: "No Bearer token required (public discovery).",
+    apiConsoleEndpoints: {
+      discovery: {
+        purpose:
+          "Returns the live API catalog: available routes, authentication rules, rate limits, and example payloads.",
+        auth: "Public — send GET with no Authorization header.",
+        payload:
+          "No request body. Optional: none.",
+        response:
+          "JSON with name, version, baseUrl, authentication, rateLimit, endpoints[], and error codes.",
+      },
+      models: {
+        purpose:
+          "Lists AI models available on the Ollama server (proxies Ollama GET /api/tags). Use this to check which model names you can pass in chat or generate requests.",
+        auth: "Authorization: Bearer <token> with the models scope.",
+        payload: "No request body.",
+        response:
+          'JSON from Ollama, e.g. { "models": [{ "name": "llama3.2", ... }] }.',
+      },
+      chat: {
+        purpose:
+          "Multi-turn chat completion. Send a conversation (messages array) and receive an assistant reply from Ollama. Best for conversational AI in your app.",
+        auth: "Authorization: Bearer <token> with the chat scope.",
+        payload:
+          "JSON body fields:\n• messages (required) — array of 1–32 objects: { \"role\": \"system\" | \"user\" | \"assistant\", \"content\": string }. Max 8192 characters per message.\n• stream (optional) — boolean, default false. Set true for streaming NDJSON chunks.\n• model (optional) — string, overrides the server default Ollama model.",
+        response:
+          "Non-stream: Ollama chat JSON (message, done, eval counts, …). Stream: application/x-ndjson — one JSON object per line as tokens arrive.",
+      },
+      generate: {
+        purpose:
+          "Single-shot text generation from one prompt (proxies Ollama POST /api/generate). Use for summaries, feedback, or one-off completions.",
+        auth: "Authorization: Bearer <token> with the generate scope.",
+        payload:
+          "JSON body fields:\n• prompt (required) — string, 1–8192 characters.\n• stream (optional) — boolean, default false.\n• model (optional) — string, overrides default Ollama model.",
+        response:
+          'Non-stream: { "response": "...", "done": true, ... }. Stream: NDJSON lines with partial response text.',
+      },
+    },
+    apiConsoleMethod: "Method",
+    apiConsoleEndpoint: "Endpoint",
+    apiConsoleBearerToken: "Bearer token",
+    apiConsoleBearerHint: "Stored in sessionStorage for this tab only.",
+    apiConsoleClearToken: "Clear token",
+    apiConsoleRequestBody: "Request body (JSON)",
+    apiConsoleFormatJson: "Format JSON",
+    apiConsoleValidateJson: "Validate JSON",
+    apiConsoleSend: "Send request",
+    apiConsoleSending: "Sending…",
+    apiConsoleResponse: "Response",
+    apiConsoleResponseFull: "Full response (raw JSON)",
+    apiConsoleResponseHint:
+      "Ollama returns metadata (durations, token counts) plus the assistant text. The summary above shows the readable part only.",
+    apiConsoleResponseError: "Error",
+    apiConsoleResponseAssistant: "Assistant reply",
+    apiConsoleResponseGenerated: "Generated text",
+    apiConsoleResponseModels: "Available models",
+    apiConsoleResponseStream: "Stream output",
+    apiConsoleStatus: "Status",
+    apiConsoleDuration: "Duration",
+    apiConsoleInvalidJson: "Invalid JSON in request body.",
+    apiConsoleStreamNote: "Streaming response — chunks append below.",
+    apiDocsTitle: "API Documentation",
+    apiDocsDescription:
+      "Live discovery document and integration examples.",
+    apiDocsOverview:
+      "The External API (base path /api/v1) is an Ollama proxy gateway. Create a Bearer token in the Tokens tab, then call endpoints from your backend or browser app.",
+    apiDocsEndpointReference: "Endpoint reference",
+    apiDocsDiscovery: "Discovery (GET /api/v1)",
+    apiDocsCopyJson: "Copy JSON",
+    apiDocsStep1: "Create an API token in the Tokens tab.",
+    apiDocsStep2: "Copy the Bearer token once — it cannot be retrieved later.",
+    apiDocsStep3: "Call endpoints with Authorization: Bearer <token>.",
+    apiDocsStep4:
+      "Handle 401 (invalid token), 403 (scope/CORS), 429 (rate limit), and 502 (Ollama error).",
+    apiDocsCorsNote:
+      "Browser apps from other domains need an allowed origin (global or per-token CORS).",
+    apiDocsExamples: "Code examples",
+    apiDocsExampleCurl: "curl",
+    apiDocsExampleFetch: "JavaScript fetch",
+    apiDocsExamplePython: "Python requests",
+    userProgress: {
+      tabProfile: "Profile",
+      tabProgress: "Progress",
+      tabFeedback: "Feedback",
+      feedbackListTitle: "AI Feedback Library",
+      feedbackListSubtitle:
+        "Browse AI feedback for every answer and group completion in one place.",
+      feedbackFilterAll: "All",
+      feedbackFilterWithAi: "With AI feedback",
+      feedbackFilterCorrect: "Correct",
+      feedbackFilterIncorrect: "Incorrect",
+      feedbackFilterCompletion: "Group completion",
+      feedbackEmpty: "No answers or feedback recorded yet.",
+      feedbackEmptyFilter: "No items match this filter.",
+      feedbackViewDetail: "View detail",
+      feedbackCompletionKind: "Group completion",
+      feedbackAnswerKind: "Question answer",
+      feedbackTotal: (count: number) => `${count} items`,
+      feedbackWithAiCount: (count: number) => `${count} with AI feedback`,
+      feedbackQuestion: "Question",
+      feedbackPreview: "Feedback preview",
+      feedbackNoPreview: "No AI feedback generated for this answer yet.",
+      feedbackFilterGroup: "Showing feedback for the selected group only.",
+      groupsCompleted: "Groups Completed",
+      materialOverall: "Material Overall",
+      proficiency: "Proficiency",
+      lastActivity: "Last Activity",
+      noActivity: "No activity yet",
+      skillsTitle: "Skills Overview",
+      levelProgressTitle: "Progress by Level",
+      groupsInLevel: (completed: number, total: number) =>
+        `${completed}/${total} groups`,
+      phasePretest: "Pretest",
+      phaseContent: "Content",
+      phasePosttest: "Posttest",
+      phaseFinished: "Done",
+      pretestCount: (answered: number, total: number) =>
+        `Pretest ${answered}/${total}`,
+      posttestCount: (answered: number, total: number) =>
+        `Posttest ${answered}/${total}`,
+      contentSteps: (completed: number, total: number) =>
+        `Content ${completed}/${total}`,
+      contentAnswerStats: (correct: number, incorrect: number) =>
+        `${correct} correct · ${incorrect} incorrect`,
+      groupScore: (score: number) => `Score: ${score}%`,
+      testimonialRating: (rating: number) => `Rating: ${rating}/5`,
+      lastActive: (date: string) => `Last active: ${date}`,
+      emptyNotStarted: "Student has not started any group yet.",
+      emptyNotStudent: "Progress tracking is for student accounts.",
+      listProgress: (completed: number, total: number) =>
+        `${completed}/${total} groups`,
+      listInProgress: (level: string) => `${level} · In progress`,
+      listNotStarted: "Not started",
+      listCompleted: "All groups completed",
+      assessmentAnswer: (value: number) => `${value}/5`,
+      noAnswer: "—",
+      expandDetails: "Show details",
+      collapseDetails: "Hide details",
+      assessmentQuestions: "Assessment answers",
+      contentSummary: "Content answers",
+      noAssessmentQuestions: "No assessment questions in this group.",
+      historyTitle: "Activity History",
+      historyEmpty: "No activity recorded yet.",
+      historyGroupStarted: (group: string) => `Started group: ${group}`,
+      historyGroupCompleted: (group: string, score: number | null) =>
+        score != null
+          ? `Completed group: ${group} (${score}%)`
+          : `Completed group: ${group}`,
+      historyContentAnswer: (item: string) => `Answered: ${item}`,
+      historyAssessmentAnswer: (phase: string, question: string) =>
+        `${phase}: ${question}`,
+      historyTestimonial: (group: string) => `Submitted testimonial for ${group}`,
+      historyViewFeedback: "View AI feedback",
+      feedbackTitle: "AI Feedback",
+      completionFeedbackTitle: "Group completion feedback",
+      answerFeedbackTitle: "Answer feedback",
+      studentAnswer: "Student answer",
+      noFeedback: "No feedback yet.",
+      answerCorrect: "Correct",
+      answerIncorrect: "Incorrect",
+      answerScore: (score: number) => `Score: ${score}%`,
+    },
   },
   student: {
     welcome: (name: string) => `Welcome, ${name}!`,
@@ -407,6 +728,114 @@ export const labels = {
     subtitle: "Gamification learning platform",
     demoAdmin: "Admin: admin@gamifikasi.com / admin123",
     demoStudent: "Student: student@gamifikasi.com / student123",
+    backToHome: "Back to home",
+  },
+  landing: {
+    meta: {
+      title: "Gamifikasi — Learn. Quiz. Level Up.",
+      description:
+        "Gamified learning with AI feedback, leaderboards, badges, and daily challenges.",
+    },
+    nav: {
+      features: "Features",
+      howItWorks: "How it works",
+      leaderboard: "Leaderboard",
+      signIn: "Sign In",
+    },
+    hero: {
+      badge: "Gamified learning platform",
+      title: "Learn. Quiz. Level Up.",
+      subtitle:
+        "Progress through structured levels, get AI-powered feedback, and compete on leaderboards — all in one place.",
+      getStarted: "Get Started",
+      exploreFeatures: "Explore features",
+    },
+    features: {
+      title: "Everything you need to stay motivated",
+      subtitle: "Built for learners who want structure, feedback, and real progress.",
+      items: {
+        learning: {
+          title: "Structured Learning",
+          description:
+            "Move through levels, groups, materials, and quizzes at your own pace with clear progress tracking.",
+        },
+        ai: {
+          title: "AI Assistant",
+          description:
+            "Get contextual help while you learn and instant feedback on essays — powered by local AI.",
+        },
+        ranking: {
+          title: "Leaderboards",
+          description:
+            "Climb the ranks, unlock tiers, and see how you compare with other learners.",
+        },
+        badges: {
+          title: "Badges & Skills",
+          description:
+            "Earn achievements as you master speaking, reading, and listening skills.",
+        },
+        rewards: {
+          title: "Rewards",
+          description:
+            "Collect points, unlock certificates, and celebrate milestones along the way.",
+        },
+        challenges: {
+          title: "Daily Challenges",
+          description:
+            "Stay consistent with daily targets and streaks that keep you coming back.",
+        },
+      },
+    },
+    steps: {
+      title: "How it works",
+      subtitle: "Three simple steps from signup to mastery.",
+      items: {
+        choose: {
+          title: "Choose your level",
+          description:
+            "Pick Basic, Intermediate, or Advanced and start with the right challenge.",
+        },
+        learn: {
+          title: "Learn & quiz",
+          description:
+            "Study materials, answer questions, and get AI feedback when you need it.",
+        },
+        earn: {
+          title: "Earn rank & rewards",
+          description:
+            "Gain points, badges, and leaderboard standing as you complete groups.",
+        },
+      },
+    },
+    stats: {
+      label: "Designed for engaged learners",
+      points: "Points & tiers",
+      ai: "AI-powered feedback",
+      skills: "Multi-skill practice",
+    },
+    leaderboard: {
+      title: "Live Leaderboard",
+      subtitle: "Compete with learners worldwide and climb from Bronze to Master",
+      participants: (count: number) =>
+        `${count} learner${count === 1 ? "" : "s"} competing`,
+      topTen: "Top 10",
+      joinCta: "Join the Leaderboard",
+      emptyTitle: "Be the first on the podium",
+      emptySubtitle:
+        "Sign in, complete lessons, earn points, and claim the top spot.",
+      tiersTitle: "Climb the tiers",
+    },
+    cta: {
+      title: "Ready to level up?",
+      subtitle: "Sign in and start your learning journey today.",
+      button: "Sign In to Start",
+    },
+    footer: {
+      tagline: "Gamification learning with AI",
+      signIn: "Sign In",
+      createdBy: "Created by IT Unipda Sidoarjo",
+    },
+    scrollToTop: "Scroll to top",
   },
   meta: {
     title: "Next Gamifikasi",
@@ -664,6 +1093,17 @@ export const labels = {
   },
   api: {
     feedbackUnavailable: "AI feedback is unavailable right now.",
+  },
+  errors: {
+    unauthorized: "Unauthorized",
+    forbidden: "Forbidden",
+    notFound: "Not found",
+    serverError: "Something went wrong. Please try again.",
+    tooManyRequests: "Too many requests. Please try again later.",
+    apiScopeDenied: "This token does not have permission for this endpoint.",
+    corsOriginDenied: "Origin not allowed by CORS policy.",
+    dailyQuotaExceeded: "Daily API quota exceeded for this token. Try again after midnight WIB.",
+    ollamaUnavailable: "AI service is temporarily unavailable. Please try again.",
   },
 } as const;
 

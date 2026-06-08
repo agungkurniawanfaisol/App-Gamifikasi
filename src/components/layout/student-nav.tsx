@@ -7,12 +7,12 @@ import {
   Home,
   LogOut,
   MessageCircle,
-  Sparkles,
   Trophy,
   Medal,
   Target,
 } from "lucide-react";
 import { logoutAction } from "@/actions/auth";
+import { BrandMark } from "@/components/layout/brand-logo";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/layout/mode-toggle";
 import { NavLink } from "@/components/layout/nav-link";
@@ -75,26 +75,10 @@ export function StudentNav({
           collapsed ? "p-3" : "p-5"
         )}
       >
-        <div
-          className={cn(
-            "flex items-center",
-            collapsed ? "justify-center" : "gap-3"
-          )}
-        >
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-            <Sparkles className="size-4" />
-          </div>
-          {!collapsed && (
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold tracking-tight">
-                {labels.nav.brand}
-              </p>
-              <p className="truncate text-xs text-muted-foreground">
-                {labels.nav.learning}
-              </p>
-            </div>
-          )}
-        </div>
+        <BrandMark
+          subtitle={labels.nav.learning}
+          collapsed={collapsed}
+        />
       </div>
 
       <div

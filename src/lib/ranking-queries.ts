@@ -48,6 +48,25 @@ export async function getGlobalLeaderboard(
   return buildLeaderboard(mapped, currentUserId);
 }
 
+export async function getPublicLeaderboardPreview(
+  limit = 10
+): Promise<LeaderboardResult> {
+  const users = await fetchLeaderboardUsers();
+  const mapped = users.map((user) => ({
+    id: user.id,
+    name: user.name,
+    points: user.points,
+    institution: user.institution,
+    groupsCompleted: user._count.progress,
+  }));
+
+  const leaderboard = buildLeaderboard(mapped, -1);
+  return {
+    ...leaderboard,
+    entries: leaderboard.entries.slice(0, limit),
+  };
+}
+
 export async function getUserRankSummary(
   userId: number
 ): Promise<UserRankSummary | null> {

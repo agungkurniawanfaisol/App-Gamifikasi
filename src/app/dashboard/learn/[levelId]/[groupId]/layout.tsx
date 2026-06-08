@@ -38,7 +38,7 @@ export default async function StudentGroupLayout({
         }}
       />
       <SetPageLayout fullWidth />
-      <div className="-mx-2 flex min-h-0 flex-1 flex-col overflow-hidden px-1 sm:-mx-0 sm:px-0 md:-mx-4 md:h-[calc(100dvh-4rem)] md:max-h-[calc(100dvh-4rem)]">
+      <div className="-mx-2 flex min-h-0 flex-col overflow-hidden px-1 sm:-mx-0 sm:px-0 md:-mx-4 md:-my-8 md:h-[calc(100dvh-3.5rem)] md:max-h-[calc(100dvh-3.5rem)]">
         {children}
       </div>
     </>

@@ -124,6 +124,7 @@ model User {
   achievements        UserAchievement[]
   certificates        UserCertificate[]
   premiumUnlocks      UserPremiumUnlock[]
+  externalApiTokens   ExternalApiToken[]
 
   @@index([role])
   @@index([institution])
@@ -149,6 +150,7 @@ model LearningGroup {
   title       String
   order       Int       @map("order_index")
   dueAt       DateTime? @map("due_at")
+  publishAt   DateTime? @map("publish_at")
   isPublished Boolean   @default(false) @map("is_published")
   isPremium   Boolean   @default(false) @map("is_premium")
   createdAt   DateTime  @default(now()) @map("created_at")
@@ -486,4 +488,99 @@ model UserPremiumUnlock {
   @@unique([userId, levelId])
   @@index([userId])
   @@map("user_premium_unlocks")
+}
+
+model Announcement {
+  id        Int       @id @default(autoincrement())
+  title     String
+  message   String    @db.Text
+  linkUrl   String?   @map("link_url")
+  linkLabel String?   @map("link_label")
+  startsAt  DateTime  @map("starts_at")
+  endsAt    DateTime? @map("ends_at")
+  isActive  Boolean   @default(true) @map("is_active")
+  targetRole Role?    @map("target_role")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  @@index([isActive, startsAt])
+  @@index([startsAt, endsAt])
+  @@map("announcements")
+}
+
+model ContentItemVersion {
+  id              Int      @id @default(autoincrement())
+  contentItemId   Int      @map("content_item_id")
+  versionNumber   Int      @map("version_number")
+  snapshot        Json
+  changedByUserId Int?     @map("changed_by_user_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([contentItemId, versionNumber])
+  @@map("content_item_versions")
+}
+
+model AppSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("app_settings")
+}
+
+model ExternalApiToken {
+  id              Int       @id @default(autoincrement())
+  name            String
+  tokenPrefix     String    @map("token_prefix")
+  tokenHash       String    @unique @map("token_hash")
+  isActive        Boolean   @default(true) @map("is_active")
+  scopes          Json      @default("[\"chat\",\"generate\",\"models\"]")
+  allowedOrigins  Json?     @map("allowed_origins")
+  lastUsedAt      DateTime? @map("last_used_at")
+  expiresAt       DateTime? @map("expires_at")
+  dailyQuota      Int?      @map("daily_quota")
+  tokenSecretEnc  String?   @map("token_secret_enc") @db.Text
+  createdByUserId Int       @map("created_by_user_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  createdBy User                 @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
+  logs      ExternalApiTokenLog[]
+
+  @@index([isActive])
+  @@index([createdByUserId])
+  @@map("external_api_tokens")
+}
+
+model ExternalApiTokenLog {
+  id         Int      @id @default(autoincrement())
+  tokenId    Int      @map("token_id")
+  endpoint   String
+  method     String
+  statusCode Int      @map("status_code")
+  clientIp   String?  @map("client_ip") @db.VarChar(45)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  token ExternalApiToken @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+
+  @@index([tokenId, createdAt])
+  @@index([createdAt])
+  @@map("external_api_token_logs")
+}
+
+model AssistantKnowledge {
+  id          Int      @id @default(autoincrement())
+  slug        String   @unique
+  keywords    Json
+  questionEn  String   @map("question_en") @db.Text
+  questionId  String?  @map("question_id") @db.Text
+  answerEn    String   @map("answer_en") @db.Text
+  answerId    String?  @map("answer_id") @db.Text
+  priority    Int      @default(0)
+  isPublished Boolean  @default(true) @map("is_published")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([isPublished, priority])
+  @@map("assistant_knowledge")
 }

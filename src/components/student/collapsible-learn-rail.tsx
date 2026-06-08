@@ -23,6 +23,8 @@ type CollapsibleLearnRailProps = {
   collapsedWidthClass?: string;
   hideChildrenWhenCollapsed?: boolean;
   useCollapsedCard?: boolean;
+  className?: string;
+  desktopBreakpoint?: "md" | "lg";
   children: React.ReactNode;
 };
 
@@ -39,6 +41,8 @@ export function CollapsibleLearnRail({
   collapsedWidthClass = "w-16",
   hideChildrenWhenCollapsed = false,
   useCollapsedCard = false,
+  className,
+  desktopBreakpoint = "md",
   children,
 }: CollapsibleLearnRailProps) {
   const isLeft = side === "left";
@@ -76,10 +80,12 @@ export function CollapsibleLearnRail({
   return (
     <aside
       className={cn(
-        "relative hidden shrink-0 transition-[width] duration-200 ease-in-out md:block",
+        "relative hidden shrink-0 transition-[width] duration-200 ease-in-out",
+        desktopBreakpoint === "lg" ? "lg:block" : "md:block",
         collapsed
           ? cn("self-start", collapsedWidthClass)
-          : cn("h-full min-h-0 max-h-full self-stretch", expandedWidthClass)
+          : cn("h-full min-h-0 max-h-full self-stretch", expandedWidthClass),
+        className
       )}
     >
       {collapsed ? (

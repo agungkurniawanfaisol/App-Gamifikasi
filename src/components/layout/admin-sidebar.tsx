@@ -1,10 +1,16 @@
 "use client";
 
 import {
+  BarChart3,
+  BookOpen,
+  Key,
   LayoutDashboard,
   Layers,
   LogOut,
+  Megaphone,
+  MessageSquare,
   MessageSquareQuote,
+  Settings,
   Sparkles,
   Trophy,
   Users,
@@ -25,10 +31,33 @@ const links = [
     icon: LayoutDashboard,
     exact: true,
   },
+  { href: "/admin/analytics", label: labels.nav.analytics, icon: BarChart3 },
   { href: "/admin/levels", label: labels.nav.levels, icon: Layers },
   { href: "/admin/users", label: labels.nav.users, icon: Users },
-  { href: "/admin/testimonials", label: labels.nav.testimonials, icon: MessageSquareQuote },
+  {
+    href: "/admin/gamification",
+    label: labels.nav.gamification,
+    icon: Sparkles,
+  },
+  {
+    href: "/admin/announcements",
+    label: labels.nav.announcements,
+    icon: Megaphone,
+  },
+  { href: "/admin/chat", label: labels.nav.chatMonitor, icon: MessageSquare },
+  {
+    href: "/admin/testimonials",
+    label: labels.nav.testimonials,
+    icon: MessageSquareQuote,
+  },
   { href: "/admin/ranking", label: labels.nav.ranking, icon: Trophy },
+  { href: "/admin/settings", label: labels.nav.settings, icon: Settings },
+  { href: "/admin/api-tokens", label: labels.nav.apiTokens, icon: Key },
+  {
+    href: "/admin/assistant-knowledge",
+    label: labels.nav.assistantKnowledge,
+    icon: BookOpen,
+  },
 ];
 
 export function AdminSidebar() {

@@ -8,6 +8,15 @@ import type { HeaderProfileUser } from "@/components/layout/user-profile-menu";
 import { BreadcrumbProvider } from "@/components/layout/breadcrumb-context";
 import { PageLayoutProvider, usePageLayout } from "@/components/layout/page-layout-context";
 import { SidebarProvider, useSidebar } from "@/components/layout/sidebar-context";
+import {
+  AiChatScopeProvider,
+  type AiChatMessage,
+} from "@/components/layout/ai-chat-scope-context";
+import { DashboardAiPanelProvider, useDashboardAiPanel } from "@/components/layout/dashboard-ai-context";
+import {
+  DashboardAiMobileButton,
+  DashboardAiRail,
+} from "@/components/layout/dashboard-ai-rail";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -51,11 +60,15 @@ function AppShellInner({
   children,
   className,
   headerProfile,
+  enableAiRail = false,
+  aiCollapsed = true,
 }: {
   sidebar: React.ReactNode;
   children: React.ReactNode;
   className?: string;
   headerProfile?: HeaderProfileUser;
+  enableAiRail?: boolean;
+  aiCollapsed?: boolean;
 }) {
   const { collapsed, toggle } = useSidebar();
   const { fullWidth } = usePageLayout();
@@ -63,7 +76,6 @@ function AppShellInner({
 
   return (
     <div className="h-dvh overflow-hidden bg-background">
-      {/* Desktop sidebar */}
       <div
         className={cn(
           "fixed inset-y-0 left-0 z-50 hidden transition-[width] duration-200 ease-in-out lg:block",
@@ -91,6 +103,12 @@ function AppShellInner({
         </Button>
       </div>
 
+      {enableAiRail && (
+        <div className="fixed inset-y-0 right-0 z-50 hidden h-dvh px-1 py-2 lg:block">
+          <DashboardAiRail />
+        </div>
+      )}
+
       <MobileNavSheet
         open={mobileOpen}
         onOpenChange={setMobileOpen}
@@ -99,9 +117,10 @@ function AppShellInner({
 
       <main
         className={cn(
-          "flex h-dvh flex-col overflow-hidden transition-[margin-left] duration-200 ease-in-out",
+          "flex h-dvh flex-col overflow-hidden transition-[margin] duration-200 ease-in-out",
           "ml-0 lg:ml-16",
           !collapsed && "lg:ml-64",
+          enableAiRail && (aiCollapsed ? "lg:mr-12" : "lg:mr-72 xl:mr-[22rem]"),
           className
         )}
       >
@@ -109,6 +128,7 @@ function AppShellInner({
           <AppTopHeader
             onMenuClick={() => setMobileOpen(true)}
             headerProfile={headerProfile}
+            mobileActions={enableAiRail ? <DashboardAiMobileButton /> : undefined}
           />
 
           <div className="min-h-0 flex-1 overflow-y-auto bg-muted/30">
@@ -127,29 +147,77 @@ function AppShellInner({
   );
 }
 
-export function AppShell({
-  sidebar,
-  children,
-  className,
-  headerProfile,
+function AppShellWithAi({
+  generalChatMessages,
+  ...props
 }: {
   sidebar: React.ReactNode;
   children: React.ReactNode;
   className?: string;
   headerProfile?: HeaderProfileUser;
+  generalChatMessages: AiChatMessage[];
 }) {
+  return (
+    <DashboardAiPanelProvider>
+      <AiChatScopeProvider defaultMessages={generalChatMessages}>
+        <AppShellInnerWithAi {...props} />
+      </AiChatScopeProvider>
+    </DashboardAiPanelProvider>
+  );
+}
+
+function AppShellInnerWithAi(
+  props: {
+    sidebar: React.ReactNode;
+    children: React.ReactNode;
+    className?: string;
+    headerProfile?: HeaderProfileUser;
+  }
+) {
+  const { collapsed: aiCollapsed } = useDashboardAiPanel();
+  return (
+    <AppShellInner enableAiRail aiCollapsed={aiCollapsed} {...props} />
+  );
+}
+
+export function AppShell({
+  sidebar,
+  children,
+  className,
+  headerProfile,
+  enableAiRail = false,
+  generalChatMessages = [],
+}: {
+  sidebar: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+  headerProfile?: HeaderProfileUser;
+  enableAiRail?: boolean;
+  generalChatMessages?: AiChatMessage[];
+}) {
+  const shell = enableAiRail ? (
+    <AppShellWithAi
+      sidebar={sidebar}
+      className={className}
+      headerProfile={headerProfile}
+      generalChatMessages={generalChatMessages}
+    >
+      {children}
+    </AppShellWithAi>
+  ) : (
+    <AppShellInner
+      sidebar={sidebar}
+      className={className}
+      headerProfile={headerProfile}
+    >
+      {children}
+    </AppShellInner>
+  );
+
   return (
     <TooltipProvider delayDuration={250}>
       <SidebarProvider>
-        <PageLayoutProvider>
-          <AppShellInner
-            sidebar={sidebar}
-            className={className}
-            headerProfile={headerProfile}
-          >
-            {children}
-          </AppShellInner>
-        </PageLayoutProvider>
+        <PageLayoutProvider>{shell}</PageLayoutProvider>
       </SidebarProvider>
     </TooltipProvider>
   );

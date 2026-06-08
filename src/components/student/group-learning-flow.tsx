@@ -6,10 +6,7 @@ import { AssessmentPhase, ContentItemType } from "@prisma/client";
 import { GroupStepFlow } from "@/components/student/group-step-flow";
 import { AssessmentStep } from "@/components/student/assessment-step";
 import { LearningLayout } from "@/components/student/learning-layout";
-import {
-  LearningSidebar,
-  type LearningPhase,
-} from "@/components/student/learning-sidebar";
+import { LearningSidebar } from "@/components/student/learning-sidebar";
 import type { SkillProgressStat } from "@/lib/skill-progress";
 import type { ContentItemPayload } from "@/lib/content-item";
 import { getContentItemLabel, getStepContextForAi } from "@/lib/content-item";
@@ -17,8 +14,9 @@ import type {
   AssessmentAnswerRecord,
   AssessmentQuestionPayload,
 } from "@/lib/assessments";
-import { isAssessmentPhaseComplete } from "@/lib/assessments";
+import { resolveInitialPhase, type LearningPhase } from "@/lib/learning-phase";
 import { GroupCompletionPanel } from "@/components/student/group-completion-panel";
+import { LearnAiScopeSync } from "@/components/student/learn-ai-scope-sync";
 import { prepareGroupCompletion } from "@/actions/student/group-completion";
 import { updateLastContentItem } from "@/actions/student/progress";
 import type { SubAnswerRecord } from "@/components/student/group-step-flow";
@@ -30,21 +28,6 @@ type GroupChatMessage = {
   role: "USER" | "ASSISTANT";
   message: string;
 };
-
-function resolveInitialPhase(
-  pretest: AssessmentQuestionPayload[],
-  posttest: AssessmentQuestionPayload[],
-  pretestAnswers: AssessmentAnswerRecord[],
-  posttestAnswers: AssessmentAnswerRecord[],
-  contentComplete: boolean,
-  groupCompleted: boolean
-): LearningPhase {
-  if (groupCompleted) return "finished";
-  if (!isAssessmentPhaseComplete(pretest, pretestAnswers)) return "pretest";
-  if (!contentComplete) return "content";
-  if (!isAssessmentPhaseComplete(posttest, posttestAnswers)) return "posttest";
-  return "finished";
-}
 
 export function GroupLearningFlow({
   levelId,
@@ -251,16 +234,22 @@ export function GroupLearningFlow({
     sidebar,
     mobileTitle: mobileMeta.title,
     mobileSubtitle: mobileMeta.subtitle,
-    groupId,
-    groupTitle,
-    stepSubtitle: chatContext.stepLabel,
-    chatContext,
-    initialChatMessages: groupChatMessages,
   };
+
+  const aiScopeSync = (
+    <LearnAiScopeSync
+      groupId={groupId}
+      groupTitle={groupTitle}
+      chatContext={chatContext}
+      messages={groupChatMessages}
+    />
+  );
 
   if (phase === "finished") {
     return (
-      <LearningLayout {...layoutProps}>
+      <>
+        {aiScopeSync}
+        <LearningLayout {...layoutProps}>
         <GroupCompletionPanel
           levelId={levelId}
           groupId={groupId}
@@ -271,7 +260,8 @@ export function GroupLearningFlow({
           initialRating={testimonialRating}
           initialTestimonialText={testimonialText}
         />
-      </LearningLayout>
+        </LearningLayout>
+      </>
     );
   }
 
@@ -343,8 +333,11 @@ export function GroupLearningFlow({
   }
 
   return (
-    <LearningLayout {...layoutProps}>
-      {mainContent}
-    </LearningLayout>
+    <>
+      {aiScopeSync}
+      <LearningLayout {...layoutProps}>
+        {mainContent}
+      </LearningLayout>
+    </>
   );
 }

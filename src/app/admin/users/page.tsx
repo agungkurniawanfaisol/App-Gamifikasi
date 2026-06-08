@@ -5,6 +5,7 @@ import { getUsers } from "@/actions/admin/users";
 import { UserList } from "@/components/admin/user-list";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
+import { getUsersProgressSummaries } from "@/lib/admin-user-progress";
 import { labels } from "@/lib/labels";
 import { Plus } from "lucide-react";
 
@@ -24,6 +25,13 @@ export default async function AdminUsersPage({
     search: searchParams.q,
   });
 
+  const studentIds = users
+    .filter((user) => user.role === Role.STUDENT)
+    .map((user) => user.id);
+  const progressSummaries = Object.fromEntries(
+    (await getUsersProgressSummaries(studentIds)).entries()
+  );
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -39,7 +47,7 @@ export default async function AdminUsersPage({
       </PageHeader>
 
       <Suspense fallback={<div className="h-24 animate-pulse rounded-xl bg-muted" />}>
-        <UserList users={users} />
+        <UserList users={users} progressSummaries={progressSummaries} />
       </Suspense>
     </div>
   );

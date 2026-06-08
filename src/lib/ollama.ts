@@ -6,8 +6,20 @@ function getOllamaConfig(): { baseUrl: string; model: string } {
   return { baseUrl, model };
 }
 
-export const CHAT_SYSTEM_PROMPT =
-  "You are a learning assistant that helps students understand course materials. Always respond in English.";
+export const BRADER_BASE_PROMPT = `You are Brader Saintek Unipda, the campus AI assistant for Universitas PGRI Delta (Unipda).
+You were developed by Tim Saintek Akreditasi.
+Reply in the same language as the user (Indonesian or English).
+Be concise, friendly, and accurate. If you are unsure, say so instead of guessing.`;
+
+/** @deprecated Use buildBraderSystemPrompt() for new code. */
+export const CHAT_SYSTEM_PROMPT = BRADER_BASE_PROMPT;
+
+export function buildBraderSystemPrompt(referenceFacts?: string | null): string {
+  const facts = referenceFacts?.trim()
+    ? `\nReference facts (prefer these over guessing):\n${referenceFacts.trim()}`
+    : "";
+  return `${BRADER_BASE_PROMPT}${facts}`;
+}
 
 export type LearnChatPhase = "pretest" | "content" | "posttest";
 
@@ -19,19 +31,22 @@ export type LearnChatContextInput = {
   stepContent?: string | null;
 };
 
-export function buildLearnChatSystemPrompt(ctx: LearnChatContextInput): string {
+export function buildLearnChatSystemPrompt(
+  ctx: LearnChatContextInput,
+  referenceFacts?: string | null
+): string {
   const contentBlock = ctx.stepContent?.trim()
     ? `\nCurrent step content excerpt:\n${ctx.stepContent.trim()}`
     : "";
 
-  return `${CHAT_SYSTEM_PROMPT}
+  return `${buildBraderSystemPrompt(referenceFacts)}
 
 You are helping a student in the learning group "${ctx.groupTitle}" (${ctx.levelName} level).
 Current phase: ${ctx.phase}.
 Current step: ${ctx.stepLabel}.${contentBlock}
 
 Guidelines:
-- Always respond in English.
+- Reply in the same language as the student (Indonesian or English).
 - Help the student understand the material; use hints and explanations first.
 - Do not give direct answers to quiz or test questions unless the student has already attempted them and needs clarification.
 - Keep responses concise and encouraging (2–5 short paragraphs max unless asked for more).`;
@@ -170,6 +185,7 @@ export async function streamChatWithHistory(
       ],
       stream: true,
     }),
+    signal: AbortSignal.timeout(30_000),
   });
   if (!response.ok || !response.body) {
     throw new Error(`Ollama chat error ${response.status}`);
@@ -198,4 +214,60 @@ export async function streamChatWithHistory(
       }
     }
   }
+}
+
+const OLLAMA_TIMEOUT_MS = 120_000;
+
+export type OllamaChatMessage = {
+  role: "system" | "user" | "assistant";
+  content: string;
+};
+
+const OLLAMA_CHAT_OPTIONS = {
+  num_predict: 256,
+  temperature: 0.3,
+};
+
+export async function ollamaChat(
+  messages: OllamaChatMessage[],
+  options?: { model?: string; stream?: boolean }
+): Promise<Response> {
+  const { baseUrl, model: defaultModel } = getOllamaConfig();
+  const model = options?.model ?? defaultModel;
+  const stream = options?.stream ?? false;
+
+  return fetch(`${baseUrl}/api/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model,
+      messages,
+      stream,
+      options: OLLAMA_CHAT_OPTIONS,
+    }),
+    signal: AbortSignal.timeout(OLLAMA_TIMEOUT_MS),
+  });
+}
+
+export async function ollamaGenerate(
+  prompt: string,
+  options?: { model?: string; stream?: boolean }
+): Promise<Response> {
+  const { baseUrl, model: defaultModel } = getOllamaConfig();
+  const model = options?.model ?? defaultModel;
+  const stream = options?.stream ?? false;
+
+  return fetch(`${baseUrl}/api/generate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model, prompt, stream }),
+    signal: AbortSignal.timeout(OLLAMA_TIMEOUT_MS),
+  });
+}
+
+export async function ollamaListModels(): Promise<Response> {
+  const { baseUrl } = getOllamaConfig();
+  return fetch(`${baseUrl}/api/tags`, {
+    signal: AbortSignal.timeout(OLLAMA_TIMEOUT_MS),
+  });
 }

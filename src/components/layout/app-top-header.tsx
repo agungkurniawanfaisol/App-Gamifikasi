@@ -12,6 +12,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/layout/brand-logo";
 import { useBreadcrumbs } from "@/components/layout/breadcrumb-context";
 import {
   UserProfileMenu,
@@ -25,7 +26,10 @@ function BreadcrumbNav() {
 
   if (items.length === 0) {
     return (
-      <span className="truncate text-sm font-semibold">{labels.nav.brand}</span>
+      <div className="flex min-w-0 items-center gap-2">
+        <BrandLogo size="sm" />
+        <span className="truncate text-sm font-semibold">{labels.nav.brand}</span>
+      </div>
     );
   }
 
@@ -76,9 +80,11 @@ function BreadcrumbNav() {
 export function AppTopHeader({
   onMenuClick,
   headerProfile,
+  mobileActions,
 }: {
   onMenuClick: () => void;
   headerProfile?: HeaderProfileUser;
+  mobileActions?: React.ReactNode;
 }) {
   const { actions } = useBreadcrumbs();
 
@@ -100,6 +106,7 @@ export function AppTopHeader({
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
+        {mobileActions}
         {actions}
         {headerProfile && <UserProfileMenu user={headerProfile} />}
       </div>
