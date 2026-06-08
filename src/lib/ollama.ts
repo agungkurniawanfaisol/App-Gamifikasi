@@ -6,6 +6,14 @@ function getOllamaConfig(): { baseUrl: string; model: string } {
   return { baseUrl, model };
 }
 
+/** Ollama default is 5m; longer keep_alive avoids cold reload between chat turns. */
+const DEFAULT_OLLAMA_KEEP_ALIVE = "30m";
+
+export function getOllamaKeepAlive(): string {
+  const raw = process.env.OLLAMA_KEEP_ALIVE?.trim();
+  return raw || DEFAULT_OLLAMA_KEEP_ALIVE;
+}
+
 export const BRADER_BASE_PROMPT = `You are Brader Saintek Unipda, the campus AI assistant for Universitas PGRI Delta (Unipda).
 You were developed by Tim Saintek Akreditasi.
 Reply in the same language as the user (Indonesian or English).
@@ -100,7 +108,12 @@ export async function generateFeedback(prompt: string): Promise<string> {
     const response = await fetch(`${baseUrl}/api/generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model, prompt, stream: false }),
+      body: JSON.stringify({
+        model,
+        prompt,
+        stream: false,
+        keep_alive: getOllamaKeepAlive(),
+      }),
     });
     if (!response.ok) {
       throw new Error(`Ollama error ${response.status}`);
@@ -132,6 +145,7 @@ export async function streamChat(
           { role: "user", content: prompt },
         ],
         stream: true,
+        keep_alive: getOllamaKeepAlive(),
       }),
     });
     if (!response.ok || !response.body) {
@@ -184,6 +198,7 @@ export async function streamChatWithHistory(
         ...messages,
       ],
       stream: true,
+      keep_alive: getOllamaKeepAlive(),
     }),
     signal: AbortSignal.timeout(30_000),
   });
@@ -243,6 +258,7 @@ export async function ollamaChat(
       model,
       messages,
       stream,
+      keep_alive: getOllamaKeepAlive(),
       options: OLLAMA_CHAT_OPTIONS,
     }),
     signal: AbortSignal.timeout(OLLAMA_TIMEOUT_MS),
@@ -260,7 +276,12 @@ export async function ollamaGenerate(
   return fetch(`${baseUrl}/api/generate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ model, prompt, stream }),
+    body: JSON.stringify({
+      model,
+      prompt,
+      stream,
+      keep_alive: getOllamaKeepAlive(),
+    }),
     signal: AbortSignal.timeout(OLLAMA_TIMEOUT_MS),
   });
 }

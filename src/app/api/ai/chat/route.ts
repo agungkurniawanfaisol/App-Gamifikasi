@@ -6,6 +6,7 @@ import { createPlainTextStream } from "@/lib/instant-chat-stream";
 import {
   buildBraderSystemPrompt,
   buildLearnChatSystemPrompt,
+  getOllamaKeepAlive,
   type LearnChatContextInput,
 } from "@/lib/ollama";
 import { awardDiscussionMilestone } from "@/lib/point-service";
@@ -140,6 +141,7 @@ export async function POST(request: Request) {
       model,
       messages: [{ role: "system", content: systemPrompt }, ...messages],
       stream: true,
+      keep_alive: getOllamaKeepAlive(),
       options: { num_predict: 256, temperature: 0.3 },
     }),
   });
