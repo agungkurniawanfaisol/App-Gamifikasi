@@ -38,6 +38,8 @@ services:
     restart: unless-stopped
     mem_limit: 4g
     mem_reservation: 3g
+    environment:
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-30m}
     volumes:
       - ollama_data:/root/.ollama
     networks:
@@ -88,6 +90,7 @@ services:
       NEXTAUTH_URL: ${NEXTAUTH_URL}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL}
       OLLAMA_MODEL: ${OLLAMA_MODEL}
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-30m}
     depends_on:
       mysql:
         condition: service_healthy

@@ -28,6 +28,7 @@ services:
       NEXTAUTH_URL: ${NEXTAUTH_URL}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL}
       OLLAMA_MODEL: ${OLLAMA_MODEL}
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-30m}
       WATCHPACK_POLLING: "true"
     volumes:
       - .:/app
