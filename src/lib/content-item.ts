@@ -8,6 +8,8 @@ import {
   getSubQuestionSummary,
   getSubQuestionsFromItem,
 } from "@/lib/sub-questions";
+import type { MaterialAttachment } from "@/lib/material-attachments";
+import { parseMaterialAttachments } from "@/lib/material-attachments";
 
 export type ContentItemPayload = {
   id: number;
@@ -26,6 +28,7 @@ export type ContentItemPayload = {
   explanation: string | null;
   essayRubric: string | null;
   subQuestions?: SubQuestion[];
+  attachments?: MaterialAttachment[];
 };
 
 export function parseOptions(options: unknown): string[] {

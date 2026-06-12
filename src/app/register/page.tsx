@@ -17,7 +17,7 @@ export default function RegisterPage() {
     <div className="flex min-h-dvh flex-col">
       <LandingNav page="register" />
 
-      <div className="flex min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 pt-14 md:pt-0">
         <div className="hidden w-1/2 flex-col justify-between border-r border-border bg-card p-12 lg:flex">
           <div className="flex items-center gap-3">
             <BrandLogo size="lg" priority />

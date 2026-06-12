@@ -12,6 +12,10 @@ import {
   serializeSubQuestionsForDb,
   validateSubQuestions,
 } from "@/lib/sub-questions";
+import {
+  serializeMaterialAttachmentsForDb,
+  type MaterialAttachment,
+} from "@/lib/material-attachments";
 
 function revalidateGroupEdit(levelId: number, groupId: number) {
   revalidatePath(`/admin/levels/${levelId}/groups/${groupId}/edit`, "layout");
@@ -28,9 +32,10 @@ async function nextOrder(groupId: number): Promise<number> {
 export async function createMaterialItem(
   groupId: number,
   levelId: number,
-  data: { title: string; content: string }
+  data: { title: string; content: string; attachments?: MaterialAttachment[] }
 ) {
   await requireAdmin();
+  const attachments = serializeMaterialAttachmentsForDb(data.attachments ?? []);
   await prisma.groupContentItem.create({
     data: {
       groupId,
@@ -38,7 +43,8 @@ export async function createMaterialItem(
       order: await nextOrder(groupId),
       title: data.title.trim() || "New Material",
       content: data.content,
-    },
+      attachments,
+    } as Parameters<typeof prisma.groupContentItem.create>[0]["data"],
   });
   revalidateGroupEdit(levelId, groupId);
   redirect(groupEditPath(levelId, groupId));
@@ -48,15 +54,17 @@ export async function updateMaterialItem(
   itemId: number,
   groupId: number,
   levelId: number,
-  data: { title: string; content: string }
+  data: { title: string; content: string; attachments?: MaterialAttachment[] }
 ) {
   await requireAdmin();
+  const attachments = serializeMaterialAttachmentsForDb(data.attachments ?? []);
   await prisma.groupContentItem.update({
     where: { id: itemId },
     data: {
       title: data.title.trim() || "Material",
       content: data.content,
-    },
+      attachments,
+    } as Parameters<typeof prisma.groupContentItem.update>[0]["data"],
   });
   revalidateGroupEdit(levelId, groupId);
   redirect(groupEditPath(levelId, groupId));

@@ -35,16 +35,15 @@ export function LearningLayout({
   return (
     <LearningStepsPanelProvider>
       <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden">
-        {/* Mobile top bar */}
-        <div className="flex shrink-0 items-center gap-3 rounded-xl border border-border bg-card px-3 py-2.5 shadow-sm lg:hidden">
+        <div className="flex shrink-0 items-center gap-3 rounded-xl border border-border bg-card px-3 py-2.5 shadow-sm md:hidden">
           <Sheet open={stepsOpen} onOpenChange={setStepsOpen}>
             <SheetTrigger asChild>
-              <Button type="button" variant="outline" size="sm" className="gap-2 shrink-0">
+              <Button type="button" variant="outline" size="sm" className="min-h-11 shrink-0 gap-2">
                 <List className="size-4" />
                 {labels.nav.openSteps}
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="flex h-full flex-col p-0 pb-safe w-[min(22rem,92vw)]">
+            <SheetContent side="left" className="flex h-full w-[min(22rem,92vw)] flex-col p-0 pb-safe">
               <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
                 <SheetTitle className="text-sm font-bold">
                   {labels.student.learningPath}
@@ -73,7 +72,7 @@ export function LearningLayout({
           </div>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col items-stretch overflow-hidden md:flex-row md:items-stretch md:gap-6">
+        <div className="flex min-h-0 flex-1 flex-col items-stretch overflow-hidden md:h-full md:flex-row md:items-stretch md:gap-6">
           <LearningStepsPanel>{sidebar}</LearningStepsPanel>
 
           <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overscroll-contain self-stretch">

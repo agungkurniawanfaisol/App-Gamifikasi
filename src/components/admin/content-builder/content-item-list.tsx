@@ -116,7 +116,8 @@ function ContentItemCard({
 }) {
   const [open, setOpen] = useState(false);
   const hasDetails =
-    (item.type === "MATERIAL" && !!item.content) ||
+    (item.type === "MATERIAL" &&
+      (!!item.content || !!item.attachments?.length)) ||
     (item.type === "QUESTION" &&
       (!!item.subQuestions?.length || !!item.questionText));
 
@@ -188,10 +189,11 @@ function ContentItemCard({
                 {labels.admin.materialPreview}
               </p>
               <div className="rounded-lg border border-border bg-muted/30">
-                {item.type === "MATERIAL" && item.content && (
+                {item.type === "MATERIAL" && (item.content || item.attachments?.length) && (
                   <MaterialPreview
                     title={item.title ?? undefined}
-                    content={item.content}
+                    content={item.content ?? ""}
+                    attachments={item.attachments}
                     showHeader={false}
                   />
                 )}

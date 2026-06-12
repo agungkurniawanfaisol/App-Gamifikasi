@@ -185,6 +185,7 @@ model GroupContentItem {
   explanation    String?         @db.Text
   essayRubric    String?         @map("essay_rubric") @db.Text
   subQuestions   Json?           @map("sub_questions")
+  attachments    Json?           @map("attachments")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

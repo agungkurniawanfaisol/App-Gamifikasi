@@ -35,7 +35,7 @@ RUN cp -r public .next/standalone/public
 # Stage 3: runner — minimal production image with non-root user
 # -----------------------------------------------------------------------------
 FROM node:20-alpine AS runner
-RUN apk add --no-cache openssl
+RUN apk add --no-cache openssl mysql-client
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -58,5 +58,5 @@ USER nextjs
 
 EXPOSE 5174
 
-# Run database migrations then start the standalone Next.js server
-CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]
+# Run database migrations, generate client, then start the standalone Next.js server
+CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma generate && node server.js"]

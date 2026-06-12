@@ -10,9 +10,11 @@ import {
 import type { ContentItemPayload } from "@/lib/content-item";
 import { groupEditPath } from "@/lib/content-routes";
 import { MaterialEditor } from "@/components/admin/content-builder/material-editor";
+import { MaterialAttachmentsPanel } from "@/components/admin/content-builder/material-attachments-panel";
 import { EditorPreviewLayout } from "@/components/admin/content-builder/editor-preview-layout";
 import { useViewMode } from "@/lib/view-mode-context";
 import { MaterialPreview } from "@/components/admin/content-builder/material-preview";
+import type { MaterialAttachment } from "@/lib/material-attachments";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,37 +32,40 @@ export function MaterialForm({
   const { viewMode, setViewMode } = useViewMode();
   const [title, setTitle] = useState(item?.title ?? "");
   const [content, setContent] = useState(item?.content ?? "");
+  const [attachments, setAttachments] = useState<MaterialAttachment[]>(
+    item?.attachments ?? []
+  );
   const [pending, startTransition] = useTransition();
   const listPath = groupEditPath(levelId, groupId);
 
   function handleSave() {
     startTransition(async () => {
+      const payload = { title, content, attachments };
       if (item) {
-        await updateMaterialItem(item.id, groupId, levelId, { title, content });
+        await updateMaterialItem(item.id, groupId, levelId, payload);
       } else {
-        await createMaterialItem(groupId, levelId, { title, content });
+        await createMaterialItem(groupId, levelId, payload);
       }
     });
   }
 
   return (
     <div className="surface-card overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center gap-3 border-b border-border px-5 py-4">
+      <div className="flex items-center gap-3 border-b border-border px-4 py-4 sm:px-5">
         <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
           <BookOpen className="size-4" />
         </div>
         <div>
-          <h3 className="text-base font-semibold">{item ? labels.common.edit : labels.admin.addMaterial}</h3>
+          <h3 className="text-base font-semibold">
+            {item ? labels.common.edit : labels.admin.addMaterial}
+          </h3>
           <p className="text-xs text-muted-foreground">
             {item ? `ID: ${item.id} · Order: ${item.order}` : labels.admin.typeMaterialDesc}
           </p>
         </div>
       </div>
 
-      {/* Body */}
-      <div className="flex flex-col gap-5 p-5">
-        {/* Title Section */}
+      <div className="flex flex-col gap-5 p-4 sm:p-5">
         <div className="flex flex-col gap-1.5">
           <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             {labels.common.title}
@@ -69,11 +74,10 @@ export function MaterialForm({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder={labels.admin.groupTitlePlaceholder}
-            className="text-base"
+            className="min-h-11 text-base"
           />
         </div>
 
-        {/* Editor + Preview */}
         <div className="flex flex-col gap-1.5">
           <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             {labels.admin.editorLabel}
@@ -89,24 +93,45 @@ export function MaterialForm({
               />
             }
             preview={
-              <MaterialPreview title={title} content={content} showHeader={false} />
+              <MaterialPreview
+                title={title}
+                content={content}
+                attachments={attachments}
+                showHeader={false}
+              />
             }
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            {labels.admin.materialAttachments}
+          </Label>
+          <MaterialAttachmentsPanel
+            groupId={groupId}
+            levelId={levelId}
+            attachments={attachments}
+            onChange={setAttachments}
           />
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="flex flex-col-reverse gap-2 border-t border-border px-5 py-4 sm:flex-row sm:justify-end">
+      <div className="flex flex-col-reverse gap-2 border-t border-border px-4 py-4 sm:flex-row sm:justify-end sm:px-5">
         <Button
           type="button"
           disabled={pending || !title.trim()}
           onClick={handleSave}
-          className="w-full gap-2 sm:w-auto"
+          className="min-h-11 w-full gap-2 sm:w-auto"
         >
           <Save className="size-4" />
           {labels.common.save}
         </Button>
-        <Button type="button" variant="outline" asChild className="w-full gap-2 sm:w-auto">
+        <Button
+          type="button"
+          variant="outline"
+          asChild
+          className="min-h-11 w-full gap-2 sm:w-auto"
+        >
           <Link href={listPath}>
             <X className="size-4" />
             {labels.common.cancel}

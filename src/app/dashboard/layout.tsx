@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { getUserId } from "@/lib/auth-helpers";
 import { getUserRankSummary } from "@/lib/ranking-queries";
 import { getProficiencySummary } from "@/lib/proficiency-queries";
+import { userChatTodayWhere } from "@/lib/chat-day";
 
 export default async function DashboardLayout({
   children,
@@ -16,7 +17,8 @@ export default async function DashboardLayout({
 }) {
   const session = await requireStudent();
   const userId = getUserId(session);
-  const [user, rankSummary, headerProfile, proficiencySummary] = await Promise.all([
+  const [user, rankSummary, headerProfile, proficiencySummary, generalChatHistory] =
+    await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
       select: { name: true, points: true },
@@ -24,10 +26,24 @@ export default async function DashboardLayout({
     getUserRankSummary(userId),
     getHeaderProfile(),
     getProficiencySummary(userId),
+    prisma.chatHistory.findMany({
+      where: userChatTodayWhere(userId, null),
+      orderBy: { createdAt: "desc" },
+      take: 20,
+      select: { id: true, role: true, message: true },
+    }),
   ]);
+
+  const generalChatMessages = [...generalChatHistory].reverse().map((entry) => ({
+    id: entry.id,
+    role: entry.role,
+    message: entry.message,
+  }));
 
   return (
     <AppShell
+      enableAiRail
+      generalChatMessages={generalChatMessages}
       headerProfile={headerProfile}
       sidebar={
         <StudentNav

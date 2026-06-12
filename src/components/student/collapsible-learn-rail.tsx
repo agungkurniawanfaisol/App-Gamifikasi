@@ -25,6 +25,8 @@ type CollapsibleLearnRailProps = {
   useCollapsedCard?: boolean;
   className?: string;
   desktopBreakpoint?: "md" | "lg";
+  /** Expanded panel height — e.g. h-dvh for fixed app-shell rail */
+  viewportHeightClass?: string;
   children: React.ReactNode;
 };
 
@@ -43,6 +45,7 @@ export function CollapsibleLearnRail({
   useCollapsedCard = false,
   className,
   desktopBreakpoint = "md",
+  viewportHeightClass = "h-full",
   children,
 }: CollapsibleLearnRailProps) {
   const isLeft = side === "left";
@@ -84,7 +87,12 @@ export function CollapsibleLearnRail({
         desktopBreakpoint === "lg" ? "lg:block" : "md:block",
         collapsed
           ? cn("self-start", collapsedWidthClass)
-          : cn("h-full min-h-0 max-h-full self-stretch", expandedWidthClass),
+          : cn(
+              "min-h-0 self-stretch",
+              viewportHeightClass,
+              "max-h-none",
+              expandedWidthClass
+            ),
         className
       )}
     >
@@ -111,7 +119,8 @@ export function CollapsibleLearnRail({
       ) : (
         <div
           className={cn(
-            "flex h-full min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-sm",
+            "flex min-h-0 flex-col overflow-hidden border bg-card shadow-sm",
+            viewportHeightClass,
             panelClassName
           )}
         >

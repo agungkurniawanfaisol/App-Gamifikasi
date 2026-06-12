@@ -3,6 +3,7 @@
 import {
   BarChart3,
   BookOpen,
+  Database,
   Key,
   LayoutDashboard,
   Layers,
@@ -51,6 +52,7 @@ const links = [
     icon: MessageSquareQuote,
   },
   { href: "/admin/ranking", label: labels.nav.ranking, icon: Trophy },
+  { href: "/admin/database", label: labels.nav.database, icon: Database },
   { href: "/admin/settings", label: labels.nav.settings, icon: Settings },
   { href: "/admin/api-tokens", label: labels.nav.apiTokens, icon: Key },
   {

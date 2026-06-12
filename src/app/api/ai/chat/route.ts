@@ -8,6 +8,7 @@ import {
   buildLearnChatSystemPrompt,
   CHAT_HISTORY_LIMIT,
   getOllamaKeepAlive,
+  OLLAMA_CHAT_OPTIONS,
   trimLearnStepContent,
   type LearnChatContextInput,
 } from "@/lib/ollama";
@@ -18,6 +19,7 @@ import {
 } from "@/lib/challenge-service";
 import { ChatRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { startOfWibDay } from "@/lib/chat-day";
 
 type ChatRequestBody = {
   message?: string;
@@ -149,7 +151,11 @@ export async function POST(request: Request) {
 
   const [historyRows, gamification] = await Promise.all([
     prisma.chatHistory.findMany({
-      where: { userId },
+      where: {
+        userId,
+        createdAt: { gte: startOfWibDay() },
+        ...(groupId != null ? { groupId } : { groupId: null }),
+      },
       orderBy: { createdAt: "desc" },
       take: CHAT_HISTORY_LIMIT,
       select: { role: true, message: true },
@@ -180,7 +186,7 @@ export async function POST(request: Request) {
       messages: [{ role: "system", content: systemPrompt }, ...messages],
       stream: true,
       keep_alive: getOllamaKeepAlive(),
-      options: { num_predict: 256, temperature: 0.3 },
+      options: OLLAMA_CHAT_OPTIONS,
     }),
   });
 

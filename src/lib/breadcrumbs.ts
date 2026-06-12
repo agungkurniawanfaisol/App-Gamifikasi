@@ -81,6 +81,11 @@ function buildAdminBreadcrumbs(segments: string[]): BreadcrumbItem[] {
     return items;
   }
 
+  if (segments[0] === "database") {
+    items.push(crumb(labels.nav.breadcrumb.database, undefined, true));
+    return items;
+  }
+
   if (segments[0] === "settings") {
     items.push(crumb(labels.nav.breadcrumb.settings, undefined, true));
     return items;

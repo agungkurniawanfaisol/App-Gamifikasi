@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { notFound } from "next/navigation";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getUserId, requireAdmin } from "@/lib/auth-helpers";
@@ -204,7 +205,7 @@ export async function createExternalApiToken(
       tokenHash: hash,
       tokenSecretEnc,
       scopes: parsed.data.scopes,
-      allowedOrigins: origins,
+      allowedOrigins: origins === null ? Prisma.DbNull : origins,
       dailyQuota: parseDailyQuotaInput(parsed.data.dailyQuota),
       expiresAt: expiresAt && !Number.isNaN(expiresAt.getTime()) ? expiresAt : null,
       createdByUserId: getUserId(session),

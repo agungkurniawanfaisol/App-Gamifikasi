@@ -8,7 +8,7 @@ import { labels } from "@/lib/labels";
 
 export default async function AdminChatMonitorPage() {
   const [{ entries }, students] = await Promise.all([
-    getChatMonitorEntries({ take: 100 }),
+    getChatMonitorEntries({ take: 200 }),
     getChatMonitorStudents(),
   ]);
 
@@ -18,7 +18,7 @@ export default async function AdminChatMonitorPage() {
         title={labels.admin.chatMonitorTitle}
         description={labels.admin.chatMonitorDescription}
       />
-      <ChatMonitorPanel entries={entries} students={students} />
+      <ChatMonitorPanel initialEntries={entries} students={students} />
     </div>
   );
 }

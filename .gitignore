@@ -37,3 +37,13 @@ next-env.d.ts
 # Prisma
 prisma/*.db
 prisma/*.db-journal
+
+# User uploads (Docker volume / local dev)
+/public/uploads/
+
+# Database dumps (local / server backups)
+/backups/*.sql
+/backups/*.sql.gz
+
+# Data Penting
+DataPenting.txt

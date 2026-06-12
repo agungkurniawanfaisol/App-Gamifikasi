@@ -1,5 +1,6 @@
 import type { ContentItemPayload } from "@/lib/content-item";
 import { getSubQuestionsFromItem, parseOptions } from "@/lib/content-item";
+import { parseMaterialAttachments } from "@/lib/material-attachments";
 import { prisma } from "@/lib/prisma";
 
 function mapContentItem(item: {
@@ -19,6 +20,7 @@ function mapContentItem(item: {
   explanation: string | null;
   essayRubric: string | null;
   subQuestions: unknown;
+  attachments?: unknown;
 }): ContentItemPayload {
   const subQuestions = getSubQuestionsFromItem(item);
   return {
@@ -38,6 +40,7 @@ function mapContentItem(item: {
     explanation: item.explanation,
     essayRubric: item.essayRubric,
     subQuestions,
+    attachments: parseMaterialAttachments(item.attachments),
   };
 }
 

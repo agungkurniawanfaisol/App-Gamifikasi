@@ -155,10 +155,19 @@ export function ChatInterface({
         className
       )}
     >
+      <p
+        className={cn(
+          "shrink-0 border-b border-sidebar-border bg-muted/30 text-muted-foreground",
+          isCompact
+            ? "px-3 py-2 text-[10px] leading-snug"
+            : "px-4 py-2.5 text-xs leading-snug sm:px-5"
+        )}
+      >
+        {labels.student.chatDailyResetHint}
+      </p>
       <ScrollArea
         className={cn(
           "h-0 min-h-0 flex-1",
-          isCompact && "h-full",
           isCompact ? "p-3" : "p-4 sm:p-5"
         )}
       >
@@ -229,8 +238,8 @@ export function ChatInterface({
       <form
         onSubmit={handleSend}
         className={cn(
-          "shrink-0 flex flex-col gap-2 border-t border-border bg-card sm:flex-row sm:gap-3",
-          isCompact ? "p-2.5" : "p-3 sm:p-4"
+          "flex shrink-0 flex-col gap-2 border-t border-sidebar-border bg-sidebar sm:flex-row sm:gap-3",
+          isCompact ? "p-3" : "p-3 sm:p-4"
         )}
       >
         <Input

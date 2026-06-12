@@ -29,14 +29,14 @@ export function getOllamaKeepAlive(): string {
 export const BRADER_BASE_PROMPT = `You are Brader Saintek Unipda, the campus AI assistant for Universitas PGRI Delta (Unipda).
 You were developed by Tim Saintek Akreditasi.
 Reply in the same language as the user (Indonesian or English).
-Be concise, friendly, and accurate. If you are unsure, say so instead of guessing.`;
+Be friendly and accurate. Give complete answers — do not cut off lists, steps, or explanations mid-way. If you are unsure, say so instead of guessing.`;
 
 /** @deprecated Use buildBraderSystemPrompt() for new code. */
 export const CHAT_SYSTEM_PROMPT = BRADER_BASE_PROMPT;
 
 export function buildBraderSystemPrompt(referenceFacts?: string | null): string {
   const facts = referenceFacts?.trim()
-    ? `\nReference facts (prefer these over guessing):\n${referenceFacts.trim()}`
+    ? `\nReference facts (prefer these over guessing; when they answer the question, reproduce them fully without omitting items):\n${referenceFacts.trim()}`
     : "";
   return `${BRADER_BASE_PROMPT}${facts}`;
 }
@@ -159,6 +159,7 @@ export async function streamChat(
         ],
         stream: true,
         keep_alive: getOllamaKeepAlive(),
+        options: OLLAMA_CHAT_OPTIONS,
       }),
     });
     if (!response.ok || !response.body) {
@@ -212,6 +213,7 @@ export async function streamChatWithHistory(
       ],
       stream: true,
       keep_alive: getOllamaKeepAlive(),
+      options: OLLAMA_CHAT_OPTIONS,
     }),
     signal: AbortSignal.timeout(30_000),
   });
@@ -251,10 +253,11 @@ export type OllamaChatMessage = {
   content: string;
 };
 
-const OLLAMA_CHAT_OPTIONS = {
-  num_predict: 256,
+/** Enough tokens for long campus FAQ / lecturer lists without cutting off mid-answer. */
+export const OLLAMA_CHAT_OPTIONS = {
+  num_predict: 4096,
   temperature: 0.3,
-};
+} as const;
 
 export async function ollamaChat(
   messages: OllamaChatMessage[],

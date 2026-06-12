@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AssessmentPhase, ContentItemType } from "@prisma/client";
 import { GroupStepFlow } from "@/components/student/group-step-flow";
 import { AssessmentStep } from "@/components/student/assessment-step";
+import { LearnAiScopeSync } from "@/components/student/learn-ai-scope-sync";
 import { LearningLayout } from "@/components/student/learning-layout";
 import { LearningSidebar } from "@/components/student/learning-sidebar";
 import type { SkillProgressStat } from "@/lib/skill-progress";
@@ -16,7 +17,6 @@ import type {
 } from "@/lib/assessments";
 import { resolveInitialPhase, type LearningPhase } from "@/lib/learning-phase";
 import { GroupCompletionPanel } from "@/components/student/group-completion-panel";
-import { LearnAiScopeSync } from "@/components/student/learn-ai-scope-sync";
 import { prepareGroupCompletion } from "@/actions/student/group-completion";
 import { updateLastContentItem } from "@/actions/student/progress";
 import type { SubAnswerRecord } from "@/components/student/group-step-flow";
@@ -236,7 +236,7 @@ export function GroupLearningFlow({
     mobileSubtitle: mobileMeta.subtitle,
   };
 
-  const aiScopeSync = (
+  const scopeSync = (
     <LearnAiScopeSync
       groupId={groupId}
       groupTitle={groupTitle}
@@ -248,7 +248,7 @@ export function GroupLearningFlow({
   if (phase === "finished") {
     return (
       <>
-        {aiScopeSync}
+        {scopeSync}
         <LearningLayout {...layoutProps}>
         <GroupCompletionPanel
           levelId={levelId}
@@ -334,10 +334,8 @@ export function GroupLearningFlow({
 
   return (
     <>
-      {aiScopeSync}
-      <LearningLayout {...layoutProps}>
-        {mainContent}
-      </LearningLayout>
+      {scopeSync}
+      <LearningLayout {...layoutProps}>{mainContent}</LearningLayout>
     </>
   );
 }

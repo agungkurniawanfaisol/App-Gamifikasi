@@ -3,13 +3,14 @@ import { prisma } from "@/lib/prisma";
 import { ChatInterface } from "@/components/student/chat-interface";
 import { PageHeader } from "@/components/ui/page-header";
 import { labels } from "@/lib/labels";
+import { userChatTodayWhere } from "@/lib/chat-day";
 
 export default async function ChatPage() {
   const session = await requireStudent();
   const userId = getUserId(session);
 
   const history = await prisma.chatHistory.findMany({
-    where: { userId, groupId: null },
+    where: userChatTodayWhere(userId, null),
     orderBy: { createdAt: "desc" },
     take: 20,
   });

@@ -20,6 +20,7 @@ import {
   tiptapJsonToHtml,
 } from "@/lib/content-item";
 import { QuestionStepRenderer } from "@/components/student/steps/question-step-renderer";
+import { MaterialAttachmentViewer } from "@/components/admin/content-builder/material-attachment-viewer";
 import type { SubQuestion } from "@/lib/sub-questions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -297,12 +298,24 @@ export function GroupStepFlow({
                   {current.title}
                 </h2>
               )}
-              <div
-                className="prose-content"
-                dangerouslySetInnerHTML={{
-                  __html: tiptapJsonToHtml(current.content),
-                }}
-              />
+              {current.content && (
+                <div
+                  className="prose-content"
+                  dangerouslySetInnerHTML={{
+                    __html: tiptapJsonToHtml(current.content),
+                  }}
+                />
+              )}
+              {current.attachments && current.attachments.length > 0 && (
+                <div className={current.content ? "mt-6 space-y-4" : "space-y-4"}>
+                  {current.attachments.map((attachment) => (
+                    <MaterialAttachmentViewer
+                      key={attachment.id}
+                      attachment={attachment}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
             <div className="p-5 sm:p-8">

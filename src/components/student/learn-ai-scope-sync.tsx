@@ -6,6 +6,7 @@ import {
   type AiChatMessage,
   useAiChatScope,
 } from "@/components/layout/ai-chat-scope-context";
+import { labels } from "@/lib/labels";
 
 export function LearnAiScopeSync({
   groupId,
@@ -25,8 +26,8 @@ export function LearnAiScopeSync({
       groupId,
       chatContext,
       messages,
-      headerTitle: groupTitle,
-      headerSubtitle: chatContext.stepLabel,
+      headerTitle: labels.student.aiAssistantTitle,
+      headerSubtitle: `${groupTitle} · ${chatContext.stepLabel}`,
     });
   }, [groupId, groupTitle, chatContext, messages, setScope]);
 

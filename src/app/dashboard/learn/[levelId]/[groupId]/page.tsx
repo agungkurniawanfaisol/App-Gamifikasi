@@ -8,6 +8,7 @@ import { getSubQuestionsFromItem, parseOptions } from "@/lib/content-item";
 import { isItemFullyAnswered } from "@/lib/sub-questions";
 import { getGroupAssessmentQuestions } from "@/lib/assessments";
 import { getSkillProgressStats } from "@/lib/skill-progress-queries";
+import { userChatTodayWhere } from "@/lib/chat-day";
 import { PageHeader } from "@/components/ui/page-header";
 import { getLevelLabel } from "@/lib/labels";
 import { ContentItemType } from "@prisma/client";
@@ -55,7 +56,7 @@ export default async function LearnGroupPage({
       select: { questionId: true, value: true },
     }),
     prisma.chatHistory.findMany({
-      where: { userId, groupId },
+      where: userChatTodayWhere(userId, groupId),
       orderBy: { createdAt: "desc" },
       take: 20,
     }),

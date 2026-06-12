@@ -1,20 +1,24 @@
 "use client";
 
 import { BookOpen, FileText } from "lucide-react";
+import { MaterialAttachmentViewer } from "@/components/admin/content-builder/material-attachment-viewer";
 import { tiptapJsonToHtml } from "@/lib/content-item";
+import type { MaterialAttachment } from "@/lib/material-attachments";
 import { labels } from "@/lib/labels";
 
 export function MaterialPreview({
   title,
   content,
+  attachments = [],
   showHeader = true,
 }: {
   title?: string;
   content: string;
+  attachments?: MaterialAttachment[];
   showHeader?: boolean;
 }) {
   const html = tiptapJsonToHtml(content);
-  const isEmpty = !html.trim();
+  const isEmpty = !html.trim() && attachments.length === 0;
 
   return (
     <div className="flex flex-col">
@@ -41,10 +45,24 @@ export function MaterialPreview({
             </p>
           </div>
         ) : (
-          <div
-            className="prose-content"
-            dangerouslySetInnerHTML={{ __html: html }}
-          />
+          <>
+            {html.trim() && (
+              <div
+                className="prose-content"
+                dangerouslySetInnerHTML={{ __html: html }}
+              />
+            )}
+            {attachments.length > 0 && (
+              <div className={html.trim() ? "mt-6 space-y-4" : "space-y-4"}>
+                {attachments.map((attachment) => (
+                  <MaterialAttachmentViewer
+                    key={attachment.id}
+                    attachment={attachment}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

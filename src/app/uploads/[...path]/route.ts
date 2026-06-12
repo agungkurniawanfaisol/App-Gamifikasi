@@ -12,7 +12,19 @@ const MIME_TYPES: Record<string, string> = {
   ".wav": "audio/wav",
   ".ogg": "audio/ogg",
   ".webm": "audio/webm",
+  ".pdf": "application/pdf",
+  ".pptx":
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  ".ppt": "application/vnd.ms-powerpoint",
+  ".docx":
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ".xlsx":
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  ".txt": "text/plain",
+  ".mp4": "video/mp4",
 };
+
+const INLINE_EXTENSIONS = new Set([".pdf", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".mp4"]);
 
 export async function GET(
   _request: NextRequest,
@@ -20,6 +32,10 @@ export async function GET(
 ) {
   const segments = params.path;
   if (!segments?.length) {
+    return new NextResponse("Not found", { status: 404 });
+  }
+
+  if (segments.some((segment) => segment === ".." || segment.includes("\0"))) {
     return new NextResponse("Not found", { status: 404 });
   }
 
@@ -33,12 +49,19 @@ export async function GET(
   try {
     const buffer = await readFile(filePath);
     const ext = path.extname(filePath).toLowerCase();
-    return new NextResponse(buffer, {
-      headers: {
-        "Content-Type": MIME_TYPES[ext] ?? "application/octet-stream",
-        "Cache-Control": "public, max-age=31536000, immutable",
-      },
-    });
+    const contentType = MIME_TYPES[ext] ?? "application/octet-stream";
+    const headers: Record<string, string> = {
+      "Content-Type": contentType,
+      "X-Content-Type-Options": "nosniff",
+      "Cache-Control": "public, max-age=31536000, immutable",
+    };
+
+    if (!INLINE_EXTENSIONS.has(ext)) {
+      const fileName = path.basename(filePath);
+      headers["Content-Disposition"] = `attachment; filename="${fileName}"`;
+    }
+
+    return new NextResponse(buffer, { headers });
   } catch {
     return new NextResponse("Not found", { status: 404 });
   }

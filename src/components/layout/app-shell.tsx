@@ -70,9 +70,11 @@ function AppShellInner({
   enableAiRail?: boolean;
   aiCollapsed?: boolean;
 }) {
+  const pathname = usePathname();
   const { collapsed, toggle } = useSidebar();
   const { fullWidth } = usePageLayout();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const showGlobalAiRail = enableAiRail;
 
   return (
     <div className="h-dvh overflow-hidden bg-background">
@@ -103,11 +105,7 @@ function AppShellInner({
         </Button>
       </div>
 
-      {enableAiRail && (
-        <div className="fixed inset-y-0 right-0 z-50 hidden h-dvh px-1 py-2 lg:block">
-          <DashboardAiRail />
-        </div>
-      )}
+      {showGlobalAiRail && <DashboardAiRail />}
 
       <MobileNavSheet
         open={mobileOpen}
@@ -120,7 +118,7 @@ function AppShellInner({
           "flex h-dvh flex-col overflow-hidden transition-[margin] duration-200 ease-in-out",
           "ml-0 lg:ml-16",
           !collapsed && "lg:ml-64",
-          enableAiRail && (aiCollapsed ? "lg:mr-12" : "lg:mr-72 xl:mr-[22rem]"),
+          showGlobalAiRail && (aiCollapsed ? "lg:mr-16" : "lg:mr-72 xl:mr-80"),
           className
         )}
       >
@@ -128,7 +126,7 @@ function AppShellInner({
           <AppTopHeader
             onMenuClick={() => setMobileOpen(true)}
             headerProfile={headerProfile}
-            mobileActions={enableAiRail ? <DashboardAiMobileButton /> : undefined}
+            mobileActions={showGlobalAiRail ? <DashboardAiMobileButton /> : undefined}
           />
 
           <div className="min-h-0 flex-1 overflow-y-auto bg-muted/30">
@@ -147,36 +145,28 @@ function AppShellInner({
   );
 }
 
-function AppShellWithAi({
-  generalChatMessages,
-  ...props
+function AppShellInnerWithAi({
+  sidebar,
+  children,
+  className,
+  headerProfile,
 }: {
   sidebar: React.ReactNode;
   children: React.ReactNode;
   className?: string;
   headerProfile?: HeaderProfileUser;
-  generalChatMessages: AiChatMessage[];
 }) {
-  return (
-    <DashboardAiPanelProvider>
-      <AiChatScopeProvider defaultMessages={generalChatMessages}>
-        <AppShellInnerWithAi {...props} />
-      </AiChatScopeProvider>
-    </DashboardAiPanelProvider>
-  );
-}
-
-function AppShellInnerWithAi(
-  props: {
-    sidebar: React.ReactNode;
-    children: React.ReactNode;
-    className?: string;
-    headerProfile?: HeaderProfileUser;
-  }
-) {
   const { collapsed: aiCollapsed } = useDashboardAiPanel();
   return (
-    <AppShellInner enableAiRail aiCollapsed={aiCollapsed} {...props} />
+    <AppShellInner
+      enableAiRail
+      aiCollapsed={aiCollapsed}
+      sidebar={sidebar}
+      className={className}
+      headerProfile={headerProfile}
+    >
+      {children}
+    </AppShellInner>
   );
 }
 
@@ -196,14 +186,15 @@ export function AppShell({
   generalChatMessages?: AiChatMessage[];
 }) {
   const shell = enableAiRail ? (
-    <AppShellWithAi
-      sidebar={sidebar}
-      className={className}
-      headerProfile={headerProfile}
-      generalChatMessages={generalChatMessages}
-    >
-      {children}
-    </AppShellWithAi>
+    <DashboardAiPanelProvider>
+      <AppShellInnerWithAi
+        sidebar={sidebar}
+        className={className}
+        headerProfile={headerProfile}
+      >
+        {children}
+      </AppShellInnerWithAi>
+    </DashboardAiPanelProvider>
   ) : (
     <AppShellInner
       sidebar={sidebar}
@@ -217,7 +208,11 @@ export function AppShell({
   return (
     <TooltipProvider delayDuration={250}>
       <SidebarProvider>
-        <PageLayoutProvider>{shell}</PageLayoutProvider>
+        <PageLayoutProvider>
+          <AiChatScopeProvider defaultMessages={generalChatMessages}>
+            {shell}
+          </AiChatScopeProvider>
+        </PageLayoutProvider>
       </SidebarProvider>
     </TooltipProvider>
   );

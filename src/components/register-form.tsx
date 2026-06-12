@@ -4,7 +4,10 @@ import { useFormState } from "react-dom";
 import { Gender } from "@prisma/client";
 import { UserCircle } from "lucide-react";
 import { registerAction } from "@/actions/register";
-import { Button } from "@/components/ui/button";
+import {
+  AuthFormFieldset,
+  AuthSubmitButton,
+} from "@/components/auth/auth-form-controls";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -32,17 +35,18 @@ function FieldLabel({
 }
 
 export function RegisterForm() {
-  const [error, formAction, pending] = useFormState(registerAction, undefined);
+  const [error, formAction] = useFormState(registerAction, undefined);
 
   return (
     <form action={formAction} className="flex flex-col gap-6">
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+      <AuthFormFieldset className="flex flex-col gap-6">
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <div className="flex items-center gap-3 border-b border-border px-4 py-3 sm:px-5">
           <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <UserCircle className="size-4" />
@@ -156,10 +160,12 @@ export function RegisterForm() {
           </div>
         </div>
       </div>
+      </AuthFormFieldset>
 
-      <Button type="submit" className="w-full rounded-xl" size="lg" disabled={pending}>
-        {pending ? labels.auth.signingUp : labels.register.submit}
-      </Button>
+      <AuthSubmitButton
+        idleLabel={labels.register.submit}
+        pendingLabel={labels.auth.signingUp}
+      />
     </form>
   );
 }

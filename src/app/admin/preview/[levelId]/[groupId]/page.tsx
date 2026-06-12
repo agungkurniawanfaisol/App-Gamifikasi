@@ -79,6 +79,7 @@ export default async function AdminPreviewPage({
                 <MaterialPreview
                   title={item.title ?? undefined}
                   content={item.content ?? ""}
+                  attachments={item.attachments}
                 />
               ) : (
                 <QuestionPreview item={item} />

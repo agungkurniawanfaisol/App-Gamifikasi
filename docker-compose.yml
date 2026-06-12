@@ -68,6 +68,28 @@ services:
       - app_network
 
   # ---------------------------------------------------------------------------
+  # db-seed — one-shot migrate + seed (run manually on first setup)
+  # Usage: docker compose --profile seed run --rm db-seed
+  # ---------------------------------------------------------------------------
+  db-seed:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: gamifikasi-db-seed
+    profiles:
+      - seed
+    restart: "no"
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - app_network
+    command: sh -c "npx prisma migrate deploy && npx prisma db seed"
+
+  # ---------------------------------------------------------------------------
   # Next.js — production app (standalone build, port 5174)
   # ---------------------------------------------------------------------------
   nextjs:
@@ -102,6 +124,7 @@ services:
       - uploads_data:/app/public/uploads
     networks:
       - app_network
+    command: sh -c "npx prisma migrate deploy && npx prisma generate && node server.js"
 
 # Internal bridge network — all services communicate via service names
 networks:
