@@ -27,11 +27,18 @@ jobs:
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+          APP_URL: http://${{ secrets.VPS_HOST }}:5174
+          ENV_FILE_B64: ${{ secrets.ENV_FILE_B64 }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key_path: ${{ github.workspace }}/deploy_key
           port: ${{ secrets.VPS_PORT || 22 }}
+          envs: MYSQL_ROOT_PASSWORD,MYSQL_PASSWORD,AUTH_SECRET,APP_URL,ENV_FILE_B64
           script: |
             set -e
             APP_DIR="/opt/Next-Gamifikasi"
@@ -48,10 +55,38 @@ jobs:
             git reset --hard origin/main
 
             if [ ! -f .env ]; then
-              echo "ERROR: .env not found in $APP_DIR"
-              echo "SSH to VPS and run:"
-              echo "  cd $APP_DIR && cp .env.example .env && nano .env"
-              exit 1
+              if [ -n "$ENV_FILE_B64" ]; then
+                echo "$ENV_FILE_B64" | base64 -d > .env
+                echo "Created .env from ENV_FILE_B64 secret"
+              elif [ -n "$MYSQL_ROOT_PASSWORD" ] && [ -n "$MYSQL_PASSWORD" ] && [ -n "$AUTH_SECRET" ] && [ -n "$APP_URL" ]; then
+                {
+                  echo "# Generated on first deploy by GitHub Actions"
+                  echo "MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}"
+                  echo "MYSQL_DATABASE=gamifikasi"
+                  echo "MYSQL_USER=gamifikasi"
+                  echo "MYSQL_PASSWORD=${MYSQL_PASSWORD}"
+                  echo ""
+                  echo "DATABASE_URL=mysql://gamifikasi:${MYSQL_PASSWORD}@mysql:3306/gamifikasi"
+                  echo ""
+                  echo "AUTH_SECRET=${AUTH_SECRET}"
+                  echo "AUTH_URL=${APP_URL}"
+                  echo ""
+                  echo "NEXTAUTH_SECRET=${AUTH_SECRET}"
+                  echo "NEXTAUTH_URL=${APP_URL}"
+                  echo ""
+                  echo "OLLAMA_BASE_URL=http://ollama:11434"
+                  echo "OLLAMA_MODEL=qwen2.5:3b"
+                  echo "OLLAMA_KEEP_ALIVE=30m"
+                } > .env
+                echo "Created .env from deploy secrets"
+              else
+                echo "ERROR: .env not found and cannot auto-create."
+                echo "Add GitHub secrets (pick one option):"
+                echo "  Option A — ENV_FILE_B64 (base64 of full .env file)"
+                echo "  Option B — MYSQL_ROOT_PASSWORD, MYSQL_PASSWORD, AUTH_SECRET (+ VPS_HOST for URL)"
+                echo "Or SSH to VPS: cd $APP_DIR && cp .env.example .env && nano .env"
+                exit 1
+              fi
             fi
 
             docker compose up --build -d
