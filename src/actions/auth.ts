@@ -27,7 +27,7 @@ export async function loginAction(
     throw error;
   }
 
-  const email = formData.get("email") as string;
+  const email = (formData.get("email") as string).toLowerCase();
   const { prisma } = await import("@/lib/prisma");
   const user = await prisma.user.findUnique({ where: { email } });
   if (user?.role === Role.ADMIN) redirect("/admin/dashboard");

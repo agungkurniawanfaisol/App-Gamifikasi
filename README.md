@@ -32,7 +32,17 @@ Edit `.env` and set at least:
 | `DATABASE_URL` | `mysql://gamifikasi:changeme_user@mysql:3306/gamifikasi` | Host must be `mysql` inside Docker |
 | `AUTH_SECRET` / `NEXTAUTH_SECRET` | random string | Generate with `openssl rand -base64 32` |
 | `AUTH_URL` / `NEXTAUTH_URL` | `http://localhost:5174` | Must match how you open the app |
+| `AUTH_GOOGLE_ID` | `*.apps.googleusercontent.com` | Google Cloud OAuth client ID (optional) |
+| `AUTH_GOOGLE_SECRET` | client secret | Google Cloud OAuth client secret (optional) |
+| `AUTH_TRUST_HOST` | `true` | Set on VPS/production behind public IP or domain |
 | `OLLAMA_MODEL` | `qwen2.5:3b` | First start downloads the model (can take several minutes) |
+
+### Google sign-in (optional)
+
+1. Create an OAuth client in [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
+2. Add **Authorized redirect URI**: `{AUTH_URL}/api/auth/callback/google` (e.g. `http://localhost:5174/api/auth/callback/google` or your production URL).
+3. Set `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` in `.env`.
+4. First Google login creates a **student** account automatically.
 
 ---
 

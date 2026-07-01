@@ -2,6 +2,7 @@ import type { NextAuthConfig } from "next-auth";
 import { Role } from "@prisma/client";
 
 export const authConfig = {
+  trustHost: true,
   pages: {
     signIn: "/login",
   },
@@ -36,13 +37,6 @@ export const authConfig = {
       }
 
       return true;
-    },
-    jwt({ token, user }) {
-      if (user) {
-        token.id = user.id as string;
-        token.role = user.role;
-      }
-      return token;
     },
     session({ session, token }) {
       if (session.user) {
