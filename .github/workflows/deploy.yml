@@ -14,23 +14,23 @@ jobs:
           SSH_KEY_B64: ${{ secrets.SSH_KEY_B64 }}
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
         run: |
-          mkdir -p ~/.ssh
+          KEY_FILE="${GITHUB_WORKSPACE}/deploy_key"
           if [ -n "$SSH_KEY_B64" ]; then
-            echo "$SSH_KEY_B64" | base64 -d > ~/.ssh/deploy_key
+            echo "$SSH_KEY_B64" | base64 -d > "$KEY_FILE"
           elif [ -n "$VPS_SSH_KEY" ]; then
-            printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
+            printf '%s\n' "$VPS_SSH_KEY" > "$KEY_FILE"
           else
             echo "Missing secret: set SSH_KEY_B64 (recommended) or VPS_SSH_KEY"
             exit 1
           fi
-          chmod 600 ~/.ssh/deploy_key
+          chmod 600 "$KEY_FILE"
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
-          key_path: ~/.ssh/deploy_key
+          key_path: ${{ github.workspace }}/deploy_key
           port: ${{ secrets.VPS_PORT || 22 }}
           script: |
             set -e
