@@ -1,8 +1,22 @@
 -- External API security: scopes, allowed origins, audit log
+-- Idempotent: 20250622000000_external_api_tokens may already include these columns/tables.
 
-ALTER TABLE `external_api_tokens`
-  ADD COLUMN `scopes` JSON NOT NULL DEFAULT ('["chat","generate","models"]') AFTER `is_active`,
-  ADD COLUMN `allowed_origins` JSON NULL AFTER `scopes`;
+SET @scopes_exists = (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'external_api_tokens'
+    AND COLUMN_NAME = 'scopes'
+);
+SET @sql = IF(
+  @scopes_exists = 0,
+  'ALTER TABLE `external_api_tokens`
+    ADD COLUMN `scopes` JSON NOT NULL DEFAULT (''["chat","generate","models"]'') AFTER `is_active`,
+    ADD COLUMN `allowed_origins` JSON NULL AFTER `scopes`',
+  'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 CREATE TABLE IF NOT EXISTS `external_api_token_logs` (
   `id` INTEGER NOT NULL AUTO_INCREMENT,
@@ -18,7 +32,6 @@ CREATE TABLE IF NOT EXISTS `external_api_token_logs` (
   PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- FK only if table was just created (ignore if exists)
 SET @fk_exists = (
   SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS
   WHERE CONSTRAINT_SCHEMA = DATABASE()
