@@ -34,9 +34,26 @@ jobs:
           port: ${{ secrets.VPS_PORT || 22 }}
           script: |
             set -e
-            cd /opt/Next-Gamifikasi
+            APP_DIR="/opt/Next-Gamifikasi"
+            REPO_URL="git@github.com:agungkurniawanfaisol/App-Gamifikasi.git"
+
+            if [ ! -d "$APP_DIR/.git" ]; then
+              echo "Cloning repo to $APP_DIR ..."
+              mkdir -p "$(dirname "$APP_DIR")"
+              git clone "$REPO_URL" "$APP_DIR"
+            fi
+
+            cd "$APP_DIR"
             git fetch origin main
             git reset --hard origin/main
+
+            if [ ! -f .env ]; then
+              echo "ERROR: .env not found in $APP_DIR"
+              echo "SSH to VPS and run:"
+              echo "  cd $APP_DIR && cp .env.example .env && nano .env"
+              exit 1
+            fi
+
             docker compose up --build -d
             docker compose ps
             docker image prune -f
