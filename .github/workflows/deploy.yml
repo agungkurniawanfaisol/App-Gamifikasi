@@ -1,0 +1,42 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write SSH key
+        env:
+          SSH_KEY_B64: ${{ secrets.SSH_KEY_B64 }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          if [ -n "$SSH_KEY_B64" ]; then
+            echo "$SSH_KEY_B64" | base64 -d > ~/.ssh/deploy_key
+          elif [ -n "$VPS_SSH_KEY" ]; then
+            printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
+          else
+            echo "Missing secret: set SSH_KEY_B64 (recommended) or VPS_SSH_KEY"
+            exit 1
+          fi
+          chmod 600 ~/.ssh/deploy_key
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key_path: ~/.ssh/deploy_key
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            set -e
+            cd /opt/Next-Gamifikasi
+            git fetch origin main
+            git reset --hard origin/main
+            docker compose up --build -d
+            docker compose ps
+            docker image prune -f
