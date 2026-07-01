@@ -41,7 +41,7 @@ jobs:
           envs: MYSQL_ROOT_PASSWORD,MYSQL_PASSWORD,AUTH_SECRET,APP_URL,ENV_FILE_B64
           script: |
             set -e
-            APP_DIR="/opt/Next-Gamifikasi"
+            APP_DIR="/home/container/Next-Gamifikasi"
             REPO_URL="git@github.com:agungkurniawanfaisol/App-Gamifikasi.git"
 
             if [ ! -d "$APP_DIR/.git" ]; then
