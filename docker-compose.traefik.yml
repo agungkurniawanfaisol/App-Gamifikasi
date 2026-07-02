@@ -5,6 +5,10 @@
 # Hostinger Traefik runs with network_mode: host (no shared Docker network).
 # Traefik discovers this container via the Docker socket and routes to its bridge IP.
 #
+# Do NOT add an HTTP→HTTPS redirect router on entrypoint "web" — it breaks
+# Let's Encrypt HTTP-01 (/.well-known/acme-challenge/ returns 404).
+# Hostinger Traefik issues the cert via port 80; only route HTTPS here.
+#
 # Requires:
 #   - TRAEFIK_HOST in .env
 #   - DNS A record pointing to your VPS
@@ -14,11 +18,7 @@ services:
   nextjs:
     labels:
       - traefik.enable=true
-      - traefik.http.routers.gamifikasi-deeptest.rule=Host(`${TRAEFIK_HOST}`)
-      - traefik.http.routers.gamifikasi-deeptest.entrypoints=websecure
-      - traefik.http.routers.gamifikasi-deeptest.tls.certresolver=letsencrypt
-      - traefik.http.services.gamifikasi-deeptest.loadbalancer.server.port=5174
-      - traefik.http.routers.gamifikasi-deeptest-http.rule=Host(`${TRAEFIK_HOST}`)
-      - traefik.http.routers.gamifikasi-deeptest-http.entrypoints=web
-      - traefik.http.routers.gamifikasi-deeptest-http.middlewares=gamifikasi-deeptest-redirect
-      - traefik.http.middlewares.gamifikasi-deeptest-redirect.redirectscheme.scheme=https
+      - traefik.http.routers.next-gamifikasi.rule=Host(`${TRAEFIK_HOST}`)
+      - traefik.http.routers.next-gamifikasi.entrypoints=websecure
+      - traefik.http.routers.next-gamifikasi.tls.certresolver=letsencrypt
+      - traefik.http.services.next-gamifikasi.loadbalancer.server.port=5174
