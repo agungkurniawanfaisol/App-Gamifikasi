@@ -14,10 +14,6 @@ const fontSans = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: labels.meta.title,
   description: labels.meta.description,
-  icons: {
-    icon: "/logo.png",
-    apple: "/logo.png",
-  },
 };
 
 export const viewport: Viewport = {

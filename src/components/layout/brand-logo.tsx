@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import brandLogo from "../../../public/logo.png";
 import { BRAND_LOGO_SIZE, type BrandLogoSize } from "@/lib/brand";
 import { labels } from "@/lib/labels";
 import { cn } from "@/lib/utils";
@@ -17,7 +18,7 @@ export function BrandLogo({
 
   return (
     <Image
-      src="/logo.png"
+      src={brandLogo}
       alt={labels.nav.brand}
       width={dimension}
       height={dimension}
