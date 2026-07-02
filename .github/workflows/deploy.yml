@@ -1,3 +1,9 @@
+# Deploy runs ON the VPS via a self-hosted runner (outbound connection to GitHub).
+# Hostinger often blocks inbound SSH from GitHub cloud IPs even when port 22 is open.
+#
+# One-time setup on VPS: bash scripts/setup-github-runner.sh
+# Fallback without runner: cron + scripts/poll-deploy.sh (every 5 minutes)
+
 name: Deploy to VPS
 
 on:
@@ -7,133 +13,15 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
-      - name: Prepare connection settings
+      - name: Deploy on VPS
         env:
-          RAW_HOST: ${{ secrets.VPS_HOST }}
-          RAW_PORT: ${{ secrets.VPS_PORT }}
-        run: |
-          HOST="${RAW_HOST#http://}"
-          HOST="${HOST#https://}"
-          HOST="${HOST%%/*}"
-          HOST="${HOST%%:*}"
-          PORT="${RAW_PORT:-22}"
-          echo "HOST=$HOST" >> "$GITHUB_ENV"
-          echo "PORT=$PORT" >> "$GITHUB_ENV"
-          if [ -z "$HOST" ]; then
-            echo "::error::VPS_HOST secret is missing or empty"
-            exit 1
-          fi
-
-      - name: Check SSH port reachable
-        continue-on-error: true
-        id: ssh_probe
-        run: |
-          echo "Testing SSH to $HOST:$PORT ..."
-          for i in 1 2 3 4 5; do
-            if nc -zv -w 20 "$HOST" "$PORT"; then
-              echo "SSH port is reachable"
-              echo "reachable=true" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-            echo "Attempt $i failed, retrying in 15s..."
-            sleep 15
-          done
-          echo "reachable=false" >> "$GITHUB_OUTPUT"
-          echo "::warning::Cannot reach $HOST:$PORT from this GitHub runner (Hostinger may block GitHub IP ranges)."
-          echo "::warning::Deploy will still attempt SSH. If it fails, run scripts/deploy.sh on the VPS."
-
-      - name: Write SSH key
-        env:
-          SSH_KEY_B64: ${{ secrets.SSH_KEY_B64 }}
-          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
-        run: |
-          KEY_FILE="${GITHUB_WORKSPACE}/deploy_key"
-          if [ -n "$SSH_KEY_B64" ]; then
-            echo "$SSH_KEY_B64" | base64 -d > "$KEY_FILE"
-          elif [ -n "$VPS_SSH_KEY" ]; then
-            printf '%s\n' "$VPS_SSH_KEY" > "$KEY_FILE"
-          else
-            echo "::error::Missing secret: set SSH_KEY_B64 or VPS_SSH_KEY"
-            exit 1
-          fi
-          chmod 600 "$KEY_FILE"
-
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.2.0
-        env:
-          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
-          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
-          APP_URL: http://${{ env.HOST }}:5174
-          ENV_FILE_B64: ${{ secrets.ENV_FILE_B64 }}
           VPS_APP_DIR: ${{ secrets.VPS_APP_DIR }}
-        with:
-          host: ${{ env.HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key_path: ${{ github.workspace }}/deploy_key
-          port: ${{ env.PORT }}
-          timeout: 180s
-          command_timeout: 30m
-          envs: MYSQL_ROOT_PASSWORD,MYSQL_PASSWORD,AUTH_SECRET,APP_URL,ENV_FILE_B64,VPS_APP_DIR
-          script: |
-            set -e
-            APP_DIR="${VPS_APP_DIR:-/home/container/Next-Gamifikasi}"
-            REPO_URL="git@github.com:agungkurniawanfaisol/App-Gamifikasi.git"
-
-            if [ ! -d "$APP_DIR/.git" ]; then
-              echo "Cloning repo to $APP_DIR ..."
-              mkdir -p "$(dirname "$APP_DIR")"
-              git clone "$REPO_URL" "$APP_DIR"
-            fi
-
-            cd "$APP_DIR"
-            git fetch origin main
-            git reset --hard origin/main
-
-            if [ ! -f .env ]; then
-              if [ -n "$ENV_FILE_B64" ]; then
-                echo "$ENV_FILE_B64" | base64 -d > .env
-                echo "Created .env from ENV_FILE_B64 secret"
-              elif [ -n "$MYSQL_ROOT_PASSWORD" ] && [ -n "$MYSQL_PASSWORD" ] && [ -n "$AUTH_SECRET" ] && [ -n "$APP_URL" ]; then
-                {
-                  echo "# Generated on first deploy by GitHub Actions"
-                  echo "MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}"
-                  echo "MYSQL_DATABASE=gamifikasi"
-                  echo "MYSQL_USER=gamifikasi"
-                  echo "MYSQL_PASSWORD=${MYSQL_PASSWORD}"
-                  echo ""
-                  echo "DATABASE_URL=mysql://gamifikasi:${MYSQL_PASSWORD}@mysql:3306/gamifikasi"
-                  echo ""
-                  echo "AUTH_SECRET=${AUTH_SECRET}"
-                  echo "AUTH_URL=${APP_URL}"
-                  echo ""
-                  echo "NEXTAUTH_SECRET=${AUTH_SECRET}"
-                  echo "NEXTAUTH_URL=${APP_URL}"
-                  echo ""
-                  echo "OLLAMA_BASE_URL=http://ollama:11434"
-                  echo "OLLAMA_MODEL=qwen2.5:3b"
-                  echo "OLLAMA_KEEP_ALIVE=30m"
-                } > .env
-                echo "Created .env from deploy secrets"
-              else
-                echo "ERROR: .env not found and cannot auto-create."
-                echo "Add GitHub secrets:"
-                echo "  MYSQL_ROOT_PASSWORD, MYSQL_PASSWORD, AUTH_SECRET"
-                echo "Or SSH to VPS: cd $APP_DIR && cp .env.example .env && nano .env"
-                exit 1
-              fi
-            fi
-
-            COMPOSE_FILES="-f docker-compose.yml"
-            if docker ps --filter "name=traefik" --format '{{.Names}}' | grep -q .; then
-              if [ -f docker-compose.traefik.yml ] && grep -q '^TRAEFIK_HOST=' .env 2>/dev/null; then
-                COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.traefik.yml"
-                echo "Traefik detected (host network) — applying routing labels"
-              fi
-            fi
-
-            docker compose $COMPOSE_FILES up --build -d
-            docker compose ps
-            docker image prune -f
+        run: |
+          set -e
+          APP_DIR="${VPS_APP_DIR:-/home/container/Next-Gamifikasi}"
+          cd "$APP_DIR"
+          git fetch origin main
+          git reset --hard origin/main
+          bash scripts/deploy.sh
