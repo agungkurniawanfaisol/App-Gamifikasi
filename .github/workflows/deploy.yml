@@ -27,19 +27,22 @@ jobs:
           fi
 
       - name: Check SSH port reachable
+        continue-on-error: true
+        id: ssh_probe
         run: |
           echo "Testing SSH to $HOST:$PORT ..."
-          for i in 1 2 3; do
-            if nc -zv -w 15 "$HOST" "$PORT"; then
+          for i in 1 2 3 4 5; do
+            if nc -zv -w 20 "$HOST" "$PORT"; then
               echo "SSH port is reachable"
+              echo "reachable=true" >> "$GITHUB_OUTPUT"
               exit 0
             fi
-            echo "Attempt $i failed, retrying in 10s..."
-            sleep 10
+            echo "Attempt $i failed, retrying in 15s..."
+            sleep 15
           done
-          echo "::error::Cannot reach $HOST:$PORT from GitHub Actions."
-          echo "::error::Open TCP port $PORT in Hostinger hPanel firewall and on the VPS (ufw allow $PORT/tcp)."
-          exit 1
+          echo "reachable=false" >> "$GITHUB_OUTPUT"
+          echo "::warning::Cannot reach $HOST:$PORT from this GitHub runner (Hostinger may block GitHub IP ranges)."
+          echo "::warning::Deploy will still attempt SSH. If it fails, run scripts/deploy.sh on the VPS."
 
       - name: Write SSH key
         env:
@@ -71,7 +74,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key_path: ${{ github.workspace }}/deploy_key
           port: ${{ env.PORT }}
-          timeout: 120s
+          timeout: 180s
           command_timeout: 30m
           envs: MYSQL_ROOT_PASSWORD,MYSQL_PASSWORD,AUTH_SECRET,APP_URL,ENV_FILE_B64,VPS_APP_DIR
           script: |
