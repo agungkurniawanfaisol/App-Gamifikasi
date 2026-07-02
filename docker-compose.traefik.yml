@@ -14,11 +14,11 @@ services:
   nextjs:
     labels:
       - traefik.enable=true
-      - traefik.http.routers.gamifikasi.rule=Host(`${TRAEFIK_HOST}`)
-      - traefik.http.routers.gamifikasi.entrypoints=websecure
-      - traefik.http.routers.gamifikasi.tls.certresolver=letsencrypt
-      - traefik.http.services.gamifikasi.loadbalancer.server.port=5174
-      - traefik.http.routers.gamifikasi-http.rule=Host(`${TRAEFIK_HOST}`)
-      - traefik.http.routers.gamifikasi-http.entrypoints=web
-      - traefik.http.routers.gamifikasi-http.middlewares=gamifikasi-redirect
-      - traefik.http.middlewares.gamifikasi-redirect.redirectscheme.scheme=https
+      - traefik.http.routers.gamifikasi-deeptest.rule=Host(`${TRAEFIK_HOST}`)
+      - traefik.http.routers.gamifikasi-deeptest.entrypoints=websecure
+      - traefik.http.routers.gamifikasi-deeptest.tls.certresolver=letsencrypt
+      - traefik.http.services.gamifikasi-deeptest.loadbalancer.server.port=5174
+      - traefik.http.routers.gamifikasi-deeptest-http.rule=Host(`${TRAEFIK_HOST}`)
+      - traefik.http.routers.gamifikasi-deeptest-http.entrypoints=web
+      - traefik.http.routers.gamifikasi-deeptest-http.middlewares=gamifikasi-deeptest-redirect
+      - traefik.http.middlewares.gamifikasi-deeptest-redirect.redirectscheme.scheme=https
