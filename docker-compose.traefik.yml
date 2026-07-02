@@ -2,9 +2,11 @@
 # docker-compose.traefik.yml — Traefik reverse proxy overlay (optional)
 # Usage: docker compose -f docker-compose.yml -f docker-compose.traefik.yml up -d --build
 #
+# Hostinger Traefik runs with network_mode: host (no shared Docker network).
+# Traefik discovers this container via the Docker socket and routes to its bridge IP.
+#
 # Requires:
-#   - Traefik running on the same VPS
-#   - TRAEFIK_HOST and TRAEFIK_NETWORK in .env
+#   - TRAEFIK_HOST in .env
 #   - DNS A record pointing to your VPS
 # =============================================================================
 
@@ -20,10 +22,3 @@ services:
       - traefik.http.routers.gamifikasi-http.entrypoints=web
       - traefik.http.routers.gamifikasi-http.middlewares=gamifikasi-redirect
       - traefik.http.middlewares.gamifikasi-redirect.redirectscheme.scheme=https
-    networks:
-      - traefik_network
-
-networks:
-  traefik_network:
-    external: true
-    name: ${TRAEFIK_NETWORK}
