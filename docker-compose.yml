@@ -91,6 +91,7 @@ services:
 
   # ---------------------------------------------------------------------------
   # Next.js — production app (standalone build, port 5174)
+  # Traefik: set TRAEFIK_HOST + TRAEFIK_NETWORK in .env (see .env.example)
   # ---------------------------------------------------------------------------
   nextjs:
     build:
@@ -99,6 +100,7 @@ services:
     container_name: gamifikasi-nextjs
     restart: unless-stopped
     mem_limit: 1g
+    # Direct access fallback (optional — remove after Traefik + HTTPS works)
     ports:
       - "5174:5174"
     env_file: .env
@@ -116,6 +118,17 @@ services:
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL}
       OLLAMA_MODEL: ${OLLAMA_MODEL}
       OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-30m}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.gamifikasi.rule=Host(`${TRAEFIK_HOST:-gamifikasi.universitaspgridelta.ac.id}`)
+      - traefik.http.routers.gamifikasi.entrypoints=websecure
+      - traefik.http.routers.gamifikasi.tls.certresolver=letsencrypt
+      - traefik.http.services.gamifikasi.loadbalancer.server.port=5174
+      # HTTP → HTTPS redirect
+      - traefik.http.routers.gamifikasi-http.rule=Host(`${TRAEFIK_HOST:-gamifikasi.universitaspgridelta.ac.id}`)
+      - traefik.http.routers.gamifikasi-http.entrypoints=web
+      - traefik.http.routers.gamifikasi-http.middlewares=gamifikasi-redirect
+      - traefik.http.middlewares.gamifikasi-redirect.redirectscheme.scheme=https
     depends_on:
       mysql:
         condition: service_healthy
@@ -128,12 +141,16 @@ services:
       - ./public/uploads:/app/public/uploads
     networks:
       - app_network
+      - traefik_network
     command: sh -c "npx prisma migrate deploy && npx prisma generate && node server.js"
 
-# Internal bridge network — all services communicate via service names
+# app_network = internal MySQL/Ollama; traefik_network = shared with Hostinger Traefik
 networks:
   app_network:
     driver: bridge
+  traefik_network:
+    external: true
+    name: ${TRAEFIK_NETWORK:-traefik_default}
 
 # Persistent volumes for database and LLM models
 volumes:
