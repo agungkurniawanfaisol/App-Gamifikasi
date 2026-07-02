@@ -124,7 +124,8 @@ services:
       ollama-pull:
         condition: service_completed_successfully
     volumes:
-      - uploads_data:/app/public/uploads
+      # Bind mount so scp/rsync to ./public/uploads on the host is visible in the app
+      - ./public/uploads:/app/public/uploads
     networks:
       - app_network
     command: sh -c "npx prisma migrate deploy && npx prisma generate && node server.js"
@@ -138,4 +139,3 @@ networks:
 volumes:
   mysql_data:
   ollama_data:
-  uploads_data:

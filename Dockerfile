@@ -59,6 +59,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modul
 # Copy Prisma schema and migrations for runtime migrate deploy
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
+# Image optimization for next/image in production (Alpine-native sharp)
+USER root
+RUN npm install sharp@0.33.5 --omit=dev --no-package-lock && chown -R nextjs:nodejs node_modules/sharp node_modules/@img 2>/dev/null || chown -R nextjs:nodejs node_modules/sharp
 USER nextjs
 
 EXPOSE 5174
