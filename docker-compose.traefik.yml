@@ -1,0 +1,29 @@
+# =============================================================================
+# docker-compose.traefik.yml — Traefik reverse proxy overlay (optional)
+# Usage: docker compose -f docker-compose.yml -f docker-compose.traefik.yml up -d --build
+#
+# Requires:
+#   - Traefik running on the same VPS
+#   - TRAEFIK_HOST and TRAEFIK_NETWORK in .env
+#   - DNS A record pointing to your VPS
+# =============================================================================
+
+services:
+  nextjs:
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.gamifikasi.rule=Host(`${TRAEFIK_HOST}`)
+      - traefik.http.routers.gamifikasi.entrypoints=websecure
+      - traefik.http.routers.gamifikasi.tls.certresolver=letsencrypt
+      - traefik.http.services.gamifikasi.loadbalancer.server.port=5174
+      - traefik.http.routers.gamifikasi-http.rule=Host(`${TRAEFIK_HOST}`)
+      - traefik.http.routers.gamifikasi-http.entrypoints=web
+      - traefik.http.routers.gamifikasi-http.middlewares=gamifikasi-redirect
+      - traefik.http.middlewares.gamifikasi-redirect.redirectscheme.scheme=https
+    networks:
+      - traefik_network
+
+networks:
+  traefik_network:
+    external: true
+    name: ${TRAEFIK_NETWORK}

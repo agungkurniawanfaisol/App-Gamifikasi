@@ -123,6 +123,19 @@ jobs:
               fi
             fi
 
-            docker compose up --build -d
+            COMPOSE_FILES="-f docker-compose.yml"
+            TRAEFIK_CONTAINER=$(docker ps --filter "name=traefik" --format '{{.Names}}' | head -1)
+            if [ -n "$TRAEFIK_CONTAINER" ]; then
+              TRAEFIK_NET=$(docker inspect "$TRAEFIK_CONTAINER" --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{"\n"}}{{end}}' | head -1)
+              if [ -n "$TRAEFIK_NET" ] && docker network inspect "$TRAEFIK_NET" >/dev/null 2>&1; then
+                if [ -f docker-compose.traefik.yml ] && grep -q '^TRAEFIK_HOST=' .env 2>/dev/null; then
+                  export TRAEFIK_NETWORK="$TRAEFIK_NET"
+                  COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.traefik.yml"
+                  echo "Traefik detected — using network: $TRAEFIK_NET"
+                fi
+              fi
+            fi
+
+            docker compose $COMPOSE_FILES up --build -d
             docker compose ps
             docker image prune -f
