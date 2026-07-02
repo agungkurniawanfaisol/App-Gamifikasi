@@ -6,29 +6,39 @@
 #   1. GitHub repo → Settings → Actions → Runners → New self-hosted runner
 #   2. Copy the registration token from the page (valid ~1 hour)
 #
-# Usage:
-#   sudo bash scripts/setup-github-runner.sh
+# Usage (already logged in as root on VPS — do NOT prefix with sudo):
+#   bash scripts/setup-github-runner.sh
 set -euo pipefail
 
 REPO="agungkurniawanfaisol/App-Gamifikasi"
 RUNNER_DIR="${RUNNER_DIR:-/home/container/actions-runner}"
-RUNNER_USER="${RUNNER_USER:-root}"
+RUNNER_USER="$(id -un)"
 
-if [ "$(id -u)" -ne 0 ]; then
-  echo "Run as root: sudo bash $0"
+if [ -n "${SUDO_USER:-}" ] && [ "$(id -u)" -eq 0 ]; then
+  echo "Do not run with sudo. You are already root — use:"
+  echo "  bash scripts/setup-github-runner.sh"
   exit 1
 fi
 
 if [ -z "${RUNNER_TOKEN:-}" ]; then
-  echo "Get a token from:"
+  echo "Get a fresh token from:"
   echo "  https://github.com/${REPO}/settings/actions/runners/new"
   echo ""
+  echo "Paste with right-click (avoid arrow keys — they corrupt the token)."
   read -r -p "Paste registration token: " RUNNER_TOKEN
 fi
+
+# Strip terminal escape chars / whitespace from pasted token
+RUNNER_TOKEN="$(printf '%s' "$RUNNER_TOKEN" | tr -cd '[:alnum:]')"
 
 if [ -z "$RUNNER_TOKEN" ]; then
   echo "Token is required."
   exit 1
+fi
+
+if [ "$(id -u)" -eq 0 ]; then
+  export RUNNER_ALLOW_RUNASROOT=1
+  echo "==> Running as root (RUNNER_ALLOW_RUNASROOT=1)"
 fi
 
 RUNNER_VERSION="$(curl -fsSL https://api.github.com/repos/actions/runner/releases/latest | grep '"tag_name"' | head -1 | cut -d'"' -f4 | sed 's/^v//')"
