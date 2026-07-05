@@ -21,9 +21,12 @@ export function trimLearnStepContent(content?: string | null): string | null {
   return `${trimmed.slice(0, MAX_LEARN_STEP_CONTENT_CHARS)}…`;
 }
 
-export function getOllamaKeepAlive(): string {
+export function getOllamaKeepAlive(): string | number {
   const raw = process.env.OLLAMA_KEEP_ALIVE?.trim();
-  return raw || DEFAULT_OLLAMA_KEEP_ALIVE;
+  if (!raw) return DEFAULT_OLLAMA_KEEP_ALIVE;
+  // Ollama API expects JSON number -1 for indefinite; string "-1" causes 400.
+  if (raw === "-1") return -1;
+  return raw;
 }
 
 export const BRADER_BASE_PROMPT = `You are Brader Saintek Unipda, the campus AI assistant for Universitas PGRI Delta (Unipda).
