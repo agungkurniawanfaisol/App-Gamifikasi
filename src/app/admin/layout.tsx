@@ -4,6 +4,7 @@ import { AdminSidebar } from "@/components/layout/admin-sidebar";
 import { AppShell } from "@/components/layout/app-shell";
 import { prisma } from "@/lib/prisma";
 import { userChatTodayWhere } from "@/lib/chat-day";
+import { mapChatHistoryRows } from "@/lib/chat-message-meta";
 
 export default async function AdminLayout({
   children,
@@ -19,15 +20,11 @@ export default async function AdminLayout({
       where: userChatTodayWhere(userId, null),
       orderBy: { createdAt: "desc" },
       take: 20,
-      select: { id: true, role: true, message: true },
+      select: { id: true, role: true, message: true, createdAt: true },
     }),
   ]);
 
-  const generalChatMessages = [...generalChatHistory].reverse().map((entry) => ({
-    id: entry.id,
-    role: entry.role,
-    message: entry.message,
-  }));
+  const generalChatMessages = mapChatHistoryRows([...generalChatHistory].reverse());
 
   return (
     <AppShell

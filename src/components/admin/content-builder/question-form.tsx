@@ -7,6 +7,7 @@ import {
   ChevronUp,
   HelpCircle,
   Plus,
+  Loader2,
   Save,
   Trash2,
   X,
@@ -36,6 +37,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { labels } from "@/lib/labels";
+import { toast } from "sonner";
 import {
   createEmptySubQuestion,
   getFormatsForSkill,
@@ -185,7 +187,8 @@ function SubQuestionEditor({
               <Button
                 type="button"
                 variant="outline"
-                size="icon-sm"
+                size="icon"
+                className="size-11"
                 disabled={index === 0}
                 onClick={onMoveUp}
                 aria-label={labels.admin.moveUp}
@@ -197,7 +200,8 @@ function SubQuestionEditor({
               <Button
                 type="button"
                 variant="outline"
-                size="icon-sm"
+                size="icon"
+                className="size-11"
                 disabled={index === total - 1}
                 onClick={onMoveDown}
                 aria-label={labels.admin.moveDown}
@@ -210,7 +214,8 @@ function SubQuestionEditor({
                 <Button
                   type="button"
                   variant="destructive"
-                  size="icon-sm"
+                  size="icon"
+                  className="size-11"
                   onClick={onRemove}
                   aria-label={labels.admin.removeSubQuestion}
                 >
@@ -477,8 +482,9 @@ export function QuestionForm({
         } else {
           await createQuestionItem(groupId, levelId, data);
         }
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to save");
+        toast.success(labels.admin.saveSuccess);
+      } catch {
+        setError(labels.admin.saveFailed);
       }
     });
   }
@@ -573,10 +579,14 @@ export function QuestionForm({
           type="button"
           disabled={pending || !weightValid}
           onClick={handleSave}
-          className="w-full gap-2 sm:w-auto"
+          className="min-h-11 w-full gap-2 sm:w-auto"
         >
-          <Save className="size-4" />
-          {labels.common.save}
+          {pending ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Save className="size-4" />
+          )}
+          {pending ? labels.admin.saving : labels.common.save}
         </Button>
         <Button type="button" variant="outline" asChild className="w-full gap-2 sm:w-auto">
           <Link href={listPath}>
@@ -600,7 +610,9 @@ export function QuestionForm({
             {item ? labels.common.edit : labels.admin.addQuestion}
           </h3>
           <p className="text-xs text-muted-foreground">
-            {item ? `ID: ${item.id} · Order: ${item.order} · ${subQuestions.length} sub-question(s)` : labels.admin.typeQuestionDesc}
+            {item
+              ? `${labels.admin.contentItemMeta(item.id, item.order)} · ${labels.admin.subQuestionsCount(subQuestions.length)}`
+              : labels.admin.typeQuestionDesc}
           </p>
         </div>
       </div>

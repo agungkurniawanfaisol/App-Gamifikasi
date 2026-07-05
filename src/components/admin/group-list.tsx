@@ -54,7 +54,14 @@ export function GroupList({
       <EmptyState
         icon={FolderOpen}
         title={labels.admin.noGroups}
-      />
+        description={labels.admin.noGroupsDescription}
+      >
+        <Button asChild className="min-h-11">
+          <Link href={`/admin/levels/${levelId}/groups/create`}>
+            {labels.admin.createGroupCta}
+          </Link>
+        </Button>
+      </EmptyState>
     );
   }
 
@@ -99,7 +106,7 @@ function GroupListCard({
         </div>
         <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
           <IconButtonTooltip label={labels.common.edit}>
-            <Button asChild size="icon-sm" aria-label={labels.common.edit}>
+            <Button asChild size="icon" className="size-11" aria-label={labels.common.edit}>
               <Link href={`/admin/levels/${levelId}/groups/${group.id}/edit`}>
                 <Pencil className="size-4" />
               </Link>
@@ -113,7 +120,8 @@ function GroupListCard({
           >
             <Button
               type="button"
-              size="icon-sm"
+              size="icon"
+              className="size-11"
               variant={group.isPublished ? "secondary" : "outline"}
               disabled={pending}
               onClick={() =>
@@ -134,7 +142,8 @@ function GroupListCard({
           <IconButtonTooltip label={labels.common.delete}>
             <Button
               type="button"
-              size="icon-sm"
+              size="icon"
+              className="size-11"
               variant="destructive"
               disabled={pending}
               onClick={() =>
@@ -159,7 +168,7 @@ function GroupListCard({
                   aria-label={
                     open ? labels.admin.hideContents : labels.admin.showContents
                   }
-                  className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40 sm:px-6"
+                  className="flex min-h-11 w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40 sm:px-6"
                 >
                   <span className="flex items-center gap-2">
                     <span className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">

@@ -16,7 +16,6 @@ import {
   Play,
   CheckCircle2,
   Circle,
-  ArrowLeft,
   ChevronRight,
 } from "lucide-react";
 
@@ -73,21 +72,17 @@ export default async function LearnLevelPage({
     <div className="space-y-6 animate-slide-up">
       {/* Header with back button and stats */}
       <PageHeader title={getLevelLabel(level.name)}>
-        <div className="flex items-center gap-3">
-          {totalCount > 0 && (
-            <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2 text-sm shadow-sm">
-              <CheckCircle2 className="size-4 text-success" />
-              <span className="font-medium">{completedCount}/{totalCount}</span>
-              <span className="text-xs text-muted-foreground">groups</span>
-            </div>
-          )}
-          <Button asChild variant="outline" size="sm" className="gap-2">
-            <Link href="/dashboard">
-              <ArrowLeft className="size-4" />
-              Back
-            </Link>
-          </Button>
-        </div>
+        {totalCount > 0 && (
+          <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2 text-sm shadow-sm">
+            <CheckCircle2 className="size-4 text-success" />
+            <span className="font-medium">
+              {labels.student.levelGroupsStat(completedCount, totalCount)}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {labels.student.levelGroupsLabel}
+            </span>
+          </div>
+        )}
       </PageHeader>
 
       {/* Group cards */}
@@ -175,12 +170,12 @@ export default async function LearnLevelPage({
                       ) : status === "completed" ? (
                         <>
                           <BookOpen className="size-4" />
-                          Review Again
+                          {labels.student.reviewAgain}
                         </>
                       ) : learningComplete ? (
                         <>
                           <Play className="size-4" />
-                          {labels.admin.finishGroup}
+                          {labels.student.finishGroup}
                         </>
                       ) : (
                         <>
@@ -223,6 +218,7 @@ export default async function LearnLevelPage({
           <EmptyState
             icon={BookOpen}
             title={labels.student.noPublishedGroups}
+            description={labels.student.noPublishedGroupsDescription}
           />
         )}
       </div>

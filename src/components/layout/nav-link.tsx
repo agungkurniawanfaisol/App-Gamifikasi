@@ -28,7 +28,7 @@ export function NavLink({
       href={href}
       title={collapsed ? label : undefined}
       className={cn(
-        "group relative flex items-center rounded-md py-2 text-sm font-medium transition-colors",
+        "group relative flex min-h-11 items-center rounded-md py-2 text-sm font-medium transition-colors",
         collapsed ? "justify-center px-2" : "gap-3 px-3",
         isActive
           ? "bg-sidebar-accent font-semibold text-sidebar-accent-foreground before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full before:bg-primary"

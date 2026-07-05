@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MaterialAttachmentViewer } from "@/components/admin/content-builder/material-attachment-viewer";
@@ -39,9 +39,10 @@ export function MaterialAttachmentsPanel({
     setError(null);
 
     const uploaded: MaterialAttachment[] = [];
+    const failedNames: string[] = [];
 
-    try {
-      for (const file of files) {
+    for (const file of files) {
+      try {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("groupId", String(groupId));
@@ -61,18 +62,31 @@ export function MaterialAttachmentsPanel({
         }
 
         uploaded.push(data.attachment);
+      } catch {
+        failedNames.push(file.name);
       }
+    }
 
+    if (uploaded.length > 0) {
       onChange([...attachments, ...uploaded]);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : labels.admin.attachmentUploadError
-      );
-    } finally {
-      setUploading(false);
-      if (inputRef.current) {
-        inputRef.current.value = "";
+    }
+
+    if (failedNames.length > 0) {
+      if (uploaded.length === 0) {
+        setError(labels.admin.attachmentUploadError);
+      } else {
+        setError(
+          labels.admin.attachmentPartialFailed(
+            failedNames.length,
+            failedNames.join(", ")
+          )
+        );
       }
+    }
+
+    setUploading(false);
+    if (inputRef.current) {
+      inputRef.current.value = "";
     }
   }
 
@@ -91,6 +105,12 @@ export function MaterialAttachmentsPanel({
           className="min-h-11"
           onChange={(event) => void handleFiles(event.target.files)}
         />
+        {uploading && (
+          <p className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" />
+            {labels.admin.attachmentUploading}
+          </p>
+        )}
       </div>
 
       <p className="text-xs text-muted-foreground">

@@ -88,6 +88,8 @@ export async function POST(request: NextRequest) {
 
     let upstream: Response;
     try {
+      const { warmOllamaModel } = await import("@/lib/ollama-health");
+      await warmOllamaModel();
       upstream = await ollamaChat(ollamaMessages, { model, stream });
     } catch (error) {
       console.error("[api/v1/chat] Ollama request failed:", error);

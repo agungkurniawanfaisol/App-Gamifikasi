@@ -22,6 +22,7 @@ import { updateLastContentItem } from "@/actions/student/progress";
 import type { SubAnswerRecord } from "@/components/student/group-step-flow";
 import type { LearnChatApiContext } from "@/components/student/chat-interface";
 import { labels } from "@/lib/labels";
+import { toast } from "sonner";
 
 type GroupChatMessage = {
   id: number;
@@ -189,11 +190,11 @@ export function GroupLearningFlow({
   async function finishGroup() {
     try {
       await prepareGroupCompletion(groupId, levelId);
+      setPhase("finished");
+      router.refresh();
     } catch {
-      // Completion panel still renders; score loads client-side as fallback.
+      toast.error(labels.student.finishGroupFailed);
     }
-    setPhase("finished");
-    router.refresh();
   }
 
   async function goToContent(index: number) {
@@ -201,8 +202,12 @@ export function GroupLearningFlow({
     if (!item || !pretestComplete) return;
     setPhase("content");
     setContentCurrentIndex(index);
-    await updateLastContentItem(groupId, item.id, levelId);
-    router.refresh();
+    try {
+      await updateLastContentItem(groupId, item.id, levelId);
+      router.refresh();
+    } catch {
+      toast.error(labels.student.progressUpdateFailed);
+    }
   }
 
   function goToAssessment(index: number) {
@@ -310,7 +315,7 @@ export function GroupLearningFlow({
             : () => finishGroup()
         }
         finishLabel={
-          hasPosttest ? labels.student.continueToPosttest : labels.admin.finishGroup
+          hasPosttest ? labels.student.continueToPosttest : labels.student.finishGroup
         }
       />
     );

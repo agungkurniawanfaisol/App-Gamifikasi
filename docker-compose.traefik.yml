@@ -22,3 +22,5 @@ services:
       - traefik.http.routers.next-gamifikasi.entrypoints=websecure
       - traefik.http.routers.next-gamifikasi.tls.certresolver=letsencrypt
       - traefik.http.services.next-gamifikasi.loadbalancer.server.port=5174
+      # AI chat streams can take 2–3 minutes on cold start; avoid proxy cutting the connection early
+      - traefik.http.services.next-gamifikasi.loadbalancer.responseForwarding.flushInterval=1s

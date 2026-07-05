@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireStudent, getUserId } from "@/lib/auth-helpers";
-import { getLevelProgressSummary } from "@/lib/progression";
+import { getBatchLevelProgressSummaries } from "@/lib/progression";
 import { PageHeader } from "@/components/ui/page-header";
 import { getLevelLabel, labels } from "@/lib/labels";
 import { cn } from "@/lib/utils";
@@ -41,12 +41,14 @@ export default async function LearnIndexPage() {
   const userId = getUserId(session);
 
   const levels = await prisma.level.findMany({ orderBy: { order: "asc" } });
-  const summaries = await Promise.all(
-    levels.map(async (level) => ({
-      level,
-      progress: await getLevelProgressSummary(userId, level.id),
-    }))
+  const progressByLevel = await getBatchLevelProgressSummaries(
+    userId,
+    levels.map((level) => level.id)
   );
+  const summaries = levels.map((level) => ({
+    level,
+    progress: progressByLevel.get(level.id) ?? { completed: 0, total: 0 },
+  }));
 
   return (
     <div className="space-y-6 animate-slide-up">
@@ -129,7 +131,7 @@ export default async function LearnIndexPage() {
 
                 <div className="flex items-center gap-2 text-sm font-medium text-primary transition-all group-hover:gap-3">
                   {percent >= 100
-                    ? "Review"
+                    ? labels.student.homeReview
                     : percent > 0
                       ? labels.student.continueLearning
                       : labels.student.startLearning}

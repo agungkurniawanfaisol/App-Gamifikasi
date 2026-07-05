@@ -158,8 +158,9 @@ function ContentItemCard({
             <IconButtonTooltip label={labels.common.edit}>
               <Button
                 asChild
-                size="icon-sm"
+                size="icon"
                 variant="outline"
+                className="size-11"
                 aria-label={labels.common.edit}
               >
                 <Link href={editHref}>
@@ -170,8 +171,9 @@ function ContentItemCard({
             <IconButtonTooltip label={labels.common.delete}>
               <Button
                 type="button"
-                size="icon-sm"
+                size="icon"
                 variant="destructive"
+                className="size-11"
                 disabled={pending}
                 onClick={onDelete}
                 aria-label={labels.common.delete}

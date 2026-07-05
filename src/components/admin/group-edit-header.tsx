@@ -85,24 +85,24 @@ export function GroupEditHeader({
 
           {isEditItemPage && (
             <div
-              className="flex shrink-0 items-center gap-0.5 self-end rounded-lg border border-border bg-muted/30 p-0.5 sm:self-auto"
+              className="hidden shrink-0 items-center gap-0.5 self-end rounded-lg border border-border bg-muted/30 p-0.5 md:flex sm:self-auto"
               role="group"
               aria-label={labels.admin.editorViewMode}
             >
               {([
-                { mode: "editor" as const, icon: PenLine, label: "Editor" },
-                { mode: "split" as const, icon: Columns2, label: "Split" },
-                { mode: "preview" as const, icon: Eye, label: "Preview" },
+                { mode: "editor" as const, icon: PenLine, label: labels.admin.viewModeEditor },
+                { mode: "split" as const, icon: Columns2, label: labels.admin.viewModeSplit },
+                { mode: "preview" as const, icon: Eye, label: labels.admin.viewModePreview },
               ]).map(({ mode: m, icon: Icon, label }) => (
                 <IconButtonTooltip key={m} label={label}>
                   <Button
                     type="button"
                     variant="ghost"
-                    size="icon-sm"
+                    size="icon"
                     onClick={() => setViewMode(m)}
                     aria-label={label}
                     className={cn(
-                      "size-9 sm:w-auto sm:px-3",
+                      "size-11 sm:w-auto sm:px-3",
                       viewMode === m && "bg-background shadow-sm"
                     )}
                   >

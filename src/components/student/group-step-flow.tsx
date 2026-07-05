@@ -236,7 +236,7 @@ export function GroupStepFlow({
               onClick={() => router.push(`/dashboard/learn/${levelId}/${groupId}`)}
             >
               <GraduationCap className="size-4" />
-              Review Again
+              {labels.student.reviewAgain}
             </Button>
           </div>
         </div>
@@ -260,8 +260,8 @@ export function GroupStepFlow({
               <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 {stepTypeIcon}
               </div>
-              <div>
-                <p className="text-sm font-medium leading-tight">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium leading-tight">
                   {getContentItemLabel(current)}
                 </p>
                 <p className="text-[11px] text-muted-foreground">
@@ -371,7 +371,7 @@ export function GroupStepFlow({
             {isLast ? (
               <>
                 <Trophy className="size-4" />
-                {finishLabel ?? labels.admin.finishGroup}
+                {finishLabel ?? labels.student.finishGroup}
               </>
             ) : (
               <>
@@ -522,8 +522,8 @@ function CompositeQuestionStep({
     <div className="flex flex-col gap-5">
       {/* Sub-question navigation dots */}
       {subQuestions.length > 1 && (
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-2">
             {subQuestions.map((_, i) => (
               <button
                 key={i}
@@ -534,7 +534,7 @@ function CompositeQuestionStep({
                   }
                 }}
                 className={cn(
-                  "flex size-7 items-center justify-center rounded-full text-xs font-semibold transition-all duration-200",
+                  "flex size-11 min-h-11 min-w-11 items-center justify-center rounded-full text-xs font-semibold transition-all duration-200",
                   i === subIndex && "bg-primary text-primary-foreground shadow-sm shadow-primary/30 ring-2 ring-primary/30",
                   answeredSubs.has(i) && i !== subIndex && "bg-success/15 text-success",
                   !answeredSubs.has(i) && i !== subIndex && "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -548,7 +548,7 @@ function CompositeQuestionStep({
               </button>
             ))}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary" className="text-[10px]">
               {getSkillLabel(currentSub.skill)}
             </Badge>

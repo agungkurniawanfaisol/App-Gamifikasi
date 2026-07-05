@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getUserId } from "@/lib/auth-helpers";
 import { resolveAssistantKnowledge } from "@/lib/assistant-knowledge";
 import { createPlainTextStream } from "@/lib/instant-chat-stream";
+import { labels } from "@/lib/labels";
 import {
   buildBraderSystemPrompt,
   buildLearnChatSystemPrompt,
@@ -168,30 +169,67 @@ export async function POST(request: Request) {
     content: h.message,
   }));
 
-  const { baseUrl, model } = (() => {
-    try {
-      const baseUrl = process.env.OLLAMA_BASE_URL!;
-      const model = process.env.OLLAMA_MODEL!;
-      return { baseUrl, model };
-    } catch {
+  let baseUrl: string;
+  let model: string;
+  try {
+    baseUrl = process.env.OLLAMA_BASE_URL!;
+    model = process.env.OLLAMA_MODEL!;
+    if (!baseUrl || !model) {
       throw new Error("Ollama not configured");
     }
-  })();
+  } catch {
+    const fallback = labels.errors.ollamaUnavailable;
+    await prisma.chatHistory.create({
+      data: {
+        userId,
+        groupId,
+        role: ChatRole.ASSISTANT,
+        message: fallback,
+      },
+    });
+    return new Response(createPlainTextStream(fallback), {
+      headers: buildResponseHeaders(gamification),
+    });
+  }
 
-  const ollamaRes = await fetch(`${baseUrl}/api/chat`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
+  let ollamaRes: Response;
+  try {
+    const { fetchOllamaChatStream } = await import("@/lib/ollama-health");
+    ollamaRes = await fetchOllamaChatStream(baseUrl, {
       model,
       messages: [{ role: "system", content: systemPrompt }, ...messages],
       stream: true,
       keep_alive: getOllamaKeepAlive(),
       options: OLLAMA_CHAT_OPTIONS,
-    }),
-  });
+    });
+  } catch {
+    const fallback = labels.errors.ollamaUnavailable;
+    await prisma.chatHistory.create({
+      data: {
+        userId,
+        groupId,
+        role: ChatRole.ASSISTANT,
+        message: fallback,
+      },
+    });
+    return new Response(createPlainTextStream(fallback), {
+      headers: buildResponseHeaders(gamification),
+    });
+  }
 
   if (!ollamaRes.ok || !ollamaRes.body) {
-    return new Response("Ollama error", { status: 502 });
+    const fallback = labels.errors.ollamaUnavailable;
+    await prisma.chatHistory.create({
+      data: {
+        userId,
+        groupId,
+        role: ChatRole.ASSISTANT,
+        message: fallback,
+      },
+    });
+    return new Response(createPlainTextStream(fallback), {
+      headers: buildResponseHeaders(gamification),
+    });
   }
 
   let fullAssistant = "";

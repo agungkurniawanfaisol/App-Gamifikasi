@@ -49,7 +49,7 @@ async function provisionGoogleUser(
       role: Role.STUDENT,
       profileImageUrl: image ?? null,
       isActive: true,
-    },
+    } as Parameters<typeof prisma.user.create>[0]["data"],
   });
 }
 

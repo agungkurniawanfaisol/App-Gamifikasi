@@ -356,20 +356,72 @@ export async function getLevelGroupsWithProgress(
 }
 
 export async function getLevelProgressSummary(userId: number, levelId: number) {
-  const groups = await getPublishedGroupsForLevel(levelId);
+  const batch = await getBatchLevelProgressSummaries(userId, [levelId]);
+  return batch.get(levelId) ?? { completed: 0, total: 0 };
+}
+
+export async function getBatchLevelProgressSummaries(
+  userId: number,
+  levelIds: number[]
+): Promise<Map<number, { completed: number; total: number }>> {
+  const result = new Map<number, { completed: number; total: number }>();
+  if (levelIds.length === 0) return result;
+
+  for (const levelId of levelIds) {
+    result.set(levelId, { completed: 0, total: 0 });
+  }
+
+  const groups = await prisma.learningGroup.findMany({
+    where: { levelId: { in: levelIds }, isPublished: true },
+    select: { id: true, levelId: true },
+  });
+
+  const groupsByLevel = new Map<number, number[]>();
+  for (const group of groups) {
+    const list = groupsByLevel.get(group.levelId) ?? [];
+    list.push(group.id);
+    groupsByLevel.set(group.levelId, list);
+  }
+
+  for (const levelId of levelIds) {
+    result.set(levelId, {
+      completed: 0,
+      total: groupsByLevel.get(levelId)?.length ?? 0,
+    });
+  }
+
+  const groupIds = groups.map((g) => g.id);
+  if (groupIds.length === 0) return result;
+
   const progressList = await prisma.userProgress.findMany({
     where: {
       userId,
-      groupId: { in: groups.map((g) => g.id) },
+      groupId: { in: groupIds },
       isGroupCompleted: true,
     },
     select: { groupId: true },
   });
-  const completedSet = new Set(progressList.map((p) => p.groupId));
-  return {
-    completed: completedSet.size,
-    total: groups.length,
-  };
+
+  const completedGroupIds = new Set(progressList.map((p) => p.groupId));
+  const completedByLevel = new Map<number, number>();
+
+  for (const group of groups) {
+    if (completedGroupIds.has(group.id)) {
+      completedByLevel.set(
+        group.levelId,
+        (completedByLevel.get(group.levelId) ?? 0) + 1
+      );
+    }
+  }
+
+  for (const [levelId, completed] of completedByLevel) {
+    const current = result.get(levelId);
+    if (current) {
+      result.set(levelId, { ...current, completed });
+    }
+  }
+
+  return result;
 }
 
 function deriveGroupStatus(

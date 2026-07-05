@@ -40,12 +40,12 @@ export function useLearningStepsCompact() {
 }
 
 export function LearningStepsPanelProvider({ children }: { children: ReactNode }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === "true") {
-      setCollapsed(true);
+    if (stored === "false") {
+      setCollapsed(false);
     }
   }, []);
 

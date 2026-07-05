@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireStudent, getUserId } from "@/lib/auth-helpers";
-import { getLevelProgressSummary } from "@/lib/progression";
+import { getBatchLevelProgressSummaries } from "@/lib/progression";
 import { getUserRankSummary } from "@/lib/ranking-queries";
 import { getProficiencySummary } from "@/lib/proficiency-queries";
 import { ProficiencyCard } from "@/components/student/proficiency/proficiency-card";
@@ -76,12 +76,14 @@ export default async function StudentDashboardPage() {
     getNextAchievementHint(userId),
   ]);
 
-  const summaries = await Promise.all(
-    levels.map(async (l) => ({
-      level: l,
-      progress: await getLevelProgressSummary(userId, l.id),
-    }))
+  const progressByLevel = await getBatchLevelProgressSummaries(
+    userId,
+    levels.map((l) => l.id)
   );
+  const summaries = levels.map((level) => ({
+    level,
+    progress: progressByLevel.get(level.id) ?? { completed: 0, total: 0 },
+  }));
 
   const totalCompleted = summaries.reduce((sum, s) => sum + s.progress.completed, 0);
   const totalGroups = summaries.reduce((sum, s) => sum + s.progress.total, 0);
@@ -128,7 +130,7 @@ export default async function StudentDashboardPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Points
+                {labels.student.homePoints}
               </p>
               <p className="mt-1 text-3xl font-bold text-points">
                 {rankSummary?.points ?? 0}
@@ -145,8 +147,10 @@ export default async function StudentDashboardPage() {
                 <>
                   <span>·</span>
                   <span>
-                    {userTierProgress.nextTier.minPoints - (rankSummary?.points ?? 0)} pts to{" "}
-                    {userTierProgress.nextTier.label}
+                    {labels.student.homePointsToTier(
+                      userTierProgress.nextTier.minPoints - (rankSummary?.points ?? 0),
+                      userTierProgress.nextTier.label
+                    )}
                   </span>
                 </>
               )}
@@ -160,7 +164,7 @@ export default async function StudentDashboardPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Rank
+                {labels.student.homeRank}
               </p>
               <div className="mt-1 flex items-baseline gap-1">
                 <span className="text-3xl font-bold text-foreground">
@@ -179,7 +183,7 @@ export default async function StudentDashboardPage() {
             href="/dashboard/ranking"
             className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
           >
-            View Leaderboard <ArrowRight className="size-3" />
+            {labels.student.homeViewLeaderboard} <ArrowRight className="size-3" />
           </Link>
         </div>
 
@@ -189,7 +193,7 @@ export default async function StudentDashboardPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Progress
+                {labels.student.homeProgress}
               </p>
               <p className="mt-1 text-3xl font-bold text-foreground">
                 {overallPercent}%
@@ -200,7 +204,7 @@ export default async function StudentDashboardPage() {
             </div>
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
-            {totalCompleted} of {totalGroups} groups completed
+            {labels.student.homeGroupsProgress(totalCompleted, totalGroups)}
           </p>
           <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
             <div
@@ -234,7 +238,7 @@ export default async function StudentDashboardPage() {
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-                  Continue Learning
+                  {labels.student.homeContinueLearning}
                 </p>
                 <p className="mt-1 text-lg font-bold text-foreground">
                   {lastGroupData.title}
@@ -242,7 +246,7 @@ export default async function StudentDashboardPage() {
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-2 text-sm font-medium text-primary">
-              Resume
+              {labels.student.homeResume}
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
             </div>
           </div>
@@ -274,7 +278,7 @@ export default async function StudentDashboardPage() {
 
       {/* ===== LEVEL CARDS GRID ===== */}
       <div>
-        <h2 className="mb-4 text-lg font-semibold">Learning Levels</h2>
+        <h2 className="mb-4 text-lg font-semibold">{labels.student.homeLearningLevels}</h2>
         <div className="grid gap-5 md:grid-cols-3">
           {summaries.map(({ level, progress }, index) => {
             const percent =
@@ -356,7 +360,7 @@ export default async function StudentDashboardPage() {
                   {/* CTA Button */}
                   <div className="flex items-center gap-2 text-sm font-medium text-primary transition-all group-hover:gap-3">
                     {percent >= 100
-                      ? "Review"
+                      ? labels.student.homeReview
                       : percent > 0
                         ? labels.student.continueLearning
                         : labels.student.startLearning}

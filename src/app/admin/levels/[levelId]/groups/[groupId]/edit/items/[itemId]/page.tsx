@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ContentItemType } from "@prisma/client";
 import { BookOpen, HelpCircle } from "lucide-react";
@@ -6,11 +5,9 @@ import { MaterialForm } from "@/components/admin/content-builder/material-form";
 import { QuestionForm } from "@/components/admin/content-builder/question-form";
 import { getGroupContentItem } from "@/lib/group-content";
 import { getContentItemLabel } from "@/lib/content-item";
-import { groupEditPath } from "@/lib/content-routes";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { labels } from "@/lib/labels";
 
 export default async function EditContentItemPage({
@@ -39,7 +36,7 @@ export default async function EditContentItemPage({
       <PageHeader
         title={
           <span className="flex items-center gap-3">
-            <span>{isQuestion ? labels.admin.addQuestion : labels.admin.addMaterial}</span>
+            <span>{labels.common.edit}</span>
             <Badge variant={isQuestion ? "default" : "secondary"} className="gap-1.5">
               <Icon className="size-3.5" />
               {isQuestion ? labels.admin.itemQuestion : labels.admin.itemMaterial}
@@ -47,13 +44,7 @@ export default async function EditContentItemPage({
           </span>
         }
         description={group ? `${group.title} · ${itemLabel}` : itemLabel}
-      >
-        <Button variant="outline" asChild>
-          <Link href={groupEditPath(levelId, groupId)}>
-            {labels.common.back}
-          </Link>
-        </Button>
-      </PageHeader>
+      />
 
       {isQuestion ? (
         <QuestionForm levelId={levelId} groupId={groupId} item={item} />

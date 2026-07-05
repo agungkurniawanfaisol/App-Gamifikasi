@@ -4,6 +4,7 @@ import { ChatInterface } from "@/components/student/chat-interface";
 import { PageHeader } from "@/components/ui/page-header";
 import { labels } from "@/lib/labels";
 import { userChatTodayWhere } from "@/lib/chat-day";
+import { mapChatHistoryRows } from "@/lib/chat-message-meta";
 
 export default async function ChatPage() {
   const session = await requireStudent();
@@ -15,11 +16,7 @@ export default async function ChatPage() {
     take: 20,
   });
 
-  const messages = [...history].reverse().map((h) => ({
-    id: h.id,
-    role: h.role,
-    message: h.message,
-  }));
+  const messages = mapChatHistoryRows([...history].reverse());
 
   return (
     <div className="flex min-h-[min(480px,70dvh)] flex-col">

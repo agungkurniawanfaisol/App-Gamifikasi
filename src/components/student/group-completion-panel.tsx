@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   prepareGroupCompletion,
@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
   Loader2,
+  RefreshCw,
   Sparkles,
   Star,
   Trophy,
@@ -60,18 +61,44 @@ export function GroupCompletionPanel({
   const [rating, setRating] = useState<number | null>(initialRating ?? null);
   const [text, setText] = useState(initialTestimonialText ?? "");
   const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [pointsAdded, setPointsAdded] = useState(0);
   const [newBadges, setNewBadges] = useState<BadgeWithMeta[]>([]);
   const [showCelebration, setShowCelebration] = useState(false);
 
+  const fetchCompletion = useCallback(
+    async (force = false) => {
+      if (testimonialSubmitted) return;
+      if (!force && scorePercent != null && aiFeedback != null) return;
+
+      setLoadingAi(true);
+      setLoadError(null);
+
+      try {
+        const result = await prepareGroupCompletion(groupId, levelId);
+        setScorePercent(result.scorePercent);
+        setAiFeedback(result.aiFeedback);
+        if (result.testimonialSubmitted) {
+          setTestimonialSubmitted(true);
+        }
+      } catch {
+        setLoadError(labels.student.completionLoadFailed);
+      } finally {
+        setLoadingAi(false);
+      }
+    },
+    [groupId, levelId, testimonialSubmitted, scorePercent, aiFeedback]
+  );
+
   useEffect(() => {
     if (testimonialSubmitted) return;
-    if (scorePercent != null && aiFeedback != null) return;
+    if (initialScore != null && initialAiFeedback != null) return;
 
     let cancelled = false;
 
     void (async () => {
       setLoadingAi(true);
+      setLoadError(null);
       try {
         const result = await prepareGroupCompletion(groupId, levelId);
         if (cancelled) return;
@@ -82,7 +109,7 @@ export function GroupCompletionPanel({
         }
       } catch {
         if (!cancelled) {
-          setAiFeedback(labels.api.feedbackUnavailable);
+          setLoadError(labels.student.completionLoadFailed);
         }
       } finally {
         if (!cancelled) setLoadingAi(false);
@@ -95,9 +122,9 @@ export function GroupCompletionPanel({
   }, [
     groupId,
     levelId,
+    initialScore,
+    initialAiFeedback,
     testimonialSubmitted,
-    scorePercent,
-    aiFeedback,
   ]);
 
   const textValid = text.trim().length >= 20;
@@ -163,7 +190,27 @@ export function GroupCompletionPanel({
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             {labels.student.completionScore}
           </p>
-          {loadingAi && scorePercent == null ? (
+          {loadError ? (
+            <div className="mt-3 space-y-3">
+              <p className="text-sm text-destructive" role="alert">
+                {loadError}
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                className="min-h-11 gap-2"
+                disabled={loadingAi}
+                onClick={() => void fetchCompletion(true)}
+              >
+                {loadingAi ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="size-4" />
+                )}
+                {labels.student.retryLoad}
+              </Button>
+            </div>
+          ) : loadingAi && scorePercent == null ? (
             <div className="mt-3 flex justify-center">
               <Loader2 className="size-8 animate-spin text-primary" />
             </div>
@@ -181,11 +228,15 @@ export function GroupCompletionPanel({
               {labels.student.aiCompletionFeedback}
             </p>
           </div>
-          {loadingAi && !aiFeedback ? (
+          {loadingAi && !aiFeedback && !loadError ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="size-4 animate-spin" />
               {labels.student.aiCompletionLoading}
             </div>
+          ) : loadError && !aiFeedback ? (
+            <p className="text-sm text-muted-foreground">
+              {labels.api.feedbackUnavailable}
+            </p>
           ) : (
             <p className="text-sm leading-relaxed">{aiFeedback}</p>
           )}
@@ -212,7 +263,7 @@ export function GroupCompletionPanel({
                     aria-label={`${value} star${value === 1 ? "" : "s"}`}
                     onClick={() => setRating(value)}
                     className={cn(
-                      "flex size-10 items-center justify-center rounded-md transition-colors",
+                      "flex size-11 items-center justify-center rounded-md transition-colors",
                       rating != null && value <= rating
                         ? "text-amber-500"
                         : "text-muted-foreground hover:text-amber-400"
@@ -251,7 +302,7 @@ export function GroupCompletionPanel({
             )}
 
             <Button
-              className="w-full gap-2"
+              className="min-h-11 w-full gap-2"
               disabled={!canSubmit}
               onClick={handleSubmitTestimonial}
             >
@@ -284,7 +335,7 @@ export function GroupCompletionPanel({
         )}
 
         <Button
-          className="w-full gap-2"
+          className="min-h-11 w-full gap-2"
           variant={testimonialSubmitted ? "default" : "outline"}
           disabled={!testimonialSubmitted}
           onClick={() => router.push(`/dashboard/learn/${levelId}`)}

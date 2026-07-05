@@ -30,6 +30,20 @@ export function formatDateTimeWib(
   })} WIB`;
 }
 
+/** Hour:minute in WIB — for chat bubbles. */
+export function formatChatTimeWib(
+  value: string | Date | null | undefined
+): string {
+  if (value == null || value === "") return "";
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return `${date.toLocaleString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: ADMIN_TIMEZONE_WIB,
+  })} WIB`;
+}
+
 /** @deprecated Use formatAdminDateTime — kept for callers passing ISO strings. */
 export function formatAdminDate(value: string | null | undefined): string {
   return formatAdminDateTime(value);

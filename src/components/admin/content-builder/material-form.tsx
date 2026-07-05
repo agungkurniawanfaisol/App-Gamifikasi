@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { BookOpen, Save, X } from "lucide-react";
+import { BookOpen, Loader2, Save, X } from "lucide-react";
 import {
   createMaterialItem,
   updateMaterialItem,
@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { labels } from "@/lib/labels";
+import { toast } from "sonner";
 
 export function MaterialForm({
   levelId,
@@ -35,16 +36,23 @@ export function MaterialForm({
   const [attachments, setAttachments] = useState<MaterialAttachment[]>(
     item?.attachments ?? []
   );
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const listPath = groupEditPath(levelId, groupId);
 
   function handleSave() {
+    setSaveError(null);
     startTransition(async () => {
-      const payload = { title, content, attachments };
-      if (item) {
-        await updateMaterialItem(item.id, groupId, levelId, payload);
-      } else {
-        await createMaterialItem(groupId, levelId, payload);
+      try {
+        const payload = { title, content, attachments };
+        if (item) {
+          await updateMaterialItem(item.id, groupId, levelId, payload);
+        } else {
+          await createMaterialItem(groupId, levelId, payload);
+        }
+        toast.success(labels.admin.saveSuccess);
+      } catch {
+        setSaveError(labels.admin.saveFailed);
       }
     });
   }
@@ -60,7 +68,9 @@ export function MaterialForm({
             {item ? labels.common.edit : labels.admin.addMaterial}
           </h3>
           <p className="text-xs text-muted-foreground">
-            {item ? `ID: ${item.id} · Order: ${item.order}` : labels.admin.typeMaterialDesc}
+            {item
+              ? labels.admin.contentItemMeta(item.id, item.order)
+              : labels.admin.typeMaterialDesc}
           </p>
         </div>
       </div>
@@ -117,14 +127,23 @@ export function MaterialForm({
       </div>
 
       <div className="flex flex-col-reverse gap-2 border-t border-border px-4 py-4 sm:flex-row sm:justify-end sm:px-5">
+        {saveError && (
+          <p className="w-full text-sm text-destructive sm:mr-auto" role="alert">
+            {saveError}
+          </p>
+        )}
         <Button
           type="button"
           disabled={pending || !title.trim()}
           onClick={handleSave}
           className="min-h-11 w-full gap-2 sm:w-auto"
         >
-          <Save className="size-4" />
-          {labels.common.save}
+          {pending ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Save className="size-4" />
+          )}
+          {pending ? labels.admin.saving : labels.common.save}
         </Button>
         <Button
           type="button"

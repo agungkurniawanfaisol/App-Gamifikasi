@@ -36,10 +36,10 @@ services:
     image: ollama/ollama:latest
     container_name: gamifikasi-ollama
     restart: unless-stopped
-    mem_limit: 4g
-    mem_reservation: 3g
+    mem_limit: 6g
+    mem_reservation: 4g
     environment:
-      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-30m}
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:--1}
     volumes:
       - ollama_data:/root/.ollama
     networks:
@@ -117,7 +117,7 @@ services:
       NEXTAUTH_URL: ${NEXTAUTH_URL}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL}
       OLLAMA_MODEL: ${OLLAMA_MODEL}
-      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-30m}
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:--1}
     depends_on:
       mysql:
         condition: service_healthy

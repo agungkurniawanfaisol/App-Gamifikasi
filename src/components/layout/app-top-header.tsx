@@ -94,7 +94,7 @@ export function AppTopHeader({
         type="button"
         variant="outline"
         size="icon"
-        className="size-10 shrink-0 lg:hidden"
+        className="min-h-11 min-w-11 shrink-0 lg:hidden"
         aria-label={labels.nav.openMenu}
         onClick={onMenuClick}
       >

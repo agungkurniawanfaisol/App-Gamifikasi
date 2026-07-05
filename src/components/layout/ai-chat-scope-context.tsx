@@ -15,6 +15,8 @@ export type AiChatMessage = {
   id: number;
   role: "USER" | "ASSISTANT";
   message: string;
+  createdAt?: string;
+  responseMs?: number;
 };
 
 export type AiChatScope = {

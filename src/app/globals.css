@@ -225,6 +225,15 @@
     @apply my-4 max-w-full rounded-lg;
   }
 
+  .prose-content table {
+    @apply mb-4 block max-w-full overflow-x-auto;
+  }
+
+  .prose-content iframe,
+  .prose-content video {
+    @apply my-4 max-w-full rounded-lg;
+  }
+
   .prose-content pre {
     @apply mb-4 overflow-x-auto rounded-lg bg-muted p-4 text-sm;
   }
@@ -239,7 +248,7 @@
 
   /* Native select — readable in light and dark mode */
   .native-select {
-    @apply flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+    @apply flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring;
   }
 
   /* Focus ring consistency */

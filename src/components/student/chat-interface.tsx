@@ -1,23 +1,24 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Send, Sparkles } from "lucide-react";
+import { Loader2, Send, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ChatMessageTime } from "@/components/chat/chat-message-time";
 import { cn } from "@/lib/utils";
 import { labels } from "@/lib/labels";
 import { notifyPointsResult } from "@/lib/points-toast";
 import { notifyChallengeCompletions } from "@/lib/challenge-toast";
 import type { ChallengeCompletionResult } from "@/lib/challenge-service";
+import {
+  formatResponseDuration,
+  type ChatMessageMeta,
+} from "@/lib/chat-message-meta";
 import type { LearnChatPhase } from "@/lib/ollama";
 
-type Message = {
-  id: number;
-  role: "USER" | "ASSISTANT";
-  message: string;
-};
+export type ChatMessage = ChatMessageMeta;
 
 export type LearnChatApiContext = {
   phase: LearnChatPhase;
@@ -27,6 +28,8 @@ export type LearnChatApiContext = {
   levelName: string;
 };
 
+const TEXTAREA_MAX_HEIGHT = 128;
+
 export function ChatInterface({
   initialMessages,
   variant = "default",
@@ -35,7 +38,7 @@ export function ChatInterface({
   quickPrompts = [],
   className,
 }: {
-  initialMessages: Message[];
+  initialMessages: ChatMessage[];
   variant?: "default" | "compact";
   groupId?: number;
   chatContext?: LearnChatApiContext;
@@ -47,6 +50,9 @@ export function ChatInterface({
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const sentAtRef = useRef<number | null>(null);
+  const [generatingElapsedMs, setGeneratingElapsedMs] = useState(0);
   const isCompact = variant === "compact";
 
   useEffect(() => {
@@ -55,7 +61,35 @@ export function ChatInterface({
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages.length, loading]);
+
+  useEffect(() => {
+    if (!loading || sentAtRef.current == null) {
+      setGeneratingElapsedMs(0);
+      return;
+    }
+
+    const tick = () => {
+      setGeneratingElapsedMs(Date.now() - sentAtRef.current!);
+    };
+    tick();
+    const intervalId = window.setInterval(tick, 500);
+    return () => window.clearInterval(intervalId);
+  }, [loading]);
+
+  const resizeTextarea = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = "auto";
+    const nextHeight = Math.min(textarea.scrollHeight, TEXTAREA_MAX_HEIGHT);
+    textarea.style.height = `${nextHeight}px`;
+    textarea.style.overflowY =
+      textarea.scrollHeight > TEXTAREA_MAX_HEIGHT ? "auto" : "hidden";
+  }, []);
+
+  useEffect(() => {
+    resizeTextarea();
+  }, [input, resizeTextarea]);
 
   async function sendMessage(text: string) {
     const trimmed = text.trim();
@@ -63,14 +97,18 @@ export function ChatInterface({
 
     setInput("");
     setLoading(true);
-    const userMsg: Message = {
-      id: Date.now(),
+    const sentAt = Date.now();
+    sentAtRef.current = sentAt;
+    const userCreatedAt = new Date(sentAt).toISOString();
+    const userMsg: ChatMessage = {
+      id: sentAt,
       role: "USER",
       message: trimmed,
+      createdAt: userCreatedAt,
     };
     setMessages((m) => [...m, userMsg]);
 
-    const assistantId = Date.now() + 1;
+    const assistantId = sentAt + 1;
     setMessages((m) => [
       ...m,
       { id: assistantId, role: "ASSISTANT", message: "" },
@@ -89,8 +127,9 @@ export function ChatInterface({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
+        signal: AbortSignal.timeout(180_000),
       });
-      if (!res.ok || !res.body) throw new Error("Chat failed");
+      if (!res.ok || !res.body) throw new Error(`Chat failed: ${res.status}`);
 
       const pointsHeader = res.headers.get("X-Points-Awarded");
       if (pointsHeader) {
@@ -114,35 +153,85 @@ export function ChatInterface({
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let accumulated = "";
+      let rafId: number | null = null;
+
+      const flushStream = () => {
+        rafId = null;
+        const snapshot = accumulated;
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantId ? { ...msg, message: snapshot } : msg
+          )
+        );
+      };
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         accumulated += decoder.decode(value, { stream: true });
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === assistantId
-              ? { ...msg, message: accumulated }
-              : msg
-          )
-        );
+        if (rafId == null) {
+          rafId = requestAnimationFrame(flushStream);
+        }
       }
-    } catch {
+
+      if (rafId != null) {
+        cancelAnimationFrame(rafId);
+      }
+
+      const completedAt = Date.now();
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === assistantId
-            ? { ...msg, message: labels.student.chatError }
+            ? {
+                ...msg,
+                message: accumulated,
+                createdAt: new Date(completedAt).toISOString(),
+                responseMs: completedAt - sentAt,
+              }
+            : msg
+        )
+      );
+    } catch (err) {
+      const completedAt = Date.now();
+      const isTimeout =
+        err instanceof DOMException && err.name === "TimeoutError";
+      const isNetwork =
+        err instanceof TypeError ||
+        (err instanceof Error && /failed|network|fetch/i.test(err.message));
+      const errorMessage = isTimeout
+        ? labels.student.chatTimeoutError
+        : isNetwork
+          ? labels.student.chatNetworkError
+          : labels.student.chatError;
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === assistantId
+            ? {
+                ...msg,
+                message: errorMessage,
+                createdAt: new Date(completedAt).toISOString(),
+                responseMs: completedAt - sentAt,
+              }
             : msg
         )
       );
     } finally {
       setLoading(false);
+      sentAtRef.current = null;
+      requestAnimationFrame(() => textareaRef.current?.focus());
     }
   }
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
     await sendMessage(input);
+  }
+
+  function handleTextareaKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      void sendMessage(input);
+    }
   }
 
   return (
@@ -171,7 +260,7 @@ export function ChatInterface({
           isCompact ? "p-3" : "p-4 sm:p-5"
         )}
       >
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3" role="log" aria-live="polite" aria-relevant="additions">
           {messages.length === 0 && (
             <div
               className={cn(
@@ -204,59 +293,105 @@ export function ChatInterface({
               )}
             </div>
           )}
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={cn(
-                "max-w-[90%] rounded-lg text-sm leading-relaxed",
-                isCompact ? "px-3 py-2 text-xs" : "px-4 py-3",
-                msg.role === "USER"
-                  ? "ml-auto bg-primary text-primary-foreground"
-                  : "mr-auto border border-border bg-muted"
-              )}
-            >
-              {msg.message ||
-                (loading && msg.role === "ASSISTANT" ? (
-                  <span className="inline-flex items-center gap-2 text-muted-foreground">
-                    <span className="text-foreground/80">
-                      {labels.student.chatGenerating}
-                    </span>
-                    <span className="inline-flex gap-0.5" aria-hidden>
-                      <span className="animate-pulse">●</span>
-                      <span className="animate-pulse delay-100">●</span>
-                      <span className="animate-pulse delay-200">●</span>
-                    </span>
-                  </span>
-                ) : (
-                  ""
-                ))}
-            </div>
-          ))}
+          {messages.map((msg) => {
+            const isStreamingAssistant =
+              loading && msg.role === "ASSISTANT" && !msg.message;
+
+            return (
+              <div
+                key={msg.id}
+                className={cn(
+                  "flex max-w-[90%] flex-col",
+                  msg.role === "USER" ? "ml-auto items-end" : "mr-auto items-start"
+                )}
+              >
+                <div
+                  className={cn(
+                    "w-full rounded-lg text-sm leading-relaxed break-words",
+                    isCompact ? "px-3 py-2 text-xs" : "px-4 py-3",
+                    msg.role === "USER"
+                      ? "bg-primary text-primary-foreground"
+                      : "border border-border bg-muted"
+                  )}
+                >
+                  {msg.message ||
+                    (isStreamingAssistant ? (
+                      <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground">
+                        <span className="inline-flex items-center gap-2 text-foreground/80">
+                          {generatingElapsedMs > 0
+                            ? labels.student.chatGeneratingElapsed(
+                                formatResponseDuration(generatingElapsedMs)
+                              )
+                            : labels.student.chatGenerating}
+                          <span className="inline-flex gap-0.5" aria-hidden>
+                            <span className="animate-pulse">●</span>
+                            <span className="animate-pulse delay-100">●</span>
+                            <span className="animate-pulse delay-200">●</span>
+                          </span>
+                        </span>
+                      </span>
+                    ) : (
+                      ""
+                    ))}
+                </div>
+                {!isStreamingAssistant && msg.createdAt && (
+                  <ChatMessageTime
+                    createdAt={msg.createdAt}
+                    responseMs={msg.responseMs}
+                    role={msg.role}
+                    isCompact={isCompact}
+                    className="text-muted-foreground"
+                  />
+                )}
+              </div>
+            );
+          })}
           <div ref={bottomRef} />
         </div>
       </ScrollArea>
       <form
         onSubmit={handleSend}
         className={cn(
-          "flex shrink-0 flex-col gap-2 border-t border-sidebar-border bg-sidebar sm:flex-row sm:gap-3",
+          "flex shrink-0 flex-col gap-2 border-t border-sidebar-border bg-sidebar",
           isCompact ? "p-3" : "p-3 sm:p-4"
         )}
       >
-        <Input
+        <Textarea
+          ref={textareaRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleTextareaKeyDown}
           placeholder={labels.student.chatPlaceholder}
           disabled={loading}
-          className="min-w-0 flex-1"
+          rows={1}
+          aria-label={labels.student.chatPlaceholder}
+          className={cn(
+            "min-h-11 min-w-0 w-full resize-none overflow-x-hidden whitespace-pre-wrap break-words py-3",
+            isCompact ? "text-sm" : "text-base md:text-sm"
+          )}
+          style={{ maxHeight: TEXTAREA_MAX_HEIGHT }}
         />
+        <p
+          className={cn(
+            "text-muted-foreground",
+            isCompact ? "text-[10px] leading-snug" : "text-xs leading-snug"
+          )}
+        >
+          {labels.student.chatKeyboardHint}
+        </p>
         <Button
           type="submit"
-          disabled={loading}
-          className="w-full shrink-0 gap-2 sm:w-auto"
+          disabled={loading || !input.trim()}
+          className="min-h-11 w-full shrink-0 gap-2 self-end sm:w-auto"
           size={isCompact ? "sm" : "default"}
+          aria-label={loading ? labels.student.chatSending : labels.student.chatSend}
         >
-          <Send className="size-4" />
-          {labels.student.chatSend}
+          {loading ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Send className="size-4" />
+          )}
+          {loading ? labels.student.chatSending : labels.student.chatSend}
         </Button>
       </form>
     </div>

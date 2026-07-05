@@ -9,6 +9,7 @@ import { isItemFullyAnswered } from "@/lib/sub-questions";
 import { getGroupAssessmentQuestions } from "@/lib/assessments";
 import { getSkillProgressStats } from "@/lib/skill-progress-queries";
 import { userChatTodayWhere } from "@/lib/chat-day";
+import { mapChatHistoryRows } from "@/lib/chat-message-meta";
 import { PageHeader } from "@/components/ui/page-header";
 import { getLevelLabel } from "@/lib/labels";
 import { ContentItemType } from "@prisma/client";
@@ -136,11 +137,7 @@ export default async function LearnGroupPage({
           testimonialSubmitted={progress?.testimonialSubmittedAt != null}
           testimonialRating={progress?.testimonialRating}
           testimonialText={progress?.testimonialText}
-          groupChatMessages={[...groupChatHistory].reverse().map((h) => ({
-            id: h.id,
-            role: h.role,
-            message: h.message,
-          }))}
+          groupChatMessages={mapChatHistoryRows([...groupChatHistory].reverse())}
           skillProgress={skillProgress}
         />
       </div>

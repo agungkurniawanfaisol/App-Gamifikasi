@@ -25,17 +25,17 @@ cp .env.example .env
 
 Edit `.env` and set at least:
 
-| Variable | Example | Notes |
-|----------|---------|-------|
-| `MYSQL_ROOT_PASSWORD` | `changeme_root` | MySQL root password |
-| `MYSQL_PASSWORD` | `changeme_user` | App DB user password |
-| `DATABASE_URL` | `mysql://gamifikasi:changeme_user@mysql:3306/gamifikasi` | Host must be `mysql` inside Docker |
-| `AUTH_SECRET` / `NEXTAUTH_SECRET` | random string | Generate with `openssl rand -base64 32` |
-| `AUTH_URL` / `NEXTAUTH_URL` | `http://localhost:5174` | Must match how you open the app |
-| `AUTH_GOOGLE_ID` | `*.apps.googleusercontent.com` | Google Cloud OAuth client ID (optional) |
-| `AUTH_GOOGLE_SECRET` | client secret | Google Cloud OAuth client secret (optional) |
-| `AUTH_TRUST_HOST` | `true` | Set on VPS/production behind public IP or domain |
-| `OLLAMA_MODEL` | `qwen2.5:3b` | First start downloads the model (can take several minutes) |
+| Variable                          | Example                                                  | Notes                                                      |
+| --------------------------------- | -------------------------------------------------------- | ---------------------------------------------------------- |
+| `MYSQL_ROOT_PASSWORD`             | `changeme_root`                                          | MySQL root password                                        |
+| `MYSQL_PASSWORD`                  | `changeme_user`                                          | App DB user password                                       |
+| `DATABASE_URL`                    | `mysql://gamifikasi:changeme_user@mysql:3306/gamifikasi` | Host must be `mysql` inside Docker                         |
+| `AUTH_SECRET` / `NEXTAUTH_SECRET` | random string                                            | Generate with `openssl rand -base64 32`                    |
+| `AUTH_URL` / `NEXTAUTH_URL`       | `http://localhost:5174`                                  | Must match how you open the app                            |
+| `AUTH_GOOGLE_ID`                  | `*.apps.googleusercontent.com`                           | Google Cloud OAuth client ID (optional)                    |
+| `AUTH_GOOGLE_SECRET`              | client secret                                            | Google Cloud OAuth client secret (optional)                |
+| `AUTH_TRUST_HOST`                 | `true`                                                   | Set on VPS/production behind public IP or domain           |
+| `OLLAMA_MODEL`                    | `qwen2.5:3b`                                             | First start downloads the model (can take several minutes) |
 
 ### Google sign-in (optional)
 
@@ -62,11 +62,11 @@ npm run docker:dev
 
 This starts:
 
-| Service | Container | Purpose |
-|---------|-----------|---------|
-| MySQL 8 | `gamifikasi-mysql` | Database |
-| Ollama | `gamifikasi-ollama` | Local LLM for AI chat and feedback |
-| Next.js (dev) | `gamifikasi-nextjs-dev` | App with HMR on port **5174** |
+| Service       | Container               | Purpose                            |
+| ------------- | ----------------------- | ---------------------------------- |
+| MySQL 8       | `gamifikasi-mysql`      | Database                           |
+| Ollama        | `gamifikasi-ollama`     | Local LLM for AI chat and feedback |
+| Next.js (dev) | `gamifikasi-nextjs-dev` | App with HMR on port **5174**      |
 
 On every start, the dev app runs `prisma migrate deploy`, `prisma generate`, then `next dev`.
 
@@ -87,12 +87,12 @@ Use this for a **production-like build** on your laptop or server: optimized Nex
 
 ### Production vs dev
 
-| | Dev | Production |
-|---|-----|------------|
-| Command | `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build` | `docker compose up --build -d` |
-| App container | `gamifikasi-nextjs-dev` | `gamifikasi-nextjs` |
-| Code changes | Instant (HMR) | Requires **`--build`** |
-| Best for | Daily coding | Testing “as users see it”, pre-deploy |
+|               | Dev                                                                            | Production                            |
+| ------------- | ------------------------------------------------------------------------------ | ------------------------------------- |
+| Command       | `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build` | `docker compose up --build -d`        |
+| App container | `gamifikasi-nextjs-dev`                                                        | `gamifikasi-nextjs`                   |
+| Code changes  | Instant (HMR)                                                                  | Requires **`--build`**                |
+| Best for      | Daily coding                                                                   | Testing “as users see it”, pre-deploy |
 
 ### Step 1 — Environment (first time only)
 
@@ -142,10 +142,10 @@ npm run docker:prod
 
 Containers started:
 
-| Service | Container | Port |
-|---------|-----------|------|
-| MySQL 8 | `gamifikasi-mysql` | internal |
-| Ollama | `gamifikasi-ollama` | internal |
+| Service        | Container           | Port     |
+| -------------- | ------------------- | -------- |
+| MySQL 8        | `gamifikasi-mysql`  | internal |
+| Ollama         | `gamifikasi-ollama` | internal |
 | Next.js (prod) | `gamifikasi-nextjs` | **5174** |
 
 On every start, `gamifikasi-nextjs` runs:
@@ -185,9 +185,9 @@ npm run docker:seed
 
 ### Step 6 — Sign in
 
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | `admin@gamifikasi.com` | `admin123` |
+| Role    | Email                    | Password     |
+| ------- | ------------------------ | ------------ |
+| Admin   | `admin@gamifikasi.com`   | `admin123`   |
 | Student | `student@gamifikasi.com` | `student123` |
 
 ### After pulling new code
@@ -241,9 +241,9 @@ docker compose down
 
 After seeding, sign in at http://localhost:5174/login with:
 
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | `admin@gamifikasi.com` | `admin123` |
+| Role    | Email                    | Password     |
+| ------- | ------------------------ | ------------ |
+| Admin   | `admin@gamifikasi.com`   | `admin123`   |
 | Student | `student@gamifikasi.com` | `student123` |
 
 ```
@@ -260,10 +260,10 @@ Migrations run **automatically** when the app container starts (dev and producti
 
 ### When to run what
 
-| Task | Auto on app start? | When to run manually |
-|------|-------------------|----------------------|
-| `prisma migrate deploy` | Yes (dev + prod) | After pulling new migrations, restart the app container |
-| `prisma db seed` | No | First setup, or after `docker compose down -v` |
+| Task                    | Auto on app start? | When to run manually                                    |
+| ----------------------- | ------------------ | ------------------------------------------------------- |
+| `prisma migrate deploy` | Yes (dev + prod)   | After pulling new migrations, restart the app container |
+| `prisma db seed`        | No                 | First setup, or after `docker compose down -v`          |
 
 ### Dev — migrate & seed
 
@@ -396,13 +396,13 @@ ssh root@YOUR_VPS_IP 'cd /opt/Next-Gamifikasi && bash scripts/docker-db-backup.s
 
 #### Notes
 
-| Topic | Detail |
-|-------|--------|
-| Dev vs prod | Same MySQL volume on one machine — one backup covers both |
+| Topic          | Detail                                                                                  |
+| -------------- | --------------------------------------------------------------------------------------- |
+| Dev vs prod    | Same MySQL volume on one machine — one backup covers both                               |
 | Fresh empty DB | Use [seed](#database-migrate--seed-docker) instead of import if you only need demo data |
-| After import | Restart app if needed: `docker compose restart nextjs` |
-| Git | SQL dumps are in `.gitignore` — do not commit backups |
-| Security | Never expose MySQL port 3306 to the public internet |
+| After import   | Restart app if needed: `docker compose restart nextjs`                                  |
+| Git            | SQL dumps are in `.gitignore` — do not commit backups                                   |
+| Security       | Never expose MySQL port 3306 to the public internet                                     |
 
 ### Fresh database (reset volumes)
 
@@ -469,10 +469,10 @@ npm run docker:seed
 
 ## Important: dev vs production Docker
 
-| Command | Result |
-|---------|--------|
-| `docker compose -f docker-compose.yml -f docker-compose.dev.yml up` | **Dev** — bind-mounted source, hot reload |
-| `docker compose up --build -d` | **Production** — baked standalone image, no HMR |
+| Command                                                             | Result                                          |
+| ------------------------------------------------------------------- | ----------------------------------------------- |
+| `docker compose -f docker-compose.yml -f docker-compose.dev.yml up` | **Dev** — bind-mounted source, hot reload       |
+| `docker compose up --build -d`                                      | **Production** — baked standalone image, no HMR |
 
 Both stacks share **MySQL**, **Ollama**, and the **`db-seed`** service.  
 Do **not** use `docker compose up` without `--build` after pulling UI changes. A plain `docker compose restart` does not rebuild the production image.
@@ -570,6 +570,25 @@ Then run `migrate deploy` and seed again.
 ### Ollama model download is slow
 
 The first `docker compose up` waits for `ollama-pull` to download `OLLAMA_MODEL`. Later starts reuse the cached model volume.
+
+### AI chat or External API returns "network error"
+
+Common causes on production:
+
+1. **Cold start** — After idle time, Ollama unloads the model from RAM. The first request can take 1–3 minutes to reload. Traefik or the browser may cut the connection before the model is ready.
+   - Set `OLLAMA_KEEP_ALIVE=-1` in `.env` (default in `docker-compose.yml`) so the model stays loaded.
+   - Rebuild: `docker compose up --build -d`
+2. **Ollama out of memory** — The `ollama` container is limited to 6 GB. Heavy chat after several turns can exhaust RAM. Check: `docker logs gamifikasi-ollama --tail 50`
+3. **External API daily quota** — If you use `/api/v1/chat` with a token, check **Admin → API Tokens → Daily quota**. A quota of `5` blocks the 6th request (HTTP 429, not always shown as JSON in some clients).
+4. **Rate limit** — External API allows 60 requests per 10 minutes per token (unlikely at 5 questions unless shared token).
+
+Verify Ollama from the server:
+
+```bash
+docker exec gamifikasi-nextjs wget -qO- http://ollama:11434/api/tags
+docker logs gamifikasi-ollama --tail 30
+docker stats gamifikasi-ollama gamifikasi-nextjs --no-stream
+```
 
 ### Stale Next.js cache in dev
 

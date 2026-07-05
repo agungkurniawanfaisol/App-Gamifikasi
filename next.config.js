@@ -19,6 +19,7 @@ const nextConfig = {
   // "npx prisma migrate deploy" works inside the production container
   // without downloading dependencies at runtime.
   experimental: {
+    instrumentationHook: true,
     outputFileTracingIncludes: {
       "/": [
         "./node_modules/.bin/prisma",

@@ -51,7 +51,8 @@ export function LearningLayout({
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon-sm"
+                  size="icon"
+                  className="size-11"
                   onClick={() => setStepsOpen(false)}
                   aria-label={labels.nav.closeSteps}
                 >

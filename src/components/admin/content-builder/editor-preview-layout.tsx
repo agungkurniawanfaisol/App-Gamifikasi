@@ -92,7 +92,7 @@ export function EditorPreviewLayout({
       <div className="flex min-w-0 flex-col gap-2">{editor}</div>
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetTrigger asChild>
-          <Button type="button" variant="outline" className="w-full gap-2">
+          <Button type="button" variant="outline" className="min-h-11 w-full gap-2">
             <Eye className="size-4" />
             {labels.admin.materialPreview}
           </Button>
@@ -122,7 +122,7 @@ export function EditorPreviewLayout({
           <div className="flex items-center gap-2 border-b border-border pb-2">
             <PenLine className="size-3.5 text-muted-foreground" />
             <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              Editor
+              {labels.admin.viewModeEditor}
             </p>
           </div>
         )}
@@ -138,7 +138,7 @@ export function EditorPreviewLayout({
           <div
             onMouseDown={handleMouseDown}
             className="absolute inset-y-0 left-0 z-10 w-1 cursor-col-resize rounded-full transition-colors hover:bg-primary/40 active:bg-primary/60"
-            title="Drag to resize"
+            title={labels.admin.dragToResize}
           />
         )}
 

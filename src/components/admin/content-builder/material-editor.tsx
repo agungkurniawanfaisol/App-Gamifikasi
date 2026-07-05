@@ -83,22 +83,22 @@ export function MaterialEditor({
   return (
     <div className="flex h-full flex-col gap-2">
       <div className="flex flex-wrap gap-1 rounded-md border border-border bg-muted/50 p-1">
-        <Button type="button" size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleBold().run()}>
+        <Button type="button" size="icon" variant="ghost" className="size-11" onClick={() => editor.chain().focus().toggleBold().run()}>
           <Bold className="size-4" />
         </Button>
-        <Button type="button" size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleItalic().run()}>
+        <Button type="button" size="icon" variant="ghost" className="size-11" onClick={() => editor.chain().focus().toggleItalic().run()}>
           <Italic className="size-4" />
         </Button>
-        <Button type="button" size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleBulletList().run()}>
+        <Button type="button" size="icon" variant="ghost" className="size-11" onClick={() => editor.chain().focus().toggleBulletList().run()}>
           <List className="size-4" />
         </Button>
-        <Button type="button" size="sm" variant="ghost" onClick={() => editor.chain().focus().toggleOrderedList().run()}>
+        <Button type="button" size="icon" variant="ghost" className="size-11" onClick={() => editor.chain().focus().toggleOrderedList().run()}>
           <ListOrdered className="size-4" />
         </Button>
-        <Button type="button" size="sm" variant="ghost" onClick={setLink}>
+        <Button type="button" size="icon" variant="ghost" className="size-11" onClick={setLink}>
           <LinkIcon className="size-4" />
         </Button>
-        <Button type="button" size="sm" variant="ghost" onClick={insertImage} title={labels.admin.uploadImage}>
+        <Button type="button" size="icon" variant="ghost" className="size-11" onClick={insertImage} title={labels.admin.uploadImage}>
           <ImageIcon className="size-4" />
         </Button>
       </div>
