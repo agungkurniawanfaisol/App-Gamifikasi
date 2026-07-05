@@ -262,6 +262,21 @@ export const OLLAMA_CHAT_OPTIONS = {
   temperature: 0.3,
 } as const;
 
+/** Tune per message length — shorter cap = faster replies on CPU-only VPS. */
+export function getOllamaChatOptions(userMessage: string): Record<string, number> {
+  const short = userMessage.trim().length <= 100;
+  const threads = Number.parseInt(process.env.OLLAMA_NUM_THREADS ?? "", 10);
+  const options: Record<string, number> = {
+    num_predict: short ? 256 : 1536,
+    num_ctx: short ? 2048 : 4096,
+    temperature: 0.3,
+  };
+  if (Number.isFinite(threads) && threads > 0) {
+    options.num_thread = threads;
+  }
+  return options;
+}
+
 export async function ollamaChat(
   messages: OllamaChatMessage[],
   options?: { model?: string; stream?: boolean }

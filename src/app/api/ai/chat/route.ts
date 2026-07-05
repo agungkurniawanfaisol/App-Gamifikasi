@@ -8,11 +8,12 @@ import {
   buildBraderSystemPrompt,
   buildLearnChatSystemPrompt,
   CHAT_HISTORY_LIMIT,
+  getOllamaChatOptions,
   getOllamaKeepAlive,
-  OLLAMA_CHAT_OPTIONS,
   trimLearnStepContent,
   type LearnChatContextInput,
 } from "@/lib/ollama";
+import { tryQuickChatReply } from "@/lib/quick-chat-reply";
 import { awardDiscussionMilestone } from "@/lib/point-service";
 import {
   recordChallengeEvent,
@@ -146,23 +147,44 @@ export async function POST(request: Request) {
     });
   }
 
+  const quickReply = tryQuickChatReply(message);
+  if (quickReply) {
+    const [, gamification] = await Promise.all([
+      prisma.$transaction(async (tx) => {
+        await tx.chatHistory.create({
+          data: { userId, groupId, role: ChatRole.USER, message },
+        });
+        await tx.chatHistory.create({
+          data: {
+            userId,
+            groupId,
+            role: ChatRole.ASSISTANT,
+            message: quickReply,
+          },
+        });
+      }),
+      resolveChatGamification(userId, groupId),
+    ]);
+
+    return new Response(createPlainTextStream(quickReply), {
+      headers: buildResponseHeaders(gamification),
+    });
+  }
+
   await prisma.chatHistory.create({
     data: { userId, groupId, role: ChatRole.USER, message },
   });
 
-  const [historyRows, gamification] = await Promise.all([
-    prisma.chatHistory.findMany({
-      where: {
-        userId,
-        createdAt: { gte: startOfWibDay() },
-        ...(groupId != null ? { groupId } : { groupId: null }),
-      },
-      orderBy: { createdAt: "desc" },
-      take: CHAT_HISTORY_LIMIT,
-      select: { role: true, message: true },
-    }),
-    resolveChatGamification(userId, groupId),
-  ]);
+  const historyRows = await prisma.chatHistory.findMany({
+    where: {
+      userId,
+      createdAt: { gte: startOfWibDay() },
+      ...(groupId != null ? { groupId } : { groupId: null }),
+    },
+    orderBy: { createdAt: "desc" },
+    take: CHAT_HISTORY_LIMIT,
+    select: { role: true, message: true },
+  });
 
   const messages = [...historyRows].reverse().map((h) => ({
     role: h.role === ChatRole.USER ? ("user" as const) : ("assistant" as const),
@@ -179,6 +201,7 @@ export async function POST(request: Request) {
     }
   } catch {
     const fallback = labels.errors.ollamaUnavailable;
+    const gamificationFallback = await resolveChatGamification(userId, groupId);
     await prisma.chatHistory.create({
       data: {
         userId,
@@ -188,22 +211,27 @@ export async function POST(request: Request) {
       },
     });
     return new Response(createPlainTextStream(fallback), {
-      headers: buildResponseHeaders(gamification),
+      headers: buildResponseHeaders(gamificationFallback),
     });
   }
 
   let ollamaRes: Response;
+  let gamification: GamificationResult;
   try {
     const { fetchOllamaChatStream } = await import("@/lib/ollama-health");
-    ollamaRes = await fetchOllamaChatStream(baseUrl, {
-      model,
-      messages: [{ role: "system", content: systemPrompt }, ...messages],
-      stream: true,
-      keep_alive: getOllamaKeepAlive(),
-      options: OLLAMA_CHAT_OPTIONS,
-    });
+    [ollamaRes, gamification] = await Promise.all([
+      fetchOllamaChatStream(baseUrl, {
+        model,
+        messages: [{ role: "system", content: systemPrompt }, ...messages],
+        stream: true,
+        keep_alive: getOllamaKeepAlive(),
+        options: getOllamaChatOptions(message),
+      }),
+      resolveChatGamification(userId, groupId),
+    ]);
   } catch (error) {
     console.error("[api/ai/chat] Ollama fetch failed:", error);
+    gamification = await resolveChatGamification(userId, groupId);
     const fallback = labels.errors.ollamaUnavailable;
     await prisma.chatHistory.create({
       data: {
