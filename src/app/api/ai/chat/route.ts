@@ -202,7 +202,8 @@ export async function POST(request: Request) {
       keep_alive: getOllamaKeepAlive(),
       options: OLLAMA_CHAT_OPTIONS,
     });
-  } catch {
+  } catch (error) {
+    console.error("[api/ai/chat] Ollama fetch failed:", error);
     const fallback = labels.errors.ollamaUnavailable;
     await prisma.chatHistory.create({
       data: {
@@ -218,6 +219,12 @@ export async function POST(request: Request) {
   }
 
   if (!ollamaRes.ok || !ollamaRes.body) {
+    const errorBody = await ollamaRes.text().catch(() => "");
+    console.error(
+      "[api/ai/chat] Ollama upstream error:",
+      ollamaRes.status,
+      errorBody.slice(0, 500)
+    );
     const fallback = labels.errors.ollamaUnavailable;
     await prisma.chatHistory.create({
       data: {

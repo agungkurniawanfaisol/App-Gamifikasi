@@ -78,5 +78,10 @@ export async function fetchOllamaChatStream(
   }
 
   await warmOllamaModel();
-  return doFetch();
+  try {
+    return await doFetch();
+  } catch (retryError) {
+    console.warn("[ollama-health] chat retry failed:", retryError);
+    throw retryError;
+  }
 }
