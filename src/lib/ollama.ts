@@ -279,11 +279,17 @@ export function getOllamaChatOptions(userMessage: string): Record<string, number
 
 export async function ollamaChat(
   messages: OllamaChatMessage[],
-  options?: { model?: string; stream?: boolean }
+  options?: {
+    model?: string;
+    stream?: boolean;
+    chatOptions?: Record<string, number>;
+  }
 ): Promise<Response> {
   const { baseUrl, model: defaultModel } = getOllamaConfig();
   const model = options?.model ?? defaultModel;
   const stream = options?.stream ?? false;
+  const lastUser = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
+  const ollamaOptions = options?.chatOptions ?? getOllamaChatOptions(lastUser);
 
   return fetch(`${baseUrl}/api/chat`, {
     method: "POST",
@@ -293,7 +299,7 @@ export async function ollamaChat(
       messages,
       stream,
       keep_alive: getOllamaKeepAlive(),
-      options: OLLAMA_CHAT_OPTIONS,
+      options: ollamaOptions,
     }),
     signal: AbortSignal.timeout(OLLAMA_TIMEOUT_MS),
   });

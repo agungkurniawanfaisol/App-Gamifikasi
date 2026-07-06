@@ -13,7 +13,7 @@ import {
   createOllamaStyleJson,
   createOllamaStyleStream,
 } from "@/lib/instant-chat-stream";
-import { buildBraderSystemPrompt, ollamaChat } from "@/lib/ollama";
+import { buildBraderSystemPrompt } from "@/lib/ollama";
 import { labels } from "@/lib/labels";
 import { corsHeaders } from "@/lib/external-api-cors";
 
@@ -88,9 +88,17 @@ export async function POST(request: NextRequest) {
 
     let upstream: Response;
     try {
-      const { warmOllamaModel } = await import("@/lib/ollama-health");
-      await warmOllamaModel();
-      upstream = await ollamaChat(ollamaMessages, { model, stream });
+      const { fetchOllamaChatStream } = await import("@/lib/ollama-health");
+      const { getOllamaKeepAlive, getOllamaChatOptions } = await import("@/lib/ollama");
+      const baseUrl = process.env.OLLAMA_BASE_URL!;
+      const resolvedModel = model ?? process.env.OLLAMA_MODEL!;
+      upstream = await fetchOllamaChatStream(baseUrl, {
+        model: resolvedModel,
+        messages: ollamaMessages,
+        stream: stream ?? false,
+        keep_alive: getOllamaKeepAlive(),
+        options: getOllamaChatOptions(lastUserMessage ?? ""),
+      });
     } catch (error) {
       console.error("[api/v1/chat] Ollama request failed:", error);
       return NextResponse.json(
