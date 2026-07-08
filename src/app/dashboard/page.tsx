@@ -4,8 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { requireStudent, getUserId } from "@/lib/auth-helpers";
 import { getActiveAnnouncementsForRole } from "@/lib/announcement-queries";
 import { getBatchLevelProgressSummaries } from "@/lib/progression";
-import { getUserRankSummary } from "@/lib/ranking-queries";
-import { getProficiencySummary } from "@/lib/proficiency-queries";
+import {
+  getCachedProficiencySummary,
+  getCachedUserRankSummary,
+} from "@/lib/cached-queries";
 import { ProficiencyCard } from "@/components/student/proficiency/proficiency-card";
 import { getLearningProgressSummary } from "@/lib/skill-progress-queries";
 import { LearningProgressSection } from "@/components/student/progress/learning-progress-section";
@@ -17,18 +19,9 @@ import {
   TrendingUp,
   Sparkles,
   Medal,
-  Award,
 } from "lucide-react";
-import { RankingPreviewCard } from "@/components/student/ranking-preview-card";
-import { BadgePreviewCard } from "@/components/student/badges/badge-preview-card";
-import { RewardPreviewCard } from "@/components/student/rewards/reward-preview-card";
-import { ChallengePreviewCard } from "@/components/student/challenges/challenge-preview-card";
 import { AnnouncementBannerStack } from "@/components/student/announcements/announcement-banner-stack";
-import { AnnouncementPreviewCard } from "@/components/student/announcements/announcement-preview-card";
 import { DashboardQuickLinks } from "@/components/student/dashboard-quick-links";
-import { getNextAchievementHint } from "@/lib/achievement-engine";
-import { BadgeIconRow } from "@/components/student/badge-card";
-import { getEarnedBadges } from "@/actions/student/badges";
 import { getLevelLabel, labels } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
@@ -61,10 +54,10 @@ export default async function StudentDashboardPage() {
   const userId = getUserId(session);
   const userName = session.user.name ?? "Student";
 
-  const [levels, rankSummary, proficiencySummary, learningProgress, lastProgress, nextRewardHint, activeAnnouncements] = await Promise.all([
+  const [levels, rankSummary, proficiencySummary, learningProgress, lastProgress, activeAnnouncements] = await Promise.all([
     prisma.level.findMany({ orderBy: { order: "asc" } }),
-    getUserRankSummary(userId),
-    getProficiencySummary(userId),
+    getCachedUserRankSummary(userId),
+    getCachedProficiencySummary(userId),
     getLearningProgressSummary(userId),
     prisma.userProgress.findFirst({
       where: { userId, isGroupCompleted: false, lastContentItemId: { not: null } },
@@ -78,7 +71,6 @@ export default async function StudentDashboardPage() {
         startedAt: true,
       },
     }),
-    getNextAchievementHint(userId),
     getActiveAnnouncementsForRole(Role.STUDENT, 3),
   ]);
 
@@ -97,9 +89,6 @@ export default async function StudentDashboardPage() {
 
   const userTier = rankSummary?.tier ?? null;
   const userTierProgress = rankSummary?.tierProgress ?? null;
-
-  // Fetch badges
-  const earnedBadges = await getEarnedBadges();
 
   // Fetch group info separately for continue learning
   let lastGroupData: { id: number; title: string; levelId: number } | null = null;
@@ -121,13 +110,30 @@ export default async function StudentDashboardPage() {
           <p className="mt-1 text-muted-foreground">{labels.student.chooseLevel}</p>
         </div>
         <DashboardQuickLinks>
-          <RankingPreviewCard userId={userId} />
-          <AnnouncementPreviewCard role={Role.STUDENT} />
-          <ChallengePreviewCard userId={userId} />
-          <BadgePreviewCard userId={userId} />
-          <div className="col-span-2 sm:col-span-1">
-            <RewardPreviewCard userId={userId} />
-          </div>
+          <Link
+            href="/dashboard/ranking"
+            className="rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium shadow-sm transition-all hover:border-primary/30 hover:shadow-md"
+          >
+            {labels.student.homeViewLeaderboard}
+          </Link>
+          <Link
+            href="/dashboard/challenges"
+            className="rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium shadow-sm transition-all hover:border-primary/30 hover:shadow-md"
+          >
+            {labels.challenges.viewAll}
+          </Link>
+          <Link
+            href="/dashboard/badges"
+            className="rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium shadow-sm transition-all hover:border-primary/30 hover:shadow-md"
+          >
+            {labels.badges.viewAllBadges}
+          </Link>
+          <Link
+            href="/dashboard/rewards"
+            className="rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium shadow-sm transition-all hover:border-primary/30 hover:shadow-md"
+          >
+            {labels.rewards.viewAll}
+          </Link>
         </DashboardQuickLinks>
       </div>
 
@@ -230,12 +236,6 @@ export default async function StudentDashboardPage() {
 
       <LearningProgressSection summary={learningProgress} />
 
-      {nextRewardHint && (
-        <p className="text-sm text-muted-foreground">
-          {labels.rewards.nextRewardHint(nextRewardHint)}
-        </p>
-      )}
-
       {/* ===== CONTINUE LEARNING CARD ===== */}
       {lastGroupData && (
         <Link
@@ -262,29 +262,6 @@ export default async function StudentDashboardPage() {
             </div>
           </div>
         </Link>
-      )}
-
-      {/* ===== EARNED BADGES ===== */}
-      {earnedBadges.length > 0 && (
-        <div>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">
-              <span className="inline-flex items-center gap-2">
-                <Award className="size-5 text-primary" />
-                {labels.badges.earned}
-              </span>
-            </h2>
-            <Link
-              href="/dashboard/badges"
-              className="text-sm font-medium text-primary hover:underline"
-            >
-              {labels.badges.viewAll} →
-            </Link>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-            <BadgeIconRow badges={earnedBadges} />
-          </div>
-        </div>
       )}
 
       {/* ===== LEVEL CARDS GRID ===== */}

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { Check, Columns2, Crown, Eye, LayoutList, Layers, Loader2, PenLine, Type } from "lucide-react";
+import { ArrowLeft, Check, Columns2, Crown, Eye, LayoutList, Layers, Loader2, PenLine, Type } from "lucide-react";
 import { updateGroup } from "@/actions/admin/groups";
 import { groupEditPath } from "@/lib/content-routes";
 import { Button } from "@/components/ui/button";
@@ -84,33 +84,47 @@ export function GroupEditHeader({
           </div>
 
           {isEditItemPage && (
-            <div
-              className="hidden shrink-0 items-center gap-0.5 self-end rounded-lg border border-border bg-muted/30 p-0.5 md:flex sm:self-auto"
-              role="group"
-              aria-label={labels.admin.editorViewMode}
-            >
-              {([
-                { mode: "editor" as const, icon: PenLine, label: labels.admin.viewModeEditor },
-                { mode: "split" as const, icon: Columns2, label: labels.admin.viewModeSplit },
-                { mode: "preview" as const, icon: Eye, label: labels.admin.viewModePreview },
-              ]).map(({ mode: m, icon: Icon, label }) => (
-                <IconButtonTooltip key={m} label={label}>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setViewMode(m)}
-                    aria-label={label}
-                    className={cn(
-                      "size-11 sm:w-auto sm:px-3",
-                      viewMode === m && "bg-background shadow-sm"
-                    )}
-                  >
-                    <Icon className="size-3.5" />
-                    <span className="hidden text-xs sm:inline">{label}</span>
-                  </Button>
-                </IconButtonTooltip>
-              ))}
+            <div className="flex flex-col gap-2 self-end sm:self-auto">
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="min-h-11 w-full gap-2 sm:w-auto"
+              >
+                <Link href={contentsPath}>
+                  <ArrowLeft className="size-4" />
+                  {labels.admin.backToGroupEdit}
+                </Link>
+              </Button>
+
+              <div
+                className="hidden shrink-0 items-center gap-0.5 rounded-lg border border-border bg-muted/30 p-0.5 md:flex"
+                role="group"
+                aria-label={labels.admin.editorViewMode}
+              >
+                {([
+                  { mode: "editor" as const, icon: PenLine, label: labels.admin.viewModeEditor },
+                  { mode: "split" as const, icon: Columns2, label: labels.admin.viewModeSplit },
+                  { mode: "preview" as const, icon: Eye, label: labels.admin.viewModePreview },
+                ]).map(({ mode: m, icon: Icon, label }) => (
+                  <IconButtonTooltip key={m} label={label}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setViewMode(m)}
+                      aria-label={label}
+                      className={cn(
+                        "size-11 sm:w-auto sm:px-3",
+                        viewMode === m && "bg-background shadow-sm"
+                      )}
+                    >
+                      <Icon className="size-3.5" />
+                      <span className="hidden text-xs sm:inline">{label}</span>
+                    </Button>
+                  </IconButtonTooltip>
+                ))}
+              </div>
             </div>
           )}
         </div>

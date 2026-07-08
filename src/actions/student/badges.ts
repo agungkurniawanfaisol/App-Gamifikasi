@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { requireStudent, getUserId } from "@/lib/auth-helpers";
-import { revalidatePath } from "next/cache";
+import { revalidateTag } from "next/cache";
 import {
   type BadgeKey,
   type BadgeProgress,
@@ -133,8 +133,8 @@ async function computeAndSaveBadgesForUser(
     skipDuplicates: true,
   });
 
-  revalidatePath("/dashboard");
-  revalidatePath("/dashboard/badges");
+  revalidateTag(`student:${userId}:badges`);
+  revalidateTag(`student:${userId}:dashboard`);
 
   return newlyUnlocked.map((key) => {
     const def = getBadgeByKey(key);
@@ -232,7 +232,8 @@ export async function getEarnedBadges(): Promise<BadgeWithMeta[]> {
  * Lightweight summary for dashboard preview card.
  */
 export async function getBadgePreviewSummary(userId: number) {
-  const overview = await getUserBadgeOverview(userId, { sync: true });
+  // Keep dashboard preview cheap; sync is handled by completion actions.
+  const overview = await getUserBadgeOverview(userId, { sync: false });
   return {
     earnedCount: overview.earnedCount,
     totalCount: overview.totalCount,

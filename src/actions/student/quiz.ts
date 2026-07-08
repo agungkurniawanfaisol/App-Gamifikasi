@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateStudentGamification } from "@/lib/revalidate-student";
 import {
   ContentItemType,
   PointEventType,
@@ -68,8 +68,15 @@ export async function submitContentAnswer(
     isCorrect = scorePercent >= SPEECH_PASS_THRESHOLD;
   }
 
-  const existing = await prisma.userAnswer.findFirst({
-    where: { userId, contentItemId, subQuestionIndex },
+  const existing = await prisma.userAnswer.findUnique({
+    where: {
+      userId_contentItemId_subQuestionIndex: {
+        userId,
+        contentItemId,
+        subQuestionIndex,
+      },
+    },
+    select: { id: true },
   });
 
   let pointsAwarded = 0;
@@ -83,7 +90,13 @@ export async function submitContentAnswer(
 
   if (existing) {
     await prisma.userAnswer.update({
-      where: { id: existing.id },
+      where: {
+        userId_contentItemId_subQuestionIndex: {
+          userId,
+          contentItemId,
+          subQuestionIndex,
+        },
+      },
       data: { answer, isCorrect, scorePercent: finalScore },
     });
     const user = await prisma.user.findUnique({
@@ -153,12 +166,7 @@ export async function submitContentAnswer(
     challengeCompletions.length > 0 ||
     achievementGrants.length > 0
   ) {
-    revalidatePath("/dashboard");
-    revalidatePath("/dashboard/profile");
-    revalidatePath("/dashboard/ranking");
-    revalidatePath("/dashboard/challenges");
-    revalidatePath("/dashboard/rewards");
-    revalidatePath(`/dashboard/learn/${item.group.levelId}/${item.groupId}`);
+    revalidateStudentGamification(userId);
   }
 
   const showFeedback =

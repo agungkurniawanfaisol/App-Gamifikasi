@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-helpers";
 
 function revalidateGroupEdit(levelId: number, groupId: number) {
-  revalidatePath(`/admin/levels/${levelId}/groups/${groupId}/edit`, "layout");
+  revalidatePath(`/admin/levels/${levelId}/groups/${groupId}/edit`);
 }
 
 async function nextAssessmentOrder(

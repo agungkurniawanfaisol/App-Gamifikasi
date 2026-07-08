@@ -1,4 +1,6 @@
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { studentCacheTag } from "@/lib/revalidate-student";
 import {
   buildLeaderboard,
   getTier,
@@ -67,22 +69,68 @@ export async function getPublicLeaderboardPreview(
   };
 }
 
-export async function getUserRankSummary(
+async function fetchUserRankSummary(
   userId: number
 ): Promise<UserRankSummary | null> {
-  const leaderboard = await getGlobalLeaderboard(userId);
-  const currentUser = leaderboard.currentUser;
-  if (!currentUser) return null;
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      role: true,
+      isActive: true,
+      points: true,
+      _count: {
+        select: {
+          progress: { where: { isGroupCompleted: true } },
+        },
+      },
+    },
+  });
+  if (!user || user.role !== "STUDENT" || !user.isActive) return null;
 
-  const tier = getTier(currentUser.points);
-  const tierProgress = getTierProgress(currentUser.points);
+  const [aheadCount, totalParticipants] = await Promise.all([
+    prisma.user.count({
+      where: {
+        role: "STUDENT",
+        isActive: true,
+        OR: [
+          { points: { gt: user.points } },
+          { AND: [{ points: user.points }, { id: { lt: user.id } }] },
+        ],
+      },
+    }),
+    prisma.user.count({
+      where: { role: "STUDENT", isActive: true },
+    }),
+  ]);
+
+  const points = user.points;
+  const tier = getTier(points);
+  const tierProgress = getTierProgress(points);
 
   return {
-    rank: leaderboard.currentUserRank,
-    totalParticipants: leaderboard.totalParticipants,
-    points: currentUser.points,
-    groupsCompleted: currentUser.groupsCompleted,
+    rank: aheadCount + 1,
+    totalParticipants,
+    points,
+    groupsCompleted: user._count.progress,
     tier,
     tierProgress,
   };
+}
+
+/**
+ * Cheap rank for shell/sidebar: avoid scanning every student + `_count` joins.
+ * Matches leaderboard order: points DESC, then id ASC.
+ */
+export async function getUserRankSummary(
+  userId: number
+): Promise<UserRankSummary | null> {
+  return unstable_cache(
+    () => fetchUserRankSummary(userId),
+    ["user-rank-summary", String(userId)],
+    {
+      revalidate: 60,
+      tags: [studentCacheTag(userId, "ranking"), studentCacheTag(userId, "dashboard")],
+    }
+  )();
 }

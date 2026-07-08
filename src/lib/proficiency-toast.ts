@@ -46,16 +46,21 @@ export function notifySubmitRewards(
   },
   refresh?: () => void
 ): void {
-  notifyPointsResult(result, refresh);
-  notifyProficiencyResult(result, refresh);
+  const shouldRefresh =
+    Boolean(result.pointsAwarded && result.pointsAwarded > 0) ||
+    Boolean(result.levelUp && result.shouldCelebrateLevelUp) ||
+    Boolean(result.challengeCompletions?.length) ||
+    Boolean(result.achievementGrants?.length);
+
+  notifyPointsResult(result);
+  notifyProficiencyResult(result);
   if (result.challengeCompletions?.length) {
     notifyChallengeCompletions(result.challengeCompletions);
-    refresh?.();
   }
   if (result.achievementGrants?.length) {
     notifyAchievementGrants(result.achievementGrants);
-    refresh?.();
   }
+  if (shouldRefresh) refresh?.();
 }
 
 export function notifyProgressRewards(
@@ -68,13 +73,17 @@ export function notifyProgressRewards(
   refresh?: () => void
 ): void {
   const points = result.pointsAwarded ?? result.pointsAdded ?? 0;
-  notifyPointsResult({ pointsAwarded: points }, refresh);
+  const shouldRefresh =
+    points > 0 ||
+    Boolean(result.challengeCompletions?.length) ||
+    Boolean(result.achievementGrants?.length);
+
+  notifyPointsResult({ pointsAwarded: points });
   if (result.challengeCompletions?.length) {
     notifyChallengeCompletions(result.challengeCompletions);
-    refresh?.();
   }
   if (result.achievementGrants?.length) {
     notifyAchievementGrants(result.achievementGrants);
-    refresh?.();
   }
+  if (shouldRefresh) refresh?.();
 }

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateTag } from "next/cache";
 import { ContentItemType, PointEventType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireStudent, getUserId } from "@/lib/auth-helpers";
@@ -20,21 +20,17 @@ import {
   evaluateAfterGroupComplete,
   type AchievementGrantResult,
 } from "@/lib/achievement-engine";
+import { revalidateStudentGamification } from "@/lib/revalidate-student";
 
-function revalidateLearnPaths(levelId: number, groupId: number) {
-  revalidatePath(`/dashboard/learn/${levelId}`);
-  revalidatePath(`/dashboard/learn/${levelId}/${groupId}`);
-  revalidatePath("/dashboard");
-  revalidatePath("/dashboard/ranking");
-  revalidatePath("/dashboard/badges");
-  revalidatePath("/dashboard/challenges");
-  revalidatePath("/dashboard/rewards");
+function revalidateLearnPaths(userId: number, levelId: number, groupId: number) {
+  revalidateStudentGamification(userId);
+  revalidateTag(`student:${userId}:learn:${levelId}:${groupId}`);
 }
 
 export async function updateLastContentItem(
   groupId: number,
   contentItemId: number,
-  levelId: number
+  _levelId: number
 ) {
   const session = await requireStudent();
   const userId = getUserId(session);
@@ -48,8 +44,7 @@ export async function updateLastContentItem(
     },
     update: { lastContentItemId: contentItemId },
   });
-
-  revalidatePath(`/dashboard/learn/${levelId}/${groupId}`);
+  // Client owns step index; avoid forcing RSC re-render of the heavy learn tree.
 }
 
 export async function completeMaterial(
@@ -89,7 +84,7 @@ export async function completeMaterial(
     });
   }
 
-  revalidateLearnPaths(levelId, groupId);
+  revalidateLearnPaths(userId, levelId, groupId);
 
   return {
     pointsAwarded: result.awarded,
@@ -185,7 +180,7 @@ export async function markGroupCompleted(groupId: number, levelId: number) {
     kind: "GROUP_COMPLETE",
   });
 
-  revalidateLearnPaths(levelId, groupId);
+  revalidateLearnPaths(userId, levelId, groupId);
 
   return {
     pointsAdded,

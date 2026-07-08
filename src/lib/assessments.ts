@@ -21,17 +21,25 @@ export async function getGroupAssessmentQuestions(
   pretest: AssessmentQuestionPayload[];
   posttest: AssessmentQuestionPayload[];
 }> {
-  const group = await prisma.learningGroup.findFirst({
-    where: { id: groupId, levelId },
-    include: {
-      assessmentQuestions: { orderBy: [{ phase: "asc" }, { order: "asc" }] },
+  const assessmentQuestions = await prisma.groupAssessmentQuestion.findMany({
+    where: {
+      groupId,
+      group: { levelId },
+    },
+    orderBy: [{ phase: "asc" }, { order: "asc" }],
+    select: {
+      id: true,
+      groupId: true,
+      phase: true,
+      order: true,
+      questionText: true,
     },
   });
-  if (!group) {
+  if (assessmentQuestions.length === 0) {
     return { pretest: [], posttest: [] };
   }
 
-  const map = (q: (typeof group.assessmentQuestions)[number]): AssessmentQuestionPayload => ({
+  const map = (q: (typeof assessmentQuestions)[number]): AssessmentQuestionPayload => ({
     id: q.id,
     groupId: q.groupId,
     phase: q.phase,
@@ -40,10 +48,10 @@ export async function getGroupAssessmentQuestions(
   });
 
   return {
-    pretest: group.assessmentQuestions
+    pretest: assessmentQuestions
       .filter((q) => q.phase === AssessmentPhase.PRETEST)
       .map(map),
-    posttest: group.assessmentQuestions
+    posttest: assessmentQuestions
       .filter((q) => q.phase === AssessmentPhase.POSTTEST)
       .map(map),
   };

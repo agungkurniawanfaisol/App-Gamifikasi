@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
@@ -32,7 +31,6 @@ export function SpeakingStepClient({
   onAnswered: (correct: boolean) => void;
   submitAnswer?: SubmitAnswerHandler;
 }) {
-  const router = useRouter();
   const [typedAnswer, setTypedAnswer] = useState("");
   const [score, setScore] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -68,7 +66,7 @@ export function SpeakingStepClient({
             subQuestionIndex
           );
       if (!submitAnswer) {
-        notifySubmitRewards(answerResult, () => router.refresh());
+        notifySubmitRewards(answerResult);
       }
       onAnswered(passed);
     } catch (error) {

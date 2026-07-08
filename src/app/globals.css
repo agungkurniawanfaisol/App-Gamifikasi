@@ -173,6 +173,91 @@
     @apply rounded-xl border border-border bg-card shadow-sm;
   }
 
+  /* TipTap live editor content */
+  .material-editor-content {
+    @apply leading-relaxed text-foreground;
+  }
+
+  .material-editor-content p {
+    @apply mb-3 leading-relaxed;
+  }
+
+  .material-editor-content h1,
+  .material-editor-content h2,
+  .material-editor-content h3,
+  .material-editor-content h4 {
+    @apply mb-3 mt-6 font-semibold text-foreground;
+  }
+
+  .material-editor-content ul {
+    @apply mb-3 list-disc pl-6;
+    list-style-position: outside;
+  }
+
+  .material-editor-content ol {
+    @apply mb-3 list-decimal pl-6;
+    list-style-position: outside;
+  }
+
+  .material-editor-content li {
+    @apply mb-1;
+  }
+
+  .material-editor-content li p {
+    @apply mb-0;
+  }
+
+  .material-editor-content ul ul,
+  .material-editor-content ol ol,
+  .material-editor-content ul ol,
+  .material-editor-content ol ul {
+    @apply my-1;
+  }
+
+  .material-editor-content img {
+    @apply my-3 max-w-full rounded-md;
+  }
+
+  .material-editor-content a {
+    @apply text-primary underline underline-offset-2;
+  }
+
+  .material-editor-content h1 {
+    @apply text-2xl;
+  }
+
+  .material-editor-content h2 {
+    @apply text-xl;
+  }
+
+  .material-editor-content h3 {
+    @apply text-lg;
+  }
+
+  .material-editor-content blockquote {
+    @apply mb-3 border-l-4 border-border pl-4 italic text-muted-foreground;
+  }
+
+  .material-editor-content pre {
+    @apply mb-3 overflow-x-auto rounded-md bg-muted p-3 text-sm;
+  }
+
+  .material-editor-content code {
+    @apply rounded bg-muted px-1.5 py-0.5 text-sm font-mono;
+  }
+
+  .material-editor-content pre code {
+    @apply bg-transparent p-0;
+  }
+
+  .material-editor-content hr {
+    @apply my-4 border-border;
+  }
+
+  .material-editor-content mark {
+    @apply rounded-sm px-0.5;
+  }
+
   /* Prose for TipTap rendered content */
   .prose-content {
     @apply leading-relaxed text-foreground;
@@ -198,15 +283,28 @@
   }
 
   .prose-content ul {
-    @apply mb-3 list-disc pl-5;
+    @apply mb-3 list-disc pl-6;
+    list-style-position: outside;
   }
 
   .prose-content ol {
-    @apply mb-3 list-decimal pl-5;
+    @apply mb-3 list-decimal pl-6;
+    list-style-position: outside;
   }
 
   .prose-content li {
     @apply mb-1;
+  }
+
+  .prose-content li p {
+    @apply mb-0;
+  }
+
+  .prose-content ul ul,
+  .prose-content ol ol,
+  .prose-content ul ol,
+  .prose-content ol ul {
+    @apply my-1;
   }
 
   .prose-content a {
@@ -244,6 +342,14 @@
 
   .prose-content pre code {
     @apply bg-transparent p-0;
+  }
+
+  .prose-content hr {
+    @apply my-4 border-border;
+  }
+
+  .prose-content mark {
+    @apply rounded-sm px-0.5;
   }
 
   /* Native select — readable in light and dark mode */

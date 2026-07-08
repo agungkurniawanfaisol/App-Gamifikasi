@@ -133,16 +133,12 @@ export function GroupStepFlow({
     if (!item) return;
     onCurrentIndexChange(index);
     await updateLastContentItem(groupId, item.id, levelId);
-    router.refresh();
   }
 
   async function awardMaterialIfNeeded(item: ContentItemPayload) {
     if (item.type !== ContentItemType.MATERIAL) return;
     const result = await completeMaterial(item.id, groupId, levelId);
-    notifyProgressRewards(
-      result,
-      () => router.refresh()
-    );
+    notifyProgressRewards(result);
   }
 
   function handlePrevious() {
@@ -182,10 +178,7 @@ export function GroupStepFlow({
       await updateLastContentItem(groupId, current.id, levelId);
       const result = await markGroupCompleted(groupId, levelId);
       setPointsAdded(result.pointsAdded);
-      notifyProgressRewards(
-        result,
-        () => router.refresh()
-      );
+      notifyProgressRewards(result);
       setFinished(true);
       return;
     }

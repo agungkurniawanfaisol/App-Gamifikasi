@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { Gender, Role, type Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getUserId, requireAuth } from "@/lib/auth-helpers";
+import { getCachedShellUser } from "@/lib/cached-queries";
 import {
   parseDateOfBirth,
   selfProfileSchema,
@@ -88,15 +89,7 @@ export async function getHeaderProfile(): Promise<{
   const session = await requireAuth();
   const userId = getUserId(session);
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      name: true,
-      email: true,
-      profileImageUrl: true,
-      role: true,
-    },
-  });
+  const user = await getCachedShellUser(userId);
 
   if (!user) {
     throw new Error("User not found.");

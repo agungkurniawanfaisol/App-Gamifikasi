@@ -2,9 +2,11 @@ import { requireStudent, getUserId } from "@/lib/auth-helpers";
 import { getMyProfile } from "@/actions/profile";
 import { StudentProfileWorkspace } from "@/components/student/profile/student-profile-workspace";
 import { PageHeader } from "@/components/ui/page-header";
-import { getProficiencySummary } from "@/lib/proficiency-queries";
+import {
+  getCachedProficiencySummary,
+  getCachedUserRankSummary,
+} from "@/lib/cached-queries";
 import { getLearningProgressSummary } from "@/lib/skill-progress-queries";
-import { getUserRankSummary } from "@/lib/ranking-queries";
 import { labels } from "@/lib/labels";
 import { UserCircle } from "lucide-react";
 
@@ -14,9 +16,9 @@ export default async function StudentProfilePage() {
   const [profile, proficiencySummary, learningProgress, rankSummary] =
     await Promise.all([
       getMyProfile(),
-      getProficiencySummary(userId),
+      getCachedProficiencySummary(userId),
       getLearningProgressSummary(userId),
-      getUserRankSummary(userId),
+      getCachedUserRankSummary(userId),
     ]);
 
   return (

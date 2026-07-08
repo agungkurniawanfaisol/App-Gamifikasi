@@ -9,7 +9,8 @@ import {
   getSubQuestionsFromItem,
 } from "@/lib/sub-questions";
 import type { MaterialAttachment } from "@/lib/material-attachments";
-import { parseMaterialAttachments } from "@/lib/material-attachments";
+import { sanitizeFontSize } from "@/lib/tiptap/font-size";
+import { sanitizeColor } from "@/lib/tiptap/text-color";
 
 export type ContentItemPayload = {
   id: number;
@@ -103,10 +104,23 @@ export function getFormatLabel(format: QuestionFormat | null): string {
 type TipTapNode = {
   type?: string;
   text?: string;
-  attrs?: Record<string, string>;
+  attrs?: Record<string, unknown>;
   content?: TipTapNode[];
-  marks?: { type: string; attrs?: Record<string, string> }[];
+  marks?: { type: string; attrs?: Record<string, unknown> }[];
 };
+
+const SAFE_ALIGN = new Set(["left", "center", "right", "justify"]);
+
+function styleAttr(styles: string[]): string {
+  if (styles.length === 0) return "";
+  return ` style="${escapeHtml(styles.join("; "))}"`;
+}
+
+function textAlignStyle(attrs?: Record<string, unknown>): string[] {
+  const align = typeof attrs?.textAlign === "string" ? attrs.textAlign : "";
+  if (!SAFE_ALIGN.has(align) || align === "left") return [];
+  return [`text-align: ${align}`];
+}
 
 export function tiptapJsonToHtml(doc: string | null): string {
   if (!doc) return "";
@@ -122,42 +136,88 @@ function renderNode(node: TipTapNode): string {
   if (!node) return "";
   if (node.type === "text") {
     let text = escapeHtml(node.text ?? "");
+    const textStyleMarks = (node.marks ?? []).filter((mark) => mark.type === "textStyle");
+    const textStyleAttrs = textStyleMarks.reduce<Record<string, unknown>>(
+      (acc, mark) => ({ ...acc, ...mark.attrs }),
+      {}
+    );
+    const textStyleStyles: string[] = [];
+    const size = sanitizeFontSize(
+      typeof textStyleAttrs.fontSize === "string" ? textStyleAttrs.fontSize : null
+    );
+    const color = sanitizeColor(
+      typeof textStyleAttrs.color === "string" ? textStyleAttrs.color : null
+    );
+    if (size) textStyleStyles.push(`font-size: ${size}`);
+    if (color) textStyleStyles.push(`color: ${color}`);
+
     for (const mark of node.marks ?? []) {
       if (mark.type === "bold") text = `<strong>${text}</strong>`;
       if (mark.type === "italic") text = `<em>${text}</em>`;
+      if (mark.type === "strike") text = `<s>${text}</s>`;
+      if (mark.type === "underline") text = `<u>${text}</u>`;
+      if (mark.type === "code") {
+        text = `<code class="rounded bg-muted px-1.5 py-0.5 text-sm font-mono">${text}</code>`;
+      }
+      if (mark.type === "highlight") {
+        const highlightColor =
+          sanitizeColor(
+            typeof mark.attrs?.color === "string" ? mark.attrs.color : null
+          ) ?? "#fef08a";
+        text = `<mark style="background-color: ${escapeHtml(highlightColor)}">${text}</mark>`;
+      }
       if (mark.type === "link") {
-        const href = mark.attrs?.href ?? "#";
+        const href =
+          typeof mark.attrs?.href === "string" ? mark.attrs.href : "#";
         text = `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" class="text-primary underline">${text}</a>`;
       }
     }
+
+    if (textStyleStyles.length > 0) {
+      text = `<span style="${escapeHtml(textStyleStyles.join("; "))}">${text}</span>`;
+    }
+
     return text;
   }
 
   const inner = (node.content ?? []).map(renderNode).join("");
+  const alignStyles = textAlignStyle(node.attrs);
 
   switch (node.type) {
     case "doc":
       return inner;
     case "paragraph":
-      return `<p class="mb-3">${inner || "<br/>"}</p>`;
+      return `<p class="mb-3"${styleAttr(alignStyles)}>${inner || "<br/>"}</p>`;
     case "heading": {
-      const level = node.attrs?.level ?? "2";
-      return `<h${level} class="mb-2 font-semibold">${inner}</h${level}>`;
+      const levelRaw = node.attrs?.level;
+      const level =
+        typeof levelRaw === "number" || typeof levelRaw === "string"
+          ? String(levelRaw)
+          : "2";
+      const safeLevel = ["1", "2", "3", "4", "5", "6"].includes(level)
+        ? level
+        : "2";
+      return `<h${safeLevel} class="mb-2 font-semibold"${styleAttr(alignStyles)}>${inner}</h${safeLevel}>`;
     }
     case "bulletList":
-      return `<ul class="mb-3 list-disc pl-5">${inner}</ul>`;
+      return `<ul class="mb-3 list-disc pl-6">${inner}</ul>`;
     case "orderedList":
-      return `<ol class="mb-3 list-decimal pl-5">${inner}</ol>`;
+      return `<ol class="mb-3 list-decimal pl-6">${inner}</ol>`;
     case "listItem":
       return `<li>${inner}</li>`;
-    case "image":
-      return `<img src="${escapeHtml(node.attrs?.src ?? "")}" alt="${escapeHtml(node.attrs?.alt ?? "")}" class="my-3 max-w-full rounded-md" />`;
+    case "image": {
+      const src = typeof node.attrs?.src === "string" ? node.attrs.src : "";
+      const alt = typeof node.attrs?.alt === "string" ? node.attrs.alt : "";
+      return `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" class="my-3 max-w-full rounded-md" />`;
+    }
     case "blockquote":
-      return `<blockquote class="mb-3 border-l-4 border-border pl-4 italic">${inner}</blockquote>`;
+      return `<blockquote class="mb-3 border-l-4 border-border pl-4 italic"${styleAttr(alignStyles)}>${inner}</blockquote>`;
     case "codeBlock":
       return `<pre class="mb-3 overflow-x-auto rounded-md bg-muted p-3 text-sm"><code>${inner}</code></pre>`;
     case "hardBreak":
       return "<br/>";
+    case "horizontalRule":
+      return '<hr class="my-4 border-border" />';
     default:
       return inner;
   }

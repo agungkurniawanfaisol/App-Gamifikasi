@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { submitContentAnswer } from "@/actions/student/quiz";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,7 +28,6 @@ export function EssayStep({
   submitAnswer?: SubmitAnswerHandler;
   initiallyAnswered?: boolean;
 }) {
-  const router = useRouter();
   const [text, setText] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -51,7 +49,7 @@ export function EssayStep({
       setSubmitted(true);
       onAnswered();
       if (!submitAnswer) {
-        notifySubmitRewards(result, () => router.refresh());
+        notifySubmitRewards(result);
       }
       void loadFeedback(answerText);
     } catch (error) {

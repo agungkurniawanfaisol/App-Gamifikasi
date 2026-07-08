@@ -1,15 +1,14 @@
-import { getHeaderProfile } from "@/actions/profile";
 import { requireStudent } from "@/lib/auth-helpers";
 import { labels } from "@/lib/labels";
 import { StudentNav } from "@/components/layout/student-nav";
 import { AppShell } from "@/components/layout/app-shell";
 import { AchievementRewardHost } from "@/components/student/rewards/reward-celebration-host";
-import { prisma } from "@/lib/prisma";
 import { getUserId } from "@/lib/auth-helpers";
-import { getUserRankSummary } from "@/lib/ranking-queries";
-import { getProficiencySummary } from "@/lib/proficiency-queries";
-import { userChatTodayWhere } from "@/lib/chat-day";
-import { mapChatHistoryRows } from "@/lib/chat-message-meta";
+import {
+  getCachedProficiencySummary,
+  getCachedShellUser,
+  getCachedUserRankSummary,
+} from "@/lib/cached-queries";
 
 export default async function DashboardLayout({
   children,
@@ -18,29 +17,25 @@ export default async function DashboardLayout({
 }) {
   const session = await requireStudent();
   const userId = getUserId(session);
-  const [user, rankSummary, headerProfile, proficiencySummary, generalChatHistory] =
+  const [user, rankSummary, proficiencySummary] =
     await Promise.all([
-    prisma.user.findUnique({
-      where: { id: userId },
-      select: { name: true, points: true },
-    }),
-    getUserRankSummary(userId),
-    getHeaderProfile(),
-    getProficiencySummary(userId),
-    prisma.chatHistory.findMany({
-      where: userChatTodayWhere(userId, null),
-      orderBy: { createdAt: "desc" },
-      take: 20,
-      select: { id: true, role: true, message: true, createdAt: true },
-    }),
+    getCachedShellUser(userId),
+    getCachedUserRankSummary(userId),
+    getCachedProficiencySummary(userId),
   ]);
-
-  const generalChatMessages = mapChatHistoryRows([...generalChatHistory].reverse());
+  const headerProfile = user
+    ? {
+        name: user.name,
+        email: user.email,
+        profileImageUrl: user.profileImageUrl,
+        profileHref: "/dashboard/profile",
+        role: user.role,
+      }
+    : undefined;
 
   return (
     <AppShell
       enableAiRail
-      generalChatMessages={generalChatMessages}
       headerProfile={headerProfile}
       sidebar={
         <StudentNav

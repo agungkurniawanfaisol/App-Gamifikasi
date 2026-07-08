@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { submitContentAnswer } from "@/actions/student/quiz";
 import { AnswerFeedback } from "@/components/student/answer-feedback";
 import { notifySubmitRewards } from "@/lib/proficiency-toast";
@@ -26,7 +25,6 @@ export function McqStep({
   onAnswered: (correct: boolean) => void;
   submitAnswer?: SubmitAnswerHandler;
 }) {
-  const router = useRouter();
   const [selected, setSelected] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [correctAnswer, setCorrectAnswer] = useState<string | null>(null);
@@ -51,7 +49,7 @@ export function McqStep({
       setCorrectAnswer(result.correctAnswer ?? null);
       setExplanation(result.explanation ?? null);
       if (!submitAnswer) {
-        notifySubmitRewards(result, () => router.refresh());
+        notifySubmitRewards(result);
       }
       onAnswered(result.isCorrect);
     } catch (error) {

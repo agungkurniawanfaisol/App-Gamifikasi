@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { SetBreadcrumbs } from "@/components/layout/set-breadcrumbs";
 import { SetPageLayout } from "@/components/layout/set-page-layout";
-import { prisma } from "@/lib/prisma";
 import { requireStudent } from "@/lib/auth-helpers";
+import { getCachedLevel, getCachedPublishedGroup } from "@/lib/cached-queries";
 import { getLevelLabel } from "@/lib/labels";
 
 export default async function StudentGroupLayout({
@@ -17,11 +17,8 @@ export default async function StudentGroupLayout({
   const groupId = parseInt(params.groupId, 10);
 
   const [level, group] = await Promise.all([
-    prisma.level.findUnique({ where: { id: levelId } }),
-    prisma.learningGroup.findFirst({
-      where: { id: groupId, levelId, isPublished: true },
-      select: { title: true },
-    }),
+    getCachedLevel(levelId),
+    getCachedPublishedGroup(groupId, levelId),
   ]);
 
   if (!level || !group) notFound();

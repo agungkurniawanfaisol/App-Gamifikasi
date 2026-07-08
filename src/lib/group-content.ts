@@ -3,7 +3,7 @@ import { getSubQuestionsFromItem, parseOptions } from "@/lib/content-item";
 import { parseMaterialAttachments } from "@/lib/material-attachments";
 import { prisma } from "@/lib/prisma";
 
-function mapContentItem(item: {
+type ContentItemRow = {
   id: number;
   groupId: number;
   type: ContentItemPayload["type"];
@@ -21,7 +21,9 @@ function mapContentItem(item: {
   essayRubric: string | null;
   subQuestions: unknown;
   attachments?: unknown;
-}): ContentItemPayload {
+};
+
+function mapContentItem(item: ContentItemRow): ContentItemPayload {
   const subQuestions = getSubQuestionsFromItem(item);
   return {
     id: item.id,
@@ -48,13 +50,35 @@ export async function getGroupContentItems(
   groupId: number,
   levelId: number
 ): Promise<ContentItemPayload[]> {
-  const group = await prisma.learningGroup.findFirst({
-    where: { id: groupId, levelId },
-    include: { contentItems: { orderBy: { order: "asc" } } },
-  });
-  if (!group) return [];
+  // Stale Prisma client may omit `attachments` from typings; call untyped.
+  const items = (await (prisma.groupContentItem.findMany as Function)({
+    where: {
+      groupId,
+      group: { levelId },
+    },
+    orderBy: { order: "asc" },
+    select: {
+      id: true,
+      groupId: true,
+      type: true,
+      order: true,
+      title: true,
+      content: true,
+      questionText: true,
+      skill: true,
+      format: true,
+      options: true,
+      correctAnswer: true,
+      expectedSpeech: true,
+      audioUrl: true,
+      explanation: true,
+      essayRubric: true,
+      subQuestions: true,
+      attachments: true,
+    },
+  })) as ContentItemRow[];
 
-  return group.contentItems.map(mapContentItem);
+  return items.map(mapContentItem);
 }
 
 export async function getGroupContentItem(
@@ -62,9 +86,9 @@ export async function getGroupContentItem(
   groupId: number,
   levelId: number
 ): Promise<ContentItemPayload | null> {
-  const item = await prisma.groupContentItem.findFirst({
+  const item = (await prisma.groupContentItem.findFirst({
     where: { id: itemId, groupId, group: { levelId } },
-  });
+  })) as unknown as ContentItemRow | null;
   if (!item) return null;
 
   return mapContentItem(item);

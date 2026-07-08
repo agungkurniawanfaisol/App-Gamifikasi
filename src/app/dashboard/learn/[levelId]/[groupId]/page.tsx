@@ -29,9 +29,31 @@ export default async function LearnGroupPage({
 
   const group = await prisma.learningGroup.findFirst({
     where: { id: groupId, levelId, isPublished: true },
-    include: {
-      contentItems: { orderBy: { order: "asc" } },
+    select: {
+      id: true,
+      title: true,
       level: { select: { name: true } },
+      contentItems: {
+        orderBy: { order: "asc" },
+        select: {
+          id: true,
+          groupId: true,
+          type: true,
+          order: true,
+          title: true,
+          content: true,
+          questionText: true,
+          skill: true,
+          format: true,
+          options: true,
+          correctAnswer: true,
+          expectedSpeech: true,
+          audioUrl: true,
+          explanation: true,
+          essayRubric: true,
+          subQuestions: true,
+        },
+      },
     },
   });
   if (!group) notFound();
@@ -83,22 +105,49 @@ export default async function LearnGroupPage({
     subQuestions: getSubQuestionsFromItem(item),
   }));
 
+  const answersByItem = new Map<
+    number,
+    Array<{ contentItemId: number; subQuestionIndex: number }>
+  >();
+  for (const answer of answers) {
+    const bucket = answersByItem.get(answer.contentItemId) ?? [];
+    bucket.push(answer);
+    answersByItem.set(answer.contentItemId, bucket);
+  }
+
   const answeredIds = items
     .filter((item) => {
       if (item.type === ContentItemType.MATERIAL) return false;
-      const itemAnswers = answers.filter((a) => a.contentItemId === item.id);
-      return isItemFullyAnswered(item.subQuestions?.length ?? 0, itemAnswers);
+      return isItemFullyAnswered(
+        item.subQuestions?.length ?? 0,
+        answersByItem.get(item.id) ?? []
+      );
     })
     .map((item) => item.id);
+  const answeredIdSet = new Set(answeredIds);
 
   const questionItems = items.filter((item) => item.type === ContentItemType.QUESTION);
   const allQuestionsAnswered =
     questionItems.length === 0 ||
-    questionItems.every((item) => answeredIds.includes(item.id));
+    questionItems.every((item) => answeredIdSet.has(item.id));
   const lastItemId = items[items.length - 1]?.id;
   const reachedEnd =
     lastItemId != null && progress?.lastContentItemId === lastItemId;
   const contentComplete = allQuestionsAnswered && reachedEnd;
+
+  const pretestIdSet = new Set(assessments.pretest.map((q) => q.id));
+  const posttestIdSet = new Set(assessments.posttest.map((q) => q.id));
+  const pretestAnswerRows: Array<{ questionId: number; value: number }> = [];
+  const posttestAnswerRows: Array<{ questionId: number; value: number }> = [];
+  for (const answer of assessmentAnswers) {
+    if (pretestIdSet.has(answer.questionId)) {
+      pretestAnswerRows.push({ questionId: answer.questionId, value: answer.value });
+      continue;
+    }
+    if (posttestIdSet.has(answer.questionId)) {
+      posttestAnswerRows.push({ questionId: answer.questionId, value: answer.value });
+    }
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden md:min-h-[480px]">
@@ -115,12 +164,8 @@ export default async function LearnGroupPage({
           items={items}
           pretest={assessments.pretest}
           posttest={assessments.posttest}
-          pretestAnswers={assessmentAnswers
-            .filter((a) => assessments.pretest.some((q) => q.id === a.questionId))
-            .map((a) => ({ questionId: a.questionId, value: a.value }))}
-          posttestAnswers={assessmentAnswers
-            .filter((a) => assessments.posttest.some((q) => q.id === a.questionId))
-            .map((a) => ({ questionId: a.questionId, value: a.value }))}
+          pretestAnswers={pretestAnswerRows}
+          posttestAnswers={posttestAnswerRows}
           initialContentItemId={progress?.lastContentItemId ?? null}
           answeredIds={answeredIds}
           subAnswers={answers.map((a) => ({

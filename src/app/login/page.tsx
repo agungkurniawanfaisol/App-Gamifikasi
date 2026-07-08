@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { BrandLogo } from "@/components/layout/brand-logo";
+import { BrandLogoPair } from "@/components/layout/brand-logo";
 import { labels } from "@/lib/labels";
 import { Trophy, Zap } from "lucide-react";
 
@@ -18,8 +18,8 @@ export default function LoginPage() {
 
       <div className="flex min-h-0 flex-1 pt-14 md:pt-0">
         <div className="hidden w-1/2 flex-col justify-between border-r border-border bg-card p-12 lg:flex">
-          <div className="flex items-center gap-3">
-            <BrandLogo size="lg" priority />
+          <div className="flex flex-col gap-4">
+            <BrandLogoPair size="xl" priority className="justify-start" />
             <span className="text-xl font-semibold">{labels.nav.brand}</span>
           </div>
           <div className="space-y-4">
@@ -48,8 +48,8 @@ export default function LoginPage() {
         <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto bg-background p-6">
           <Card className="w-full max-w-md">
             <CardHeader className="space-y-2 text-center">
-              <div className="mx-auto mb-2 lg:hidden">
-                <BrandLogo size="lg" className="mx-auto" priority />
+              <div className="mx-auto mb-3 lg:hidden">
+                <BrandLogoPair size="xl" className="mx-auto" priority />
               </div>
               <CardTitle className="text-xl">{labels.login.title}</CardTitle>
               <CardDescription>{labels.login.subtitle}</CardDescription>

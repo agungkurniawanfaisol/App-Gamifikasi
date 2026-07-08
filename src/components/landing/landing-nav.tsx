@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { BrandMark } from "@/components/layout/brand-logo";
+import { BrandLogo } from "@/components/layout/brand-logo";
 import { ModeToggle } from "@/components/layout/mode-toggle";
 import { Button } from "@/components/ui/button";
 import { labels } from "@/lib/labels";
@@ -18,7 +18,9 @@ export function LandingNav({ page = "landing" }: { page?: PublicNavPage }) {
     <header className="fixed inset-x-0 top-0 z-50 border-b border-border/60 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 md:sticky">
       <div className="mx-auto flex h-14 min-w-0 max-w-6xl items-center gap-2 px-4 sm:gap-3 sm:px-6">
         {isLanding ? (
-          <BrandMark href="/" priority className="min-w-0 shrink-0" />
+          <Link href="/" className="shrink-0">
+            <BrandLogo size="md" priority />
+          </Link>
         ) : (
           <Link
             href="/"

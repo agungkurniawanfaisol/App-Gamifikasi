@@ -191,7 +191,6 @@ export function GroupLearningFlow({
     try {
       await prepareGroupCompletion(groupId, levelId);
       setPhase("finished");
-      router.refresh();
     } catch {
       toast.error(labels.student.finishGroupFailed);
     }
@@ -204,7 +203,6 @@ export function GroupLearningFlow({
     setContentCurrentIndex(index);
     try {
       await updateLastContentItem(groupId, item.id, levelId);
-      router.refresh();
     } catch {
       toast.error(labels.student.progressUpdateFailed);
     }

@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { TypePicker } from "@/components/admin/content-builder/item-wizards";
+import { Button } from "@/components/ui/button";
+import { labels } from "@/lib/labels";
 
 export default async function NewContentItemPage({
   params,
@@ -16,5 +19,14 @@ export default async function NewContentItemPage({
   });
   if (!group) notFound();
 
-  return <TypePicker levelId={levelId} groupId={groupId} />;
+  return (
+    <div className="space-y-4">
+      <Button asChild variant="outline" size="sm" className="min-h-11 w-full sm:w-auto">
+        <Link href={`/admin/levels/${levelId}/groups/${groupId}/edit`}>
+          {labels.admin.backToGroupEdit}
+        </Link>
+      </Button>
+      <TypePicker levelId={levelId} groupId={groupId} />
+    </div>
+  );
 }

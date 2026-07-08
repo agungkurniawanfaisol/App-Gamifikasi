@@ -20,7 +20,7 @@ import {
   type ChallengeCompletionResult,
 } from "@/lib/challenge-service";
 import { ChatRole } from "@prisma/client";
-import { revalidatePath } from "next/cache";
+import { revalidateStudentGamification } from "@/lib/revalidate-student";
 import { startOfWibDay } from "@/lib/chat-day";
 
 type ChatRequestBody = {
@@ -47,12 +47,7 @@ async function resolveChatGamification(
   ]);
 
   if (discussionAward.awarded > 0 || challengeCompletions.length > 0) {
-    revalidatePath("/dashboard");
-    revalidatePath("/dashboard/chat");
-    revalidatePath("/dashboard/challenges");
-    if (groupId != null) {
-      revalidatePath("/dashboard/learn");
-    }
+    revalidateStudentGamification(userId);
   }
 
   return { discussionAward, challengeCompletions };

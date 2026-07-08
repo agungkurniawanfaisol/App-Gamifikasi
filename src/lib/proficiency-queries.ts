@@ -1,4 +1,6 @@
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { studentCacheTag } from "@/lib/revalidate-student";
 import {
   getProficiencyLevel,
   getProficiencyProgress,
@@ -12,7 +14,7 @@ export type ProficiencySummary = {
   progress: ProficiencyProgress;
 };
 
-export async function getProficiencySummary(
+async function fetchProficiencySummary(
   userId: number
 ): Promise<ProficiencySummary> {
   const user = await prisma.user.findUnique({
@@ -25,4 +27,20 @@ export async function getProficiencySummary(
   const progress = getProficiencyProgress(score);
 
   return { score, level, progress };
+}
+
+export async function getProficiencySummary(
+  userId: number
+): Promise<ProficiencySummary> {
+  return unstable_cache(
+    () => fetchProficiencySummary(userId),
+    ["user-proficiency-summary", String(userId)],
+    {
+      revalidate: 60,
+      tags: [
+        studentCacheTag(userId, "proficiency"),
+        studentCacheTag(userId, "dashboard"),
+      ],
+    }
+  )();
 }

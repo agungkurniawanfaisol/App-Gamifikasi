@@ -18,7 +18,7 @@ import {
 } from "@/lib/material-attachments";
 
 function revalidateGroupEdit(levelId: number, groupId: number) {
-  revalidatePath(`/admin/levels/${levelId}/groups/${groupId}/edit`, "layout");
+  revalidatePath(`/admin/levels/${levelId}/groups/${groupId}/edit`);
 }
 
 async function nextOrder(groupId: number): Promise<number> {

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Trophy, Zap } from "lucide-react";
-import { BrandLogo } from "@/components/layout/brand-logo";
+import { BrandLogoPair } from "@/components/layout/brand-logo";
 import { Button } from "@/components/ui/button";
 import { LandingTechBackground } from "@/components/landing/landing-tech-background";
 import { labels } from "@/lib/labels";
@@ -12,8 +12,12 @@ export function LandingHero() {
 
       <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24 lg:py-28">
         <div className="landing-reveal mx-auto max-w-3xl text-center">
-          <div className="mb-6 flex justify-center">
-            <BrandLogo size="xl" priority className="drop-shadow-lg" />
+          <div className="mb-8 flex justify-center sm:mb-10">
+            <BrandLogoPair
+              size="2xl"
+              priority
+              className="gap-4 sm:gap-6 md:gap-8 [&_img]:!size-28 sm:[&_img]:!size-36 md:[&_img]:!size-44 lg:[&_img]:!size-52"
+            />
           </div>
 
           <div className="relative mb-6 inline-flex items-center gap-2 rounded-full border border-violet-500/25 bg-violet-500/10 px-4 py-1.5 text-xs font-semibold text-violet-700 dark:text-violet-300">

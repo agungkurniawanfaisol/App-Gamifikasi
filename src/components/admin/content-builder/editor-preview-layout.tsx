@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Eye, GripVertical, PenLine } from "lucide-react";
+import { Eye, GripVertical, Maximize2, Minimize2, PenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -18,13 +18,46 @@ const DEFAULT_PREVIEW_WIDTH = 380;
 
 export type ViewMode = "split" | "editor" | "preview";
 
-function PreviewHeader() {
+function PreviewHeader({
+  onFullscreen,
+  isFullscreen = false,
+}: {
+  onFullscreen?: () => void;
+  isFullscreen?: boolean;
+}) {
   return (
-    <div className="flex shrink-0 items-center gap-2 border-b border-border px-4 py-2.5">
-      <Eye className="size-3.5 text-muted-foreground" />
-      <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-        {labels.admin.materialPreview}
-      </p>
+    <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-4 py-2.5">
+      <div className="flex min-w-0 items-center gap-2">
+        <Eye className="size-3.5 text-muted-foreground" />
+        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          {labels.admin.materialPreview}
+        </p>
+      </div>
+      {onFullscreen ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-11 shrink-0"
+          onClick={onFullscreen}
+          aria-label={
+            isFullscreen
+              ? labels.admin.previewExitFullscreen
+              : labels.admin.previewFullscreen
+          }
+          title={
+            isFullscreen
+              ? labels.admin.previewExitFullscreen
+              : labels.admin.previewFullscreen
+          }
+        >
+          {isFullscreen ? (
+            <Minimize2 className="size-4" />
+          ) : (
+            <Maximize2 className="size-4" />
+          )}
+        </Button>
+      ) : null}
     </div>
   );
 }
@@ -41,6 +74,7 @@ export function EditorPreviewLayout({
   onModeChange: (mode: ViewMode) => void;
 }) {
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
   const [previewWidth, setPreviewWidth] = useState(DEFAULT_PREVIEW_WIDTH);
   const [isDraggingState, setIsDraggingState] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -49,6 +83,31 @@ export function EditorPreviewLayout({
   const isSplit = mode === "split";
   const showPreview = mode === "split" || mode === "preview";
   const showEditor = mode === "split" || mode === "editor";
+
+  const openFullscreen = useCallback(() => {
+    setFullscreen(true);
+    onModeChange("preview");
+  }, [onModeChange]);
+
+  const closeFullscreen = useCallback(() => {
+    setFullscreen(false);
+  }, []);
+
+  useEffect(() => {
+    if (!fullscreen) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setFullscreen(false);
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [fullscreen]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -90,21 +149,32 @@ export function EditorPreviewLayout({
   const mobileContent = (
     <div className="flex flex-col gap-3 md:hidden">
       <div className="flex min-w-0 flex-col gap-2">{editor}</div>
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetTrigger asChild>
-          <Button type="button" variant="outline" className="min-h-11 w-full gap-2">
-            <Eye className="size-4" />
-            {labels.admin.materialPreview}
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="bottom" className="h-[min(70dvh,32rem)] p-0">
-          <SheetTitle className="sr-only">{labels.admin.materialPreview}</SheetTitle>
-          <div className="flex h-full flex-col overflow-hidden rounded-t-lg border-t border-border bg-background">
-            <PreviewHeader />
-            <div className="min-h-0 flex-1 overflow-y-auto">{preview}</div>
-          </div>
-        </SheetContent>
-      </Sheet>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+          <SheetTrigger asChild>
+            <Button type="button" variant="outline" className="min-h-11 w-full gap-2 sm:flex-1">
+              <Eye className="size-4" />
+              {labels.admin.materialPreview}
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="h-[min(80dvh,40rem)] p-0">
+            <SheetTitle className="sr-only">{labels.admin.materialPreview}</SheetTitle>
+            <div className="flex h-full flex-col overflow-hidden rounded-t-lg border-t border-border bg-background">
+              <PreviewHeader onFullscreen={openFullscreen} />
+              <div className="min-h-0 flex-1 overflow-y-auto">{preview}</div>
+            </div>
+          </SheetContent>
+        </Sheet>
+        <Button
+          type="button"
+          variant="outline"
+          className="min-h-11 w-full gap-2 sm:flex-1"
+          onClick={openFullscreen}
+        >
+          <Maximize2 className="size-4" />
+          {labels.admin.previewFullscreen}
+        </Button>
+      </div>
     </div>
   );
 
@@ -172,7 +242,7 @@ export function EditorPreviewLayout({
             showPreview ? "mx-2" : "mx-0"
           )}
         >
-          <PreviewHeader />
+          <PreviewHeader onFullscreen={openFullscreen} />
           <div className="min-h-0 flex-1 overflow-y-auto">{preview}</div>
         </div>
       </div>
@@ -183,6 +253,20 @@ export function EditorPreviewLayout({
     <div className="min-h-[360px]">
       {mobileContent}
       {desktopContent}
+
+      {fullscreen ? (
+        <div
+          className="fixed inset-0 z-50 flex flex-col bg-background"
+          role="dialog"
+          aria-modal="true"
+          aria-label={labels.admin.previewFullscreen}
+        >
+          <PreviewHeader isFullscreen onFullscreen={closeFullscreen} />
+          <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
+            <div className="mx-auto w-full max-w-5xl">{preview}</div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

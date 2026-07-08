@@ -63,12 +63,6 @@ export async function getSkillProgressStats(
         subQuestions: true,
         questionText: true,
         format: true,
-        options: true,
-        correctAnswer: true,
-        expectedSpeech: true,
-        audioUrl: true,
-        explanation: true,
-        essayRubric: true,
       },
     }),
     prisma.userAnswer.findMany({
@@ -92,12 +86,14 @@ export async function getSkillProgressStats(
     }
   }
 
+  const contentItemById = new Map(contentItems.map((item) => [item.id, item]));
+
   const attempted = new Map<QuestionSkill, number>();
   const correct = new Map<QuestionSkill, number>();
   const answeredKeys = new Set<string>();
 
   for (const answer of answers) {
-    const item = contentItems.find((entry) => entry.id === answer.contentItemId);
+    const item = contentItemById.get(answer.contentItemId);
     if (!item) continue;
 
     const slots = expandContentItemToSkillSlots(item);

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateStudentGamification } from "@/lib/revalidate-student";
 import { PointEventType, UserChallengeStatus } from "@prisma/client";
 import { requireStudent, getUserId } from "@/lib/auth-helpers";
 import { submitContentAnswer } from "@/actions/student/quiz";
@@ -146,9 +146,7 @@ export async function submitDailyChallengeAnswer(
     });
   }
 
-  revalidatePath("/dashboard");
-  revalidatePath("/dashboard/challenges");
-  revalidatePath("/dashboard/challenges/daily");
+  revalidateStudentGamification(userId);
 
   return {
     ...result,
