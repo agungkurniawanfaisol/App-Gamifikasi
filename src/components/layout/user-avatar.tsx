@@ -6,11 +6,13 @@ export function UserAvatar({
   name,
   imageUrl,
   size = "md",
+  variant = "default",
   className,
 }: {
   name: string;
   imageUrl?: string | null;
   size?: "sm" | "md" | "lg";
+  variant?: "default" | "header";
   className?: string;
 }) {
   const sizeClasses = {
@@ -19,13 +21,19 @@ export function UserAvatar({
     lg: "size-20 text-xl",
   };
 
+  const ringClasses =
+    variant === "header"
+      ? "ring-2 ring-violet-500/25 ring-offset-2 ring-offset-background"
+      : "ring-2 ring-border";
+
   const initials = getInitials(name);
 
   if (imageUrl) {
     return (
       <div
         className={cn(
-          "relative shrink-0 overflow-hidden rounded-full ring-2 ring-border",
+          "relative shrink-0 overflow-hidden rounded-full",
+          ringClasses,
           sizeClasses[size],
           className
         )}
@@ -44,7 +52,8 @@ export function UserAvatar({
   return (
     <div
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary ring-2 ring-border",
+        "flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500/20 to-violet-600/10 font-semibold text-violet-700 dark:text-violet-300",
+        ringClasses,
         sizeClasses[size],
         className
       )}

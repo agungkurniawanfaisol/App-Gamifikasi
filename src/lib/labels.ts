@@ -1161,6 +1161,12 @@ export const labels = {
       master: "1,500+ pts",
     },
   },
+  header: {
+    accountMenu: "Account menu",
+    roleAdmin: "Administrator",
+    roleStudent: "Student",
+    viewProfile: "View profile",
+  },
   profile: {
     title: "My Profile",
     subtitle: "View and update your personal information.",

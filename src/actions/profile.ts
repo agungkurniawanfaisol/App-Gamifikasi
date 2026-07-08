@@ -2,7 +2,7 @@
 
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
-import { Gender, type Prisma } from "@prisma/client";
+import { Gender, Role, type Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getUserId, requireAuth } from "@/lib/auth-helpers";
 import {
@@ -83,6 +83,7 @@ export async function getHeaderProfile(): Promise<{
   email: string;
   profileImageUrl: string | null;
   profileHref: string;
+  role: Role;
 }> {
   const session = await requireAuth();
   const userId = getUserId(session);
@@ -107,5 +108,6 @@ export async function getHeaderProfile(): Promise<{
     profileImageUrl: user.profileImageUrl,
     profileHref:
       user.role === "ADMIN" ? "/admin/profile" : "/dashboard/profile",
+    role: user.role,
   };
 }

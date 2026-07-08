@@ -151,11 +151,12 @@ export function DashboardAiMobileButton() {
       type="button"
       variant="outline"
       size="sm"
-      className="min-h-11 shrink-0 gap-2 lg:hidden"
+      className="min-h-11 shrink-0 gap-2 rounded-full border-violet-500/25 bg-violet-500/5 px-3 text-violet-700 hover:bg-violet-500/10 dark:text-violet-300 lg:hidden"
       onClick={() => setMobileOpen(true)}
+      aria-label={labels.student.askAi}
     >
-      <Sparkles className="size-4" />
-      {labels.student.askAi}
+      <Sparkles className="size-4 shrink-0" />
+      <span className="hidden sm:inline">{labels.student.askAi}</span>
     </Button>
   );
 }

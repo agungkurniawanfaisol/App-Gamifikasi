@@ -89,7 +89,7 @@ export function AppTopHeader({
   const { actions } = useBreadcrumbs();
 
   return (
-    <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-3 border-b border-border bg-background/95 px-4 backdrop-blur-sm supports-[backdrop-filter]:bg-background/80 sm:px-6">
+    <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-3 border-b border-border/80 bg-background/95 px-4 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-background/85 sm:px-6">
       <Button
         type="button"
         variant="outline"
@@ -105,9 +105,19 @@ export function AppTopHeader({
         <BreadcrumbNav />
       </div>
 
-      <div className="flex shrink-0 items-center gap-2">
-        {mobileActions}
-        {actions}
+      <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+        {(mobileActions || actions) && (
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {mobileActions}
+            {actions}
+          </div>
+        )}
+        {headerProfile && (mobileActions || actions) && (
+          <div
+            className="hidden h-8 w-px shrink-0 bg-border/80 sm:block"
+            aria-hidden
+          />
+        )}
         {headerProfile && <UserProfileMenu user={headerProfile} />}
       </div>
     </header>
