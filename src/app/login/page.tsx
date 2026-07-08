@@ -19,7 +19,12 @@ export default function LoginPage() {
       <div className="flex min-h-0 flex-1 pt-14 md:pt-0">
         <div className="hidden w-1/2 flex-col justify-between border-r border-border bg-card p-12 lg:flex">
           <div className="flex flex-col gap-4">
-            <BrandLogoPair size="xl" priority className="justify-start" />
+            <BrandLogoPair
+              brandSize="xl"
+              partnerSize="xs"
+              priority
+              className="justify-start [&>img:last-of-type]:!h-10 [&>img:last-of-type]:!w-auto sm:[&>img:last-of-type]:!h-11"
+            />
             <span className="text-xl font-semibold">{labels.nav.brand}</span>
           </div>
           <div className="space-y-4">
@@ -49,7 +54,12 @@ export default function LoginPage() {
           <Card className="w-full max-w-md">
             <CardHeader className="space-y-2 text-center">
               <div className="mx-auto mb-3 lg:hidden">
-                <BrandLogoPair size="xl" className="mx-auto" priority />
+                <BrandLogoPair
+                  brandSize="lg"
+                  partnerSize="xs"
+                  className="mx-auto [&>img:last-of-type]:!h-9 [&>img:last-of-type]:!w-auto sm:[&>img:last-of-type]:!h-10"
+                  priority
+                />
               </div>
               <CardTitle className="text-xl">{labels.login.title}</CardTitle>
               <CardDescription>{labels.login.subtitle}</CardDescription>

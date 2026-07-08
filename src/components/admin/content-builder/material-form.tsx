@@ -25,16 +25,18 @@ export function MaterialForm({
   levelId,
   groupId,
   item,
+  initialValues,
 }: {
   levelId: number;
   groupId: number;
   item?: ContentItemPayload;
+  initialValues?: { title?: string; content?: string; attachments?: MaterialAttachment[] };
 }) {
   const { viewMode, setViewMode } = useViewMode();
-  const [title, setTitle] = useState(item?.title ?? "");
-  const [content, setContent] = useState(item?.content ?? "");
+  const [title, setTitle] = useState(item?.title ?? initialValues?.title ?? "");
+  const [content, setContent] = useState(item?.content ?? initialValues?.content ?? "");
   const [attachments, setAttachments] = useState<MaterialAttachment[]>(
-    item?.attachments ?? []
+    item?.attachments ?? initialValues?.attachments ?? []
   );
   const [saveError, setSaveError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();

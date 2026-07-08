@@ -1,5 +1,8 @@
 export const BRAND_LOGO_SRC = "/logo.png";
-export const PARTNER_LOGO_SRC = "/unipda-logo.png";
+export const PARTNER_LOGO_SRC = "/logoUnipda.png";
+
+/** UNIPDA mark is portrait (128×160). */
+export const PARTNER_LOGO_ASPECT = 128 / 160;
 
 export const BRAND_LOGO_SIZE = {
   xs: 28,

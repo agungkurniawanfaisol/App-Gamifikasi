@@ -27,6 +27,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { AiContentGenerator } from "@/components/admin/content-builder/ai-content-generator";
 import { labels } from "@/lib/labels";
 
 export function ContentItemList({
@@ -44,6 +45,8 @@ export function ContentItemList({
 
   return (
     <div className="flex flex-col gap-6">
+      <AiContentGenerator levelId={levelId} groupId={groupId} />
+
       <div className="surface-elevated flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <Badge variant="outline" className="gap-1.5 font-normal">

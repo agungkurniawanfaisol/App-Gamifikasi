@@ -1,8 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import brandLogo from "../../../public/logo.png";
-import partnerLogo from "../../../public/unipda-logo.png";
-import { BRAND_LOGO_SIZE, type BrandLogoSize } from "@/lib/brand";
+import partnerLogo from "../../../public/logoUnipda.png";
+import {
+  BRAND_LOGO_SIZE,
+  PARTNER_LOGO_ASPECT,
+  type BrandLogoSize,
+} from "@/lib/brand";
 import { labels } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
@@ -39,50 +43,59 @@ export function PartnerLogo({
   className?: string;
   priority?: boolean;
 }) {
-  const dimension = BRAND_LOGO_SIZE[size];
+  const height = BRAND_LOGO_SIZE[size];
+  const width = Math.round(height * PARTNER_LOGO_ASPECT);
 
   return (
     <Image
       src={partnerLogo}
       alt={labels.nav.partnerBrand}
-      width={dimension}
-      height={dimension}
+      width={width}
+      height={height}
       priority={priority}
       className={cn("shrink-0 object-contain", className)}
-      style={{ width: dimension, height: dimension }}
+      style={{ width, height }}
     />
   );
 }
 
-/** App logo + partner (UNIPDA) logo side by side. */
+/** Deeptest logo (large) with a smaller UNIPDA partner mark beside it. */
 export function BrandLogoPair({
-  size = "lg",
+  brandSize = "2xl",
+  partnerSize = "sm",
   className,
   priority = false,
 }: {
-  size?: BrandLogoSize;
+  brandSize?: BrandLogoSize;
+  partnerSize?: BrandLogoSize;
   className?: string;
   priority?: boolean;
 }) {
+  const brandDimension = BRAND_LOGO_SIZE[brandSize];
+
   return (
     <div
       className={cn(
-        "flex items-center justify-center gap-3 sm:gap-5",
+        "flex items-center justify-center gap-3 sm:gap-4",
         className
       )}
       aria-label={`${labels.nav.brand} · ${labels.nav.partnerBrand}`}
     >
-      <BrandLogo size={size} priority={priority} className="drop-shadow-md" />
+      <BrandLogo
+        size={brandSize}
+        priority={priority}
+        className="drop-shadow-md"
+      />
       <span
-        className={cn(
-          "shrink-0 bg-border",
-          size === "3xl" || size === "4xl"
-            ? "h-14 w-px sm:h-20"
-            : "h-10 w-px sm:h-14"
-        )}
+        className="w-px shrink-0 bg-border"
+        style={{ height: Math.round(brandDimension * 0.72) }}
         aria-hidden="true"
       />
-      <PartnerLogo size={size} priority={priority} className="drop-shadow-md" />
+      <PartnerLogo
+        size={partnerSize}
+        priority={priority}
+        className="drop-shadow-sm"
+      />
     </div>
   );
 }
@@ -112,9 +125,10 @@ export function BrandMark({
     >
       {showPartner && !collapsed ? (
         <BrandLogoPair
-          size="sm"
+          brandSize="md"
+          partnerSize="xs"
           priority={priority}
-          className="gap-2 sm:gap-2.5 [&>span]:h-7 sm:[&>span]:h-8"
+          className="gap-2"
         />
       ) : (
         <BrandLogo

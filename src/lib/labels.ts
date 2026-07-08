@@ -667,12 +667,30 @@ export const labels = {
     versionRestore: "Restore version",
     aiCopilot: "AI content copilot",
     aiCopilotHint:
-      "Generate draft MCQ or material JSON from a topic. Review before publishing.",
+      "Enter a topic or upload a source file. AI generates one complete material or question item for you to review and save.",
     aiCopilotTopic: "Topic or learning objective",
+    aiCopilotTopicPlaceholder: "e.g. Past tense verbs in daily routines",
+    aiCopilotSourceFile: "Source file (optional)",
+    aiCopilotSourceFileHint: "Upload a .txt or .md file as reference. You can also use topic only.",
+    aiCopilotFileLoaded: (name: string) => `Loaded: ${name}`,
+    aiCopilotClearFile: "Clear file",
+    aiCopilotContentType: "Content type",
+    aiCopilotTypeQuestion: "Question (4 skills template)",
+    aiCopilotTypeMaterial: "Material",
+    aiCopilotQuestionTemplateHint:
+      "Generates Reading MCQ, Listening MCQ, Writing essay, and Speaking prompt — 25% weight each. Upload listening audio before saving.",
+    aiCopilotMaterialHint: "Generates a rich-text lesson with title and paragraphs.",
+    aiCopilotGenerate: "Generate content",
     aiCopilotGenerateMcq: "Generate MCQ draft",
     aiCopilotGenerateMaterial: "Generate material draft",
     aiCopilotGenerating: "Generating…",
     aiCopilotError: "Could not generate content. Try again.",
+    aiCopilotSourceRequired: "Enter a topic or upload a source file.",
+    aiCopilotOllamaUnavailable:
+      "AI service is unavailable. Check Ollama configuration and try again.",
+    aiCopilotStartOver: "Generate another",
+    aiCopilotValidationWarning: (detail: string) =>
+      `Review before saving: ${detail}`,
     atRiskTitle: "At-risk students",
     atRiskDescription:
       "Students who may need a nudge based on inactivity, stuck progress, or low accuracy.",

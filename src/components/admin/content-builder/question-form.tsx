@@ -394,10 +394,12 @@ export function QuestionForm({
   levelId,
   groupId,
   item,
+  initialSubQuestions,
 }: {
   levelId: number;
   groupId: number;
   item?: ContentItemPayload;
+  initialSubQuestions?: SubQuestion[];
 }) {
   const { viewMode, setViewMode } = useViewMode();
 
@@ -405,7 +407,9 @@ export function QuestionForm({
     () =>
       item?.subQuestions?.length
         ? item.subQuestions
-        : [createEmptySubQuestion()]
+        : initialSubQuestions?.length
+          ? initialSubQuestions
+          : [createEmptySubQuestion()]
   );
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();

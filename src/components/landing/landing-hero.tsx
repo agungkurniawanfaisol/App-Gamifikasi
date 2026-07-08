@@ -14,9 +14,10 @@ export function LandingHero() {
         <div className="landing-reveal mx-auto max-w-3xl text-center">
           <div className="mb-8 flex justify-center sm:mb-10">
             <BrandLogoPair
-              size="2xl"
+              brandSize="4xl"
+              partnerSize="xs"
               priority
-              className="gap-4 sm:gap-6 md:gap-8 [&_img]:!size-28 sm:[&_img]:!size-36 md:[&_img]:!size-44 lg:[&_img]:!size-52"
+              className="gap-4 sm:gap-5 md:gap-6 [&>img:first-of-type]:!size-32 sm:[&>img:first-of-type]:!size-40 md:[&>img:first-of-type]:!size-48 lg:[&>img:first-of-type]:!size-56 [&>img:last-of-type]:!h-9 [&>img:last-of-type]:!w-auto sm:[&>img:last-of-type]:!h-11 md:[&>img:last-of-type]:!h-12 lg:[&>img:last-of-type]:!h-14"
             />
           </div>
 
