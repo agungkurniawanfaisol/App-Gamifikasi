@@ -21,6 +21,9 @@ import { getLevelLabel } from "@/lib/labels";
 import { buildAchievementBonusKey } from "@/lib/points";
 import { getPublishedGroupsForLevel } from "@/lib/progression";
 
+const PROGRAM_COMPLETE_TRIGGER =
+  "PROGRAM_COMPLETE" as AchievementTriggerType;
+
 export type GrantedRewardResult =
   | { type: "BONUS_POINTS"; points: number }
   | {
@@ -64,6 +67,16 @@ export async function isLevelComplete(
   return completed === groups.length;
 }
 
+export async function isProgramComplete(userId: number): Promise<boolean> {
+  const levels = await prisma.level.findMany({ select: { id: true } });
+  if (levels.length === 0) return false;
+
+  const results = await Promise.all(
+    levels.map((level) => isLevelComplete(userId, level.id))
+  );
+  return results.every(Boolean);
+}
+
 async function matchesAchievement(
   userId: number,
   definition: {
@@ -97,6 +110,11 @@ async function matchesAchievement(
     const config = parseProficiencyReachConfig(definition.triggerConfig);
     if (!config) return false;
     return event.proficiencyLevel === config.proficiencyLevel;
+  }
+
+  if (definition.triggerType === PROGRAM_COMPLETE_TRIGGER) {
+    if (event.type !== "PROGRAM_COMPLETE") return false;
+    return isProgramComplete(userId);
   }
 
   return false;
@@ -233,7 +251,9 @@ export async function evaluateAchievements(
       ? AchievementTriggerType.GROUP_COMPLETE
       : event.type === "LEVEL_COMPLETE"
         ? AchievementTriggerType.LEVEL_COMPLETE
-        : AchievementTriggerType.PROFICIENCY_REACH;
+        : event.type === "PROGRAM_COMPLETE"
+          ? PROGRAM_COMPLETE_TRIGGER
+          : AchievementTriggerType.PROFICIENCY_REACH;
 
   const [definitions, earned] = await Promise.all([
     prisma.achievementDefinition.findMany({
@@ -308,7 +328,12 @@ export async function evaluateAfterGroupComplete(
     ? await evaluateAchievements(userId, { type: "LEVEL_COMPLETE", levelId })
     : [];
 
-  return [...groupResults, ...levelResults];
+  const programResults =
+    levelComplete && (await isProgramComplete(userId))
+      ? await evaluateAchievements(userId, { type: "PROGRAM_COMPLETE" })
+      : [];
+
+  return [...groupResults, ...levelResults, ...programResults];
 }
 
 export async function evaluateAfterProficiencyLevelUp(
@@ -369,10 +394,15 @@ export async function getAchievementsWithProgress(
             progress = {
               current: groupsCompleted,
               target: config.groupsCompleted,
-              percent: Math.min(
-                100,
-                Math.round((groupsCompleted / config.groupsCompleted) * 100)
-              ),
+              percent:
+                config.groupsCompleted > 0
+                  ? Math.min(
+                      100,
+                      Math.round(
+                        (groupsCompleted / config.groupsCompleted) * 100
+                      )
+                    )
+                  : 0,
             };
           }
         } else if (def.triggerType === AchievementTriggerType.LEVEL_COMPLETE) {
@@ -398,6 +428,17 @@ export async function getAchievementsWithProgress(
               };
             }
           }
+        } else if (def.triggerType === PROGRAM_COMPLETE_TRIGGER) {
+          const completedLevels = await Promise.all(
+            levels.map((level) => isLevelComplete(userId, level.id))
+          );
+          const current = completedLevels.filter(Boolean).length;
+          const target = levels.length;
+          progress = {
+            current,
+            target,
+            percent: target > 0 ? Math.round((current / target) * 100) : 0,
+          };
         }
       }
 

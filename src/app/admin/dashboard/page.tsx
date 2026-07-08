@@ -1,5 +1,8 @@
 import Link from "next/link";
+import { Role } from "@prisma/client";
 import { getAdminDashboardStats } from "@/actions/admin/stats";
+import { getActiveAnnouncementsForRole } from "@/lib/announcement-queries";
+import { AnnouncementBannerStack } from "@/components/student/announcements/announcement-banner-stack";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
@@ -7,7 +10,10 @@ import { getLevelLabel, labels } from "@/lib/labels";
 import { BookOpen, HelpCircle, Layers, Users } from "lucide-react";
 
 export default async function AdminDashboardPage() {
-  const stats = await getAdminDashboardStats();
+  const [stats, activeAnnouncements] = await Promise.all([
+    getAdminDashboardStats(),
+    getActiveAnnouncementsForRole(Role.ADMIN, 3),
+  ]);
 
   return (
     <div className="space-y-8">
@@ -15,6 +21,8 @@ export default async function AdminDashboardPage() {
         title={labels.admin.dashboardTitle}
         description={labels.admin.dashboardDescription}
       />
+
+      <AnnouncementBannerStack announcements={activeAnnouncements} />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Link href="/admin/users?role=STUDENT" className="block transition-opacity hover:opacity-90">

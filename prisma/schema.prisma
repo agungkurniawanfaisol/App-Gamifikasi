@@ -68,6 +68,7 @@ enum AchievementTriggerType {
   GROUP_COMPLETE
   LEVEL_COMPLETE
   PROFICIENCY_REACH
+  PROGRAM_COMPLETE
 }
 
 enum RewardType {

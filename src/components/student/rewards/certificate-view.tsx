@@ -12,6 +12,7 @@ type CertificateViewProps = {
   levelLabel: string;
   issuedAt: string;
   achievementTitle?: string | null;
+  bodyText?: string;
 };
 
 export function CertificateView({
@@ -22,6 +23,7 @@ export function CertificateView({
   levelLabel,
   issuedAt,
   achievementTitle,
+  bodyText,
 }: CertificateViewProps) {
   return (
     <div className="space-y-6">
@@ -43,7 +45,7 @@ export function CertificateView({
           {userName}
         </p>
         <p className="mx-auto mt-8 max-w-lg text-sm leading-relaxed text-muted-foreground">
-          {labels.rewards.certificateBody(levelLabel)}
+          {bodyText ?? labels.rewards.certificateBody(levelLabel)}
         </p>
         {achievementTitle && (
           <p className="mt-4 text-sm font-semibold text-primary">

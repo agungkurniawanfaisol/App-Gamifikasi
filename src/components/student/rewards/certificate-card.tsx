@@ -22,7 +22,7 @@ export function CertificateCard({
 
   return (
     <Link
-      href={`/dashboard/rewards/certificates/${certificate.id}`}
+      href={`/dashboard/certificates/${certificate.id}`}
       className={cn(
         "group block overflow-hidden rounded-xl border border-amber-500/20 bg-gradient-to-br from-amber-500/10 via-card to-primary/5 p-5 shadow-sm transition-all hover:border-amber-500/40 hover:shadow-md",
         className

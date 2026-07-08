@@ -12,42 +12,73 @@ export async function RewardPreviewCard({ userId }: { userId: number }) {
   );
 
   return (
-    <Link
-      href="/dashboard/rewards"
-      className="group relative block overflow-hidden rounded-xl border border-border bg-card p-5 shadow-sm transition-all hover:shadow-md"
-    >
-      <div className="absolute -right-4 -top-4 size-16 rounded-full bg-primary/5" />
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {labels.rewards.previewTitle}
-          </p>
-          <p className="mt-1 text-lg font-bold">
-            {labels.rewards.previewEarned(earnedCount, achievements.length)}
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {certificates.length > 0
-              ? labels.rewards.previewCertificates(certificates.length)
-              : next?.progress
-                ? labels.rewards.progress(
-                    next.progress.current,
-                    next.progress.target
-                  )
-                : labels.rewards.previewEmpty}
-          </p>
+    <div className="grid gap-4 sm:grid-cols-2">
+      <Link
+        href="/dashboard/rewards"
+        className="group relative block overflow-hidden rounded-xl border border-border bg-card p-5 shadow-sm transition-all hover:shadow-md"
+      >
+        <div className="absolute -right-4 -top-4 size-16 rounded-full bg-primary/5" />
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {labels.rewards.previewTitle}
+            </p>
+            <p className="mt-1 text-lg font-bold">
+              {labels.rewards.previewEarned(earnedCount, achievements.length)}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {certificates.length > 0
+                ? labels.rewards.previewCertificates(certificates.length)
+                : next?.progress
+                  ? labels.rewards.progress(
+                      next.progress.current,
+                      next.progress.target
+                    )
+                  : labels.rewards.previewEmpty}
+            </p>
+          </div>
+          <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            {certificates.length > 0 ? (
+              <Award className="size-5" />
+            ) : (
+              <Gift className="size-5" />
+            )}
+          </div>
         </div>
-        <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          {certificates.length > 0 ? (
+        <div className="mt-4 flex items-center gap-1 text-xs font-medium text-primary">
+          {labels.rewards.viewAll}
+          <ChevronRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+        </div>
+      </Link>
+
+      <Link
+        href="/dashboard/certificates"
+        className="group relative block overflow-hidden rounded-xl border border-border bg-card p-5 shadow-sm transition-all hover:shadow-md"
+      >
+        <div className="absolute -right-4 -top-4 size-16 rounded-full bg-amber-500/10" />
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {labels.nav.certificates}
+            </p>
+            <p className="mt-1 text-lg font-bold">
+              {certificates.length > 0
+                ? labels.rewards.previewCertificates(certificates.length)
+                : labels.certificates.emptyTitle}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {labels.certificates.pageSubtitle}
+            </p>
+          </div>
+          <div className="flex size-10 items-center justify-center rounded-lg bg-amber-500/15 text-amber-700 dark:text-amber-400">
             <Award className="size-5" />
-          ) : (
-            <Gift className="size-5" />
-          )}
+          </div>
         </div>
-      </div>
-      <div className="mt-4 flex items-center gap-1 text-xs font-medium text-primary">
-        {labels.rewards.viewAll}
-        <ChevronRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-      </div>
-    </Link>
+        <div className="mt-4 flex items-center gap-1 text-xs font-medium text-primary">
+          {labels.rewards.openCertificatesPage}
+          <ChevronRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+        </div>
+      </Link>
+    </div>
   );
 }

@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TABLE `achievement_definitions` MODIFY `trigger_type` ENUM('GROUP_COMPLETE', 'LEVEL_COMPLETE', 'PROFICIENCY_REACH', 'PROGRAM_COMPLETE') NOT NULL;

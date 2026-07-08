@@ -38,7 +38,8 @@ export type PremiumUnlockRewardConfig = {
 export type AchievementEventContext =
   | { type: "GROUP_COMPLETE"; levelId: number; groupId: number }
   | { type: "LEVEL_COMPLETE"; levelId: number }
-  | { type: "PROFICIENCY_REACH"; proficiencyLevel: PrismaProficiencyLevel };
+  | { type: "PROFICIENCY_REACH"; proficiencyLevel: PrismaProficiencyLevel }
+  | { type: "PROGRAM_COMPLETE" };
 
 export function parseGroupCompleteConfig(
   raw: unknown
@@ -131,6 +132,10 @@ export function eventMatchesTrigger(
     const config = parseProficiencyReachConfig(triggerConfig);
     if (!config) return false;
     return event.proficiencyLevel === config.proficiencyLevel;
+  }
+
+  if (triggerType === ("PROGRAM_COMPLETE" as AchievementTriggerType)) {
+    return event.type === "PROGRAM_COMPLETE";
   }
 
   return false;

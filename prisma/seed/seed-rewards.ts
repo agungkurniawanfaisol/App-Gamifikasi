@@ -1,9 +1,10 @@
-import { LevelName, Prisma, PrismaClient } from "@prisma/client";
+import { AchievementTriggerType, LevelName, Prisma, PrismaClient } from "@prisma/client";
 import { SEED_SCALE } from "./config";
 
 const TRIGGER_GROUP = "GROUP_COMPLETE" as const;
 const TRIGGER_LEVEL = "LEVEL_COMPLETE" as const;
 const TRIGGER_PROFICIENCY = "PROFICIENCY_REACH" as const;
+const TRIGGER_PROGRAM = "PROGRAM_COMPLETE" as const;
 const REWARD_POINTS = "BONUS_POINTS" as const;
 const REWARD_CERT = "CERTIFICATE" as const;
 const REWARD_PREMIUM = "PREMIUM_UNLOCK" as const;
@@ -28,6 +29,12 @@ const CERTIFICATES = [
     levelName: LevelName.HARD,
   },
 ] as const;
+
+const GRADUATION_CERTIFICATE = {
+  slug: "cert-graduation",
+  title: "Program Completion Certificate",
+  subtitle: "Certificate of Completion — Full Program",
+} as const;
 
 const ACHIEVEMENTS = [
   {
@@ -106,6 +113,21 @@ const ACHIEVEMENTS = [
     ],
   },
   {
+    slug: "program-complete",
+    title: "Program Graduate",
+    description: "Complete all learning groups in every level.",
+    triggerType: TRIGGER_PROGRAM,
+    triggerConfig: {},
+    iconKey: "medal",
+    sortOrder: 13,
+    rewards: [
+      {
+        rewardType: REWARD_CERT,
+        rewardConfig: { templateSlug: "cert-graduation" },
+      },
+    ],
+  },
+  {
     slug: "proficiency-elementary",
     title: "Elementary Proficiency",
     description: "Reach Elementary proficiency to unlock premium Basic content.",
@@ -166,6 +188,23 @@ export async function seedRewards(prisma: PrismaClient): Promise<void> {
     });
   }
 
+  await prisma.certificateTemplate.upsert({
+    where: { slug: GRADUATION_CERTIFICATE.slug },
+    update: {
+      title: GRADUATION_CERTIFICATE.title,
+      subtitle: GRADUATION_CERTIFICATE.subtitle,
+      levelId: null,
+      isActive: true,
+    },
+    create: {
+      slug: GRADUATION_CERTIFICATE.slug,
+      title: GRADUATION_CERTIFICATE.title,
+      subtitle: GRADUATION_CERTIFICATE.subtitle,
+      levelId: null,
+      designVariant: "classic",
+    },
+  });
+
   for (const achievement of ACHIEVEMENTS) {
     const rewards = achievement.rewards.map((reward, index) => {
       const config = { ...reward.rewardConfig } as Record<string, unknown>;
@@ -185,7 +224,7 @@ export async function seedRewards(prisma: PrismaClient): Promise<void> {
       update: {
         title: achievement.title,
         description: achievement.description,
-        triggerType: achievement.triggerType,
+        triggerType: achievement.triggerType as AchievementTriggerType,
         triggerConfig: achievement.triggerConfig,
         iconKey: achievement.iconKey,
         sortOrder: achievement.sortOrder,
@@ -199,7 +238,7 @@ export async function seedRewards(prisma: PrismaClient): Promise<void> {
         slug: achievement.slug,
         title: achievement.title,
         description: achievement.description,
-        triggerType: achievement.triggerType,
+        triggerType: achievement.triggerType as AchievementTriggerType,
         triggerConfig: achievement.triggerConfig,
         iconKey: achievement.iconKey,
         sortOrder: achievement.sortOrder,

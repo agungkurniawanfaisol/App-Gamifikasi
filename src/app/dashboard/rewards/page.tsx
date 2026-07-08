@@ -36,7 +36,14 @@ export default async function RewardsPage() {
           <AchievementCollection achievements={achievements} />
         </TabsContent>
 
-        <TabsContent value="certificates">
+        <TabsContent value="certificates" className="space-y-4">
+          <div className="flex justify-end">
+            <Button asChild variant="outline" size="sm" className="min-h-11">
+              <Link href="/dashboard/certificates">
+                {labels.rewards.openCertificatesPage}
+              </Link>
+            </Button>
+          </div>
           {certificates.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2">
               {certificates.map((certificate) => (

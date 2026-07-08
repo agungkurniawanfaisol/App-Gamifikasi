@@ -2,11 +2,16 @@
 
 import { useTransition } from "react";
 import { ChallengeRecurrence } from "@prisma/client";
-import { Save, Trophy } from "lucide-react";
+import { Save, Trash2, Trophy } from "lucide-react";
+import { toast } from "sonner";
 import type { getGamificationOverview } from "@/actions/admin/gamification";
 import {
   createAchievementDefinition,
   createChallengeTemplate,
+  deleteAchievementDefinition,
+  deleteCertificateTemplate,
+  deleteChallengeTemplate,
+  resetPointValues,
   savePointValues,
   toggleAchievementActive,
   toggleCertificateActive,
@@ -37,6 +42,38 @@ type GamificationData = Awaited<ReturnType<typeof getGamificationOverview>>;
 
 export function GamificationPanel({ data }: { data: GamificationData }) {
   const [pending, startTransition] = useTransition();
+
+  function handleDeleteChallenge(id: number) {
+    if (!window.confirm(labels.admin.gamificationDeleteChallengeConfirm)) return;
+    startTransition(async () => {
+      const result = await deleteChallengeTemplate(id);
+      if (!result.ok) toast.error(labels.admin.gamificationDeleteFailed);
+    });
+  }
+
+  function handleDeleteAchievement(id: number) {
+    if (!window.confirm(labels.admin.gamificationDeleteAchievementConfirm)) return;
+    startTransition(async () => {
+      const result = await deleteAchievementDefinition(id);
+      if (!result.ok) toast.error(labels.admin.gamificationDeleteFailed);
+    });
+  }
+
+  function handleDeleteCertificate(id: number) {
+    if (!window.confirm(labels.admin.gamificationDeleteCertificateConfirm)) return;
+    startTransition(async () => {
+      const result = await deleteCertificateTemplate(id);
+      if (!result.ok) toast.error(labels.admin.gamificationDeleteFailed);
+    });
+  }
+
+  function handleResetPoints() {
+    if (!window.confirm(labels.admin.gamificationResetPointsConfirm)) return;
+    startTransition(async () => {
+      const result = await resetPointValues();
+      if (!result.ok) toast.error(labels.admin.gamificationDeleteFailed);
+    });
+  }
 
   return (
     <Tabs defaultValue="challenges" className="space-y-4">
@@ -164,6 +201,16 @@ export function GamificationPanel({ data }: { data: GamificationData }) {
                     ? labels.admin.unpublish
                     : labels.admin.publish}
                 </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  className="min-h-11"
+                  disabled={pending}
+                  onClick={() => handleDeleteChallenge(challenge.id)}
+                >
+                  <Trash2 className="size-4" />
+                  {labels.admin.gamificationDelete}
+                </Button>
               </div>
             </li>
           ))}
@@ -254,19 +301,31 @@ export function GamificationPanel({ data }: { data: GamificationData }) {
                     : labels.admin.gamificationInactive}
                 </Badge>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                className="min-h-11 w-full sm:w-auto"
-                disabled={pending}
-                onClick={() =>
-                  startTransition(() => toggleAchievementActive(achievement.id))
-                }
-              >
-                {achievement.isActive
-                  ? labels.admin.unpublish
-                  : labels.admin.publish}
-              </Button>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="min-h-11 w-full sm:w-auto"
+                  disabled={pending}
+                  onClick={() =>
+                    startTransition(() => toggleAchievementActive(achievement.id))
+                  }
+                >
+                  {achievement.isActive
+                    ? labels.admin.unpublish
+                    : labels.admin.publish}
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  className="min-h-11 w-full sm:w-auto"
+                  disabled={pending}
+                  onClick={() => handleDeleteAchievement(achievement.id)}
+                >
+                  <Trash2 className="size-4" />
+                  {labels.admin.gamificationDelete}
+                </Button>
+              </div>
             </li>
           ))}
         </ul>
@@ -296,19 +355,31 @@ export function GamificationPanel({ data }: { data: GamificationData }) {
                     : labels.admin.gamificationInactive}
                 </Badge>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                className="min-h-11 w-full sm:w-auto"
-                disabled={pending}
-                onClick={() =>
-                  startTransition(() => toggleCertificateActive(certificate.id))
-                }
-              >
-                {certificate.isActive
-                  ? labels.admin.unpublish
-                  : labels.admin.publish}
-              </Button>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="min-h-11 w-full sm:w-auto"
+                  disabled={pending}
+                  onClick={() =>
+                    startTransition(() => toggleCertificateActive(certificate.id))
+                  }
+                >
+                  {certificate.isActive
+                    ? labels.admin.unpublish
+                    : labels.admin.publish}
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  className="min-h-11 w-full sm:w-auto"
+                  disabled={pending}
+                  onClick={() => handleDeleteCertificate(certificate.id)}
+                >
+                  <Trash2 className="size-4" />
+                  {labels.admin.gamificationDelete}
+                </Button>
+              </div>
             </li>
           ))}
         </ul>
@@ -323,6 +394,7 @@ export function GamificationPanel({ data }: { data: GamificationData }) {
           </CardHeader>
           <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
             <form
+              key={JSON.stringify(data.pointValues)}
               className="grid gap-4 sm:grid-cols-2"
               onSubmit={(e) => {
                 e.preventDefault();
@@ -413,8 +485,17 @@ export function GamificationPanel({ data }: { data: GamificationData }) {
                   defaultValue={data.pointValues.groupComplete}
                 />
               </div>
-              <div className="sm:col-span-2">
-                <Button type="submit" disabled={pending} className="min-h-11">
+              <div className="flex flex-col-reverse gap-2 sm:col-span-2 sm:flex-row">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="min-h-11 w-full sm:w-auto"
+                  disabled={pending}
+                  onClick={handleResetPoints}
+                >
+                  {labels.admin.gamificationResetPoints}
+                </Button>
+                <Button type="submit" disabled={pending} className="min-h-11 w-full sm:w-auto">
                   <Save className="size-4" />
                   {labels.admin.gamificationSavePoints}
                 </Button>

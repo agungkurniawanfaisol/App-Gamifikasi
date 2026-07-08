@@ -1,56 +1,16 @@
 "use client";
 
-import {
-  Award,
-  BookOpen,
-  Gift,
-  Home,
-  LogOut,
-  MessageCircle,
-  Trophy,
-  Medal,
-  Target,
-} from "lucide-react";
+import { LogOut, Trophy } from "lucide-react";
 import { logoutAction } from "@/actions/auth";
 import { BrandMark } from "@/components/layout/brand-logo";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/layout/mode-toggle";
-import { NavLink } from "@/components/layout/nav-link";
-import { useSidebar } from "@/components/layout/sidebar-context";
+import { NavTree } from "@/components/layout/nav-tree";
+import { useSidebarRailCollapsed } from "@/components/layout/sidebar-context";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { studentNavTree } from "@/lib/nav-config";
 import { labels } from "@/lib/labels";
 import { cn } from "@/lib/utils";
-
-const links = [
-  {
-    href: "/dashboard",
-    label: labels.nav.home,
-    icon: Home,
-    exact: true,
-  },
-  { href: "/dashboard/learn", label: labels.nav.learn, icon: BookOpen },
-  { href: "/dashboard/chat", label: labels.nav.chat, icon: MessageCircle },
-  {
-    href: "/dashboard/ranking",
-    label: labels.nav.ranking,
-    icon: Medal,
-  },
-  {
-    href: "/dashboard/badges",
-    label: labels.nav.badges,
-    icon: Award,
-  },
-  {
-    href: "/dashboard/rewards",
-    label: labels.nav.rewards,
-    icon: Gift,
-  },
-  {
-    href: "/dashboard/challenges",
-    label: labels.nav.challenges,
-    icon: Target,
-  },
-];
 
 export function StudentNav({
   userName,
@@ -65,29 +25,29 @@ export function StudentNav({
   proficiencyLabel?: string;
   proficiencyHint?: string;
 }) {
-  const { collapsed } = useSidebar();
+  const railCollapsed = useSidebarRailCollapsed();
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
       <div
         className={cn(
           "shrink-0 border-b border-sidebar-border",
-          collapsed ? "p-3" : "p-5"
+          railCollapsed ? "p-3" : "p-5"
         )}
       >
         <BrandMark
           subtitle={labels.nav.learning}
-          collapsed={collapsed}
+          collapsed={railCollapsed}
         />
       </div>
 
       <div
         className={cn(
           "shrink-0 border-b border-sidebar-border",
-          collapsed ? "p-2" : "p-4"
+          railCollapsed ? "p-2" : "p-4"
         )}
       >
-        {collapsed ? (
+        {railCollapsed ? (
           <div
             className="flex items-center justify-center rounded-md border border-border bg-card p-2"
             title={`${userName} · ${labels.nav.points(points)}${proficiencyLabel ? ` · ${proficiencyLabel}` : ""}`}
@@ -124,34 +84,32 @@ export function StudentNav({
       <ScrollArea className="h-0 min-h-0 flex-1">
         <nav
           className={cn(
-            "flex flex-col gap-1",
-            collapsed ? "p-2" : "p-4"
+            "flex flex-col",
+            railCollapsed ? "p-2" : "p-4"
           )}
         >
-          {!collapsed && (
+          {!railCollapsed && (
             <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
               {labels.nav.menu}
             </p>
           )}
-          {links.map((link) => (
-            <NavLink key={link.href} {...link} />
-          ))}
+          <NavTree items={studentNavTree} />
         </nav>
       </ScrollArea>
 
       <div
         className={cn(
           "shrink-0 space-y-3 border-t border-sidebar-border",
-          collapsed ? "p-2" : "p-4"
+          railCollapsed ? "p-2" : "p-4"
         )}
       >
         <div
           className={cn(
             "flex items-center gap-2",
-            collapsed ? "flex-col" : "justify-between"
+            railCollapsed ? "flex-col" : "justify-between"
           )}
         >
-          {!collapsed && (
+          {!railCollapsed && (
             <span className="text-xs text-muted-foreground">
               {labels.theme.appearance}
             </span>
@@ -163,14 +121,14 @@ export function StudentNav({
             type="submit"
             variant="outline"
             size="sm"
-            title={collapsed ? labels.auth.signOut : undefined}
+            title={railCollapsed ? labels.auth.signOut : undefined}
             className={cn(
               "gap-2",
-              collapsed ? "size-9 w-full justify-center p-0" : "w-full justify-start"
+              railCollapsed ? "size-9 w-full justify-center p-0" : "w-full justify-start"
             )}
           >
             <LogOut className="size-4" />
-            {!collapsed && labels.auth.signOut}
+            {!railCollapsed && labels.auth.signOut}
           </Button>
         </form>
       </div>

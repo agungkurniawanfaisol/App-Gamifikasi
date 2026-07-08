@@ -7,14 +7,26 @@ import { cn } from "@/lib/utils";
 
 export function LearningProgressSection({
   summary,
+  hideProficiency = false,
+  hideHeader = false,
+  className,
 }: {
   summary: LearningProgressSummary;
+  hideProficiency?: boolean;
+  hideHeader?: boolean;
+  className?: string;
 }) {
   const { material, proficiency, skills } = summary;
   const LevelIcon = proficiency.level.icon;
 
   return (
-    <section className="rounded-xl border border-border bg-card p-5 shadow-sm sm:p-6">
+    <section
+      className={cn(
+        "rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6",
+        className
+      )}
+    >
+      {hideHeader ? null : (
       <div className="mb-6">
         <h2 className="flex items-center gap-2 text-lg font-bold tracking-tight">
           <TrendingUp className="size-5 text-primary" />
@@ -24,8 +36,14 @@ export function LearningProgressSection({
           {labels.progress.sectionSubtitle}
         </p>
       </div>
+      )}
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div
+        className={cn(
+          "grid gap-5",
+          hideProficiency ? "grid-cols-1" : "lg:grid-cols-2"
+        )}
+      >
         <div className="space-y-3 rounded-xl border border-border/70 bg-muted/15 p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -47,6 +65,7 @@ export function LearningProgressSection({
           />
         </div>
 
+        {!hideProficiency ? (
         <div className="space-y-3 rounded-xl border border-border/70 bg-muted/15 p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -87,6 +106,7 @@ export function LearningProgressSection({
             )}
           />
         </div>
+        ) : null}
       </div>
 
       <div className="mt-6">

@@ -248,3 +248,71 @@ export async function savePointValues(values: PointValuesConfig) {
   });
   revalidateGamification();
 }
+
+export async function deleteChallengeTemplate(id: number): Promise<{ ok: boolean }> {
+  await requireAdmin();
+  try {
+    const row = await prisma.challengeTemplate.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!row) return { ok: false };
+    await prisma.challengeTemplate.delete({ where: { id } });
+    revalidateGamification();
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
+
+export async function deleteAchievementDefinition(
+  id: number
+): Promise<{ ok: boolean }> {
+  await requireAdmin();
+  try {
+    const row = await prisma.achievementDefinition.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!row) return { ok: false };
+    await prisma.achievementDefinition.delete({ where: { id } });
+    revalidateGamification();
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
+
+export async function deleteCertificateTemplate(
+  id: number
+): Promise<{ ok: boolean }> {
+  await requireAdmin();
+  try {
+    const row = await prisma.certificateTemplate.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!row) return { ok: false };
+    await prisma.certificateTemplate.delete({ where: { id } });
+    revalidateGamification();
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
+
+export async function resetPointValues(): Promise<{ ok: boolean }> {
+  await requireAdmin();
+  try {
+    const defaults = defaultPointValues();
+    await prisma.appSetting.upsert({
+      where: { key: POINT_VALUES_KEY },
+      create: { key: POINT_VALUES_KEY, value: defaults },
+      update: { value: defaults },
+    });
+    revalidateGamification();
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}

@@ -49,3 +49,19 @@ export function useSidebar() {
   }
   return context;
 }
+
+/** Collapsed icon rail — desktop lg+ only; mobile sheet always shows full tree labels. */
+export function useSidebarRailCollapsed(): boolean {
+  const { collapsed } = useSidebar();
+  const [isLargeScreen, setIsLargeScreen] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 1024px)");
+    const update = () => setIsLargeScreen(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  return collapsed && isLargeScreen;
+}

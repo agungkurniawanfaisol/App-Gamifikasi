@@ -11,7 +11,7 @@ export function UserAvatar({
 }: {
   name: string;
   imageUrl?: string | null;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   variant?: "default" | "header";
   className?: string;
 }) {
@@ -19,6 +19,7 @@ export function UserAvatar({
     sm: "size-8 text-xs",
     md: "size-9 text-sm",
     lg: "size-20 text-xl",
+    xl: "size-24 text-2xl sm:size-28",
   };
 
   const ringClasses =
@@ -43,7 +44,15 @@ export function UserAvatar({
           alt={name}
           fill
           className="object-cover"
-          sizes={size === "lg" ? "80px" : size === "md" ? "36px" : "32px"}
+          sizes={
+            size === "xl"
+              ? "112px"
+              : size === "lg"
+                ? "80px"
+                : size === "md"
+                  ? "36px"
+                  : "32px"
+          }
         />
       </div>
     );

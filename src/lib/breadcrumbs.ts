@@ -253,6 +253,21 @@ function buildStudentBreadcrumbs(segments: string[]): BreadcrumbItem[] {
     return items;
   }
 
+  if (segments[0] === "challenges") {
+    items.push(crumb(labels.nav.breadcrumb.challenges, undefined, true));
+    return items;
+  }
+
+  if (segments[0] === "rewards") {
+    items.push(crumb(labels.nav.breadcrumb.rewards, undefined, true));
+    return items;
+  }
+
+  if (segments[0] === "certificates") {
+    items.push(crumb(labels.nav.breadcrumb.certificates, undefined, true));
+    return items;
+  }
+
   if (segments[0] === "ranking") {
     items.push(crumb(labels.nav.breadcrumb.ranking, undefined, true));
     return items;
@@ -260,6 +275,11 @@ function buildStudentBreadcrumbs(segments: string[]): BreadcrumbItem[] {
 
   if (segments[0] === "badges") {
     items.push(crumb(labels.nav.badges, undefined, true));
+    return items;
+  }
+
+  if (segments[0] === "announcements") {
+    items.push(crumb(labels.nav.breadcrumb.announcements, undefined, true));
     return items;
   }
 

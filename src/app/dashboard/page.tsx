@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireStudent, getUserId } from "@/lib/auth-helpers";
+import { getActiveAnnouncementsForRole } from "@/lib/announcement-queries";
 import { getBatchLevelProgressSummaries } from "@/lib/progression";
 import { getUserRankSummary } from "@/lib/ranking-queries";
 import { getProficiencySummary } from "@/lib/proficiency-queries";
@@ -21,6 +23,9 @@ import { RankingPreviewCard } from "@/components/student/ranking-preview-card";
 import { BadgePreviewCard } from "@/components/student/badges/badge-preview-card";
 import { RewardPreviewCard } from "@/components/student/rewards/reward-preview-card";
 import { ChallengePreviewCard } from "@/components/student/challenges/challenge-preview-card";
+import { AnnouncementBannerStack } from "@/components/student/announcements/announcement-banner-stack";
+import { AnnouncementPreviewCard } from "@/components/student/announcements/announcement-preview-card";
+import { DashboardQuickLinks } from "@/components/student/dashboard-quick-links";
 import { getNextAchievementHint } from "@/lib/achievement-engine";
 import { BadgeIconRow } from "@/components/student/badge-card";
 import { getEarnedBadges } from "@/actions/student/badges";
@@ -56,7 +61,7 @@ export default async function StudentDashboardPage() {
   const userId = getUserId(session);
   const userName = session.user.name ?? "Student";
 
-  const [levels, rankSummary, proficiencySummary, learningProgress, lastProgress, nextRewardHint] = await Promise.all([
+  const [levels, rankSummary, proficiencySummary, learningProgress, lastProgress, nextRewardHint, activeAnnouncements] = await Promise.all([
     prisma.level.findMany({ orderBy: { order: "asc" } }),
     getUserRankSummary(userId),
     getProficiencySummary(userId),
@@ -74,6 +79,7 @@ export default async function StudentDashboardPage() {
       },
     }),
     getNextAchievementHint(userId),
+    getActiveAnnouncementsForRole(Role.STUDENT, 3),
   ]);
 
   const progressByLevel = await getBatchLevelProgressSummaries(
@@ -114,13 +120,18 @@ export default async function StudentDashboardPage() {
           </h1>
           <p className="mt-1 text-muted-foreground">{labels.student.chooseLevel}</p>
         </div>
-        <div className="flex w-full flex-col gap-2 sm:w-auto">
+        <DashboardQuickLinks>
           <RankingPreviewCard userId={userId} />
+          <AnnouncementPreviewCard role={Role.STUDENT} />
           <ChallengePreviewCard userId={userId} />
           <BadgePreviewCard userId={userId} />
-          <RewardPreviewCard userId={userId} />
-        </div>
+          <div className="col-span-2 sm:col-span-1">
+            <RewardPreviewCard userId={userId} />
+          </div>
+        </DashboardQuickLinks>
       </div>
+
+      <AnnouncementBannerStack announcements={activeAnnouncements} />
 
       {/* ===== HERO STATS ROW ===== */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

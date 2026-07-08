@@ -65,6 +65,9 @@ function parseAnnouncementForm(formData: FormData) {
 
 function revalidateAnnouncements() {
   revalidatePath("/admin/announcements");
+  revalidatePath("/admin/dashboard");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/announcements");
 }
 
 export async function listAnnouncements(): Promise<AnnouncementListItem[]> {
