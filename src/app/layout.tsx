@@ -14,6 +14,9 @@ const fontSans = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: labels.meta.title,
   description: labels.meta.description,
+  other: {
+    google: "notranslate",
+  },
 };
 
 export const viewport: Viewport = {
@@ -27,8 +30,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className="h-full">
-      <body className={`${fontSans.variable} h-full font-sans`}>
+    <html
+      lang="en"
+      translate="no"
+      suppressHydrationWarning
+      className="notranslate h-full"
+    >
+      <body className={`notranslate ${fontSans.variable} h-full font-sans`}>
         <ThemeProvider>
           {children}
           <Toaster />

@@ -6,6 +6,15 @@
 const nextConfig = {
   output: "standalone",
 
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [{ key: "Content-Language", value: "en" }],
+      },
+    ];
+  },
+
   images: {
     remotePatterns: [
       {
