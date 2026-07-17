@@ -1,5 +1,6 @@
 import { LoginForm } from "@/components/login-form";
 import { LandingNav } from "@/components/landing/landing-nav";
+import { AuthBrandHeader } from "@/components/auth/auth-brand-header";
 import {
   Card,
   CardContent,
@@ -7,64 +8,73 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { BrandLogoPair } from "@/components/layout/brand-logo";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { labels } from "@/lib/labels";
 import { Trophy, Zap } from "lucide-react";
 
-export default function LoginPage() {
+type LoginPageProps = {
+  searchParams: { passwordReset?: string | string[] };
+};
+
+export default function LoginPage({ searchParams }: LoginPageProps) {
+  const passwordWasReset = searchParams.passwordReset === "success";
+
   return (
     <div className="flex min-h-dvh flex-col">
       <LandingNav page="login" />
 
       <div className="flex min-h-0 flex-1 pt-14 md:pt-0">
-        <div className="hidden w-1/2 flex-col justify-between border-r border-border bg-card p-12 lg:flex">
-          <div className="flex flex-col gap-4">
-            <BrandLogoPair
-              brandSize="xl"
-              partnerSize="xs"
-              priority
-              className="justify-start [&>img:last-of-type]:!h-10 [&>img:last-of-type]:!w-auto sm:[&>img:last-of-type]:!h-11"
-            />
-            <span className="text-xl font-semibold">{labels.nav.brand}</span>
-          </div>
-          <div className="space-y-4">
-            <h2 className="text-3xl font-semibold leading-tight">
+        <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden border-r border-border bg-card p-10 lg:flex xl:p-12">
+          <div
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,hsl(var(--primary)/0.08),transparent_55%)]"
+            aria-hidden="true"
+          />
+
+          <AuthBrandHeader align="start" priority className="relative" />
+
+          <div className="relative space-y-5">
+            <h2 className="max-w-md text-3xl font-semibold leading-tight tracking-tight xl:text-4xl">
               {labels.login.heroTitle}
             </h2>
             <p className="max-w-md text-muted-foreground">
               {labels.meta.description}
             </p>
-            <div className="flex gap-6 text-sm text-muted-foreground">
+            <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
-                <Trophy className="size-4 text-points" />
+                <Trophy className="size-4 text-points" aria-hidden />
                 <span>{labels.login.heroEarnPoints}</span>
               </div>
               <div className="flex items-center gap-2">
-                <Zap className="size-4 text-primary" />
+                <Zap className="size-4 text-primary" aria-hidden />
                 <span>{labels.login.heroAiFeedback}</span>
               </div>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">
+
+          <p className="relative text-xs text-muted-foreground">
             © {new Date().getFullYear()} {labels.nav.brand}
           </p>
         </div>
 
-        <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto bg-background p-6">
-          <Card className="w-full max-w-md">
-            <CardHeader className="space-y-2 text-center">
-              <div className="mx-auto mb-3 lg:hidden">
-                <BrandLogoPair
-                  brandSize="lg"
-                  partnerSize="xs"
-                  className="mx-auto [&>img:last-of-type]:!h-9 [&>img:last-of-type]:!w-auto sm:[&>img:last-of-type]:!h-10"
-                  priority
-                />
+        <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto bg-background p-4 sm:p-6">
+          <Card className="w-full max-w-md shadow-sm">
+            <CardHeader className="space-y-4 text-center">
+              <div className="lg:hidden">
+                <AuthBrandHeader priority showTitle={false} />
               </div>
-              <CardTitle className="text-xl">{labels.login.title}</CardTitle>
-              <CardDescription>{labels.login.subtitle}</CardDescription>
+              <div className="space-y-1.5">
+                <CardTitle className="text-xl">{labels.login.title}</CardTitle>
+                <CardDescription>{labels.login.subtitle}</CardDescription>
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              {passwordWasReset && (
+                <Alert>
+                  <AlertDescription>
+                    {labels.passwordReset.success}
+                  </AlertDescription>
+                </Alert>
+              )}
               <LoginForm />
             </CardContent>
           </Card>

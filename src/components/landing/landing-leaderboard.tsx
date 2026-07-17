@@ -26,7 +26,7 @@ function LandingLeaderboardRow({
 
   return (
     <LandingRevealOnScroll delayMs={delayMs}>
-      <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card/80 px-4 py-3 transition-all hover:-translate-y-0.5 hover:border-primary/25 hover:bg-card hover:shadow-md">
+      <div className="landing-glass flex items-center gap-3 rounded-xl px-4 py-3 transition-all hover:-translate-y-0.5 hover:shadow-md">
         <div className="flex w-8 shrink-0 items-center justify-center">
           {rankIcon ? (
             (() => {
@@ -76,18 +76,18 @@ export function LandingLeaderboard({ leaderboard }: { leaderboard: LeaderboardRe
       className="relative scroll-mt-20 overflow-hidden border-y border-border/60 py-16 sm:py-20"
     >
       <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_0%,hsl(var(--primary)/0.12),transparent)]"
+        className="landing-spotlight pointer-events-none absolute inset-0 opacity-70"
         aria-hidden="true"
       />
       <div
-        className="pointer-events-none absolute inset-0 landing-grid-bg opacity-15 dark:opacity-10"
+        className="pointer-events-none absolute inset-0 landing-grid-bg opacity-25 dark:opacity-12"
         aria-hidden="true"
       />
 
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
         <LandingRevealOnScroll>
           <div className="mx-auto max-w-2xl text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/10 px-4 py-1.5 text-xs font-semibold text-amber-800 dark:text-amber-300">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-1.5 text-xs font-semibold text-amber-900 dark:text-amber-200">
               <Trophy className="landing-icon-float size-3.5" />
               {labels.landing.leaderboard.title}
             </div>
@@ -96,7 +96,7 @@ export function LandingLeaderboard({ leaderboard }: { leaderboard: LeaderboardRe
             </h2>
             <p className="mt-3 text-muted-foreground">{labels.landing.leaderboard.subtitle}</p>
             {hasParticipants && (
-              <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-muted px-4 py-1.5 text-xs font-medium text-muted-foreground">
+              <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/80 px-4 py-1.5 text-xs font-medium text-muted-foreground dark:bg-muted/50">
                 <Users className="size-3.5 text-primary" />
                 {labels.landing.leaderboard.participants(leaderboard.totalParticipants)}
               </p>
@@ -107,7 +107,7 @@ export function LandingLeaderboard({ leaderboard }: { leaderboard: LeaderboardRe
         {hasParticipants ? (
           <div className="mt-10 space-y-8">
             <LandingRevealOnScroll delayMs={100}>
-              <div className="overflow-hidden rounded-2xl border border-border/80 bg-card/90 shadow-lg backdrop-blur-sm">
+              <div className="landing-glass landing-gradient-border overflow-hidden rounded-2xl shadow-lg">
                 <RankingPodium topThree={leaderboard.topThree} />
               </div>
             </LandingRevealOnScroll>
@@ -134,8 +134,8 @@ export function LandingLeaderboard({ leaderboard }: { leaderboard: LeaderboardRe
           </div>
         ) : (
           <LandingRevealOnScroll delayMs={100}>
-            <div className="mt-10 rounded-2xl border border-dashed border-border bg-card/50 px-6 py-12 text-center">
-              <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-amber-500/10">
+            <div className="landing-glass landing-gradient-border mt-10 rounded-2xl border-dashed px-6 py-12 text-center">
+              <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-amber-500/10 shadow-[0_0_20px_color-mix(in_srgb,var(--amber-9)_20%,transparent)]">
                 <Trophy className="size-8 text-amber-600 dark:text-amber-400" />
               </div>
               <h3 className="mt-4 text-lg font-semibold">{labels.landing.leaderboard.emptyTitle}</h3>
@@ -161,7 +161,7 @@ export function LandingLeaderboard({ leaderboard }: { leaderboard: LeaderboardRe
 
         <LandingRevealOnScroll delayMs={150}>
           <div className="mt-10 text-center">
-            <Button asChild size="lg" className="gap-2 px-8">
+            <Button asChild size="lg" className="landing-cta-glow gap-2 px-8">
               <Link href="/login">
                 {labels.landing.leaderboard.joinCta}
                 <ArrowRight className="size-4" />

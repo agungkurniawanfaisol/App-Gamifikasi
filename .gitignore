@@ -47,3 +47,8 @@ prisma/*.db-journal
 
 # Data Penting
 DataPenting.txt
+
+# Windows / WSL file metadata artifacts
+*:Zone.Identifier
+*.TMP
+~RF*.TMP

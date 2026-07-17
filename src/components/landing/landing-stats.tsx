@@ -10,18 +10,18 @@ const stats = [
 
 export function LandingStats() {
   return (
-    <section className="border-y border-border/60 bg-card/50 py-10">
+    <section className="border-y border-border/60 bg-card/60 py-10 dark:bg-card/40">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <LandingRevealOnScroll>
           <p className="mb-6 text-center font-mono text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             {labels.landing.stats.label}
           </p>
         </LandingRevealOnScroll>
-        <div className="flex flex-col items-center justify-center gap-6 sm:flex-row sm:gap-12">
+        <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-6">
           {stats.map(({ icon: Icon, label }, index) => (
             <LandingRevealOnScroll key={label} delayMs={index * 100}>
-              <div className="flex items-center gap-3 rounded-xl px-3 py-2 transition-colors hover:bg-primary/5">
-                <div className="relative flex size-10 items-center justify-center rounded-lg bg-primary/10">
+              <div className="landing-glass landing-card-tech flex min-w-0 items-center gap-3 rounded-xl px-4 py-3 sm:min-w-[180px]">
+                <div className="relative flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 shadow-[0_0_16px_color-mix(in_srgb,var(--primary)_18%,transparent)]">
                   <Icon
                     className="landing-icon-float size-5 text-primary"
                     style={{ animationDelay: `${index * 0.35}s` }}

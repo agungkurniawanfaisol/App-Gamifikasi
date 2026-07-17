@@ -409,25 +409,138 @@
 
   .landing-grid-bg {
     background-image:
-      linear-gradient(to right, color-mix(in srgb, var(--primary) 10%, transparent) 1px, transparent 1px),
-      linear-gradient(to bottom, color-mix(in srgb, var(--primary) 10%, transparent) 1px, transparent 1px);
+      linear-gradient(to right, color-mix(in srgb, var(--primary) 14%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in srgb, var(--primary) 14%, transparent) 1px, transparent 1px);
     background-size: 48px 48px;
     animation: landing-grid-drift 24s linear infinite;
   }
 
+  .dark .landing-grid-bg {
+    background-image:
+      linear-gradient(to right, color-mix(in srgb, var(--primary) 10%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in srgb, var(--primary) 10%, transparent) 1px, transparent 1px);
+  }
+
   .landing-gradient-text {
     background: linear-gradient(
-      120deg,
-      var(--foreground) 0%,
-      var(--violet-9) 35%,
-      var(--amber-9) 70%,
-      var(--foreground) 100%
+      115deg,
+      var(--violet-11) 0%,
+      var(--violet-9) 28%,
+      #c026d3 55%,
+      var(--amber-9) 82%,
+      var(--violet-9) 100%
     );
-    background-size: 200% auto;
+    background-size: 220% auto;
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
     animation: landing-gradient-shift 7s ease-in-out infinite;
+  }
+
+  .dark .landing-gradient-text {
+    background: linear-gradient(
+      115deg,
+      #e9d5ff 0%,
+      var(--violet-9) 30%,
+      #e879f9 55%,
+      var(--amber-9) 80%,
+      #c4b5fd 100%
+    );
+    background-size: 220% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+
+  .landing-glass {
+    background: color-mix(in srgb, var(--card) 78%, transparent);
+    border: 1px solid color-mix(in srgb, var(--border) 80%, var(--primary) 20%);
+    box-shadow:
+      0 1px 0 color-mix(in srgb, #ffffff 55%, transparent) inset,
+      0 12px 40px color-mix(in srgb, var(--primary) 8%, transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .dark .landing-glass {
+    background: color-mix(in srgb, var(--card) 72%, transparent);
+    box-shadow:
+      0 1px 0 color-mix(in srgb, #ffffff 8%, transparent) inset,
+      0 16px 48px color-mix(in srgb, var(--primary) 14%, transparent);
+  }
+
+  .landing-spotlight {
+    background:
+      radial-gradient(
+        ellipse 70% 55% at 50% 0%,
+        color-mix(in srgb, var(--primary) 22%, transparent),
+        transparent 70%
+      );
+  }
+
+  .dark .landing-spotlight {
+    background:
+      radial-gradient(
+        ellipse 70% 55% at 50% 0%,
+        color-mix(in srgb, var(--primary) 28%, transparent),
+        transparent 70%
+      );
+  }
+
+  .landing-aurora {
+    background:
+      radial-gradient(ellipse 50% 40% at 20% 20%, color-mix(in srgb, var(--violet-9) 18%, transparent), transparent 60%),
+      radial-gradient(ellipse 45% 35% at 80% 30%, color-mix(in srgb, #c026d3 14%, transparent), transparent 55%),
+      radial-gradient(ellipse 40% 30% at 50% 80%, color-mix(in srgb, var(--amber-9) 12%, transparent), transparent 50%);
+    animation: landing-aurora-shift 14s ease-in-out infinite;
+  }
+
+  .dark .landing-aurora {
+    background:
+      radial-gradient(ellipse 50% 40% at 20% 20%, color-mix(in srgb, var(--violet-9) 28%, transparent), transparent 60%),
+      radial-gradient(ellipse 45% 35% at 80% 30%, color-mix(in srgb, #e879f9 18%, transparent), transparent 55%),
+      radial-gradient(ellipse 40% 30% at 50% 80%, color-mix(in srgb, var(--amber-9) 14%, transparent), transparent 50%);
+  }
+
+  .landing-gradient-border {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .landing-gradient-border::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--violet-9) 55%, transparent),
+      color-mix(in srgb, #c026d3 35%, transparent),
+      color-mix(in srgb, var(--amber-9) 45%, transparent)
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .landing-cta-glow {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--primary) 30%, transparent),
+      0 8px 28px color-mix(in srgb, var(--primary) 28%, transparent);
+    transition: box-shadow 0.25s ease, transform 0.2s ease;
+  }
+
+  .landing-cta-glow:hover {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--primary) 45%, transparent),
+      0 12px 36px color-mix(in srgb, var(--primary) 38%, transparent);
   }
 
   .landing-float {
@@ -484,12 +597,12 @@
   .landing-reveal-delay-3 { animation-delay: 0.36s; }
 
   .landing-card-tech {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
   }
 
   .landing-card-tech:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 28px color-mix(in srgb, var(--primary) 12%, transparent);
+    transform: translateY(-4px);
+    box-shadow: 0 14px 36px color-mix(in srgb, var(--primary) 16%, transparent);
   }
 
   .landing-row-reveal {
@@ -513,12 +626,17 @@
     .landing-data-stream-bar,
     .landing-reveal,
     .landing-row-reveal,
-    .landing-cta-shimmer {
+    .landing-cta-shimmer,
+    .landing-aurora {
       animation: none;
     }
 
     .landing-gpu {
       will-change: auto;
+    }
+
+    .landing-cta-glow:hover {
+      transform: none;
     }
   }
 
@@ -684,4 +802,9 @@
 @keyframes landing-border-glow {
   0%, 100% { opacity: 0.6; }
   50% { opacity: 1; }
+}
+
+@keyframes landing-aurora-shift {
+  0%, 100% { opacity: 0.85; transform: scale(1) translate(0, 0); }
+  50% { opacity: 1; transform: scale(1.05) translate(1%, -1%); }
 }

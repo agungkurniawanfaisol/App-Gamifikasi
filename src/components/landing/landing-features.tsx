@@ -20,38 +20,38 @@ const featureConfig: {
   {
     key: "learning",
     icon: BookOpen,
-    accent: "from-emerald-500/15 to-emerald-500/5 text-emerald-600 dark:text-emerald-400",
+    accent: "from-emerald-500/20 to-emerald-500/5 text-emerald-600 dark:text-emerald-400",
   },
   {
     key: "ai",
     icon: Sparkles,
-    accent: "from-violet-500/15 to-violet-500/5 text-violet-600 dark:text-violet-400",
+    accent: "from-violet-500/20 to-violet-500/5 text-violet-600 dark:text-violet-400",
   },
   {
     key: "ranking",
     icon: Medal,
-    accent: "from-blue-500/15 to-blue-500/5 text-blue-600 dark:text-blue-400",
+    accent: "from-blue-500/20 to-blue-500/5 text-blue-600 dark:text-blue-400",
   },
   {
     key: "badges",
     icon: Award,
-    accent: "from-amber-500/15 to-amber-500/5 text-amber-600 dark:text-amber-400",
+    accent: "from-amber-500/20 to-amber-500/5 text-amber-600 dark:text-amber-400",
   },
   {
     key: "rewards",
     icon: Gift,
-    accent: "from-rose-500/15 to-rose-500/5 text-rose-600 dark:text-rose-400",
+    accent: "from-rose-500/20 to-rose-500/5 text-rose-600 dark:text-rose-400",
   },
   {
     key: "challenges",
     icon: Target,
-    accent: "from-cyan-500/15 to-cyan-500/5 text-cyan-600 dark:text-cyan-400",
+    accent: "from-cyan-500/20 to-cyan-500/5 text-cyan-600 dark:text-cyan-400",
   },
 ];
 
 export function LandingFeatures() {
   return (
-    <section id="features" className="scroll-mt-20 border-t border-border/60 bg-muted/30 py-16 sm:py-20">
+    <section id="features" className="scroll-mt-20 border-t border-border/60 bg-muted/40 py-16 sm:py-20 dark:bg-muted/20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <LandingRevealOnScroll>
           <div className="mx-auto max-w-2xl text-center">
@@ -67,11 +67,11 @@ export function LandingFeatures() {
             const item = labels.landing.features.items[key];
             return (
               <LandingRevealOnScroll key={key} delayMs={index * 80}>
-                <Card className="landing-card-tech h-full border-border/80 bg-card/80 shadow-sm">
+                <Card className="landing-card-tech landing-glass landing-gradient-border h-full border-transparent shadow-sm">
                   <CardHeader className="pb-3">
                     <div
                       className={cn(
-                        "mb-2 flex size-11 items-center justify-center rounded-xl bg-gradient-to-br",
+                        "mb-2 flex size-11 items-center justify-center rounded-xl bg-gradient-to-br shadow-sm",
                         accent
                       )}
                     >

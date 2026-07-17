@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { RegisterForm } from "@/components/register-form";
 import { LandingNav } from "@/components/landing/landing-nav";
+import { AuthBrandHeader } from "@/components/auth/auth-brand-header";
 import {
   Card,
   CardContent,
@@ -9,7 +10,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { labels } from "@/lib/labels";
-import { BrandLogo } from "@/components/layout/brand-logo";
 import { Trophy, Zap } from "lucide-react";
 
 export default function RegisterPage() {
@@ -18,48 +18,59 @@ export default function RegisterPage() {
       <LandingNav page="register" />
 
       <div className="flex min-h-0 flex-1 pt-14 md:pt-0">
-        <div className="hidden w-1/2 flex-col justify-between border-r border-border bg-card p-12 lg:flex">
-          <div className="flex items-center gap-3">
-            <BrandLogo size="lg" priority />
-            <span className="text-xl font-semibold">{labels.nav.brand}</span>
-          </div>
-          <div className="space-y-4">
-            <h2 className="text-3xl font-semibold leading-tight">
+        <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden border-r border-border bg-card p-10 lg:flex xl:p-12">
+          <div
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,hsl(var(--primary)/0.08),transparent_55%)]"
+            aria-hidden="true"
+          />
+
+          <AuthBrandHeader align="start" priority className="relative" />
+
+          <div className="relative space-y-5">
+            <h2 className="max-w-md text-3xl font-semibold leading-tight tracking-tight xl:text-4xl">
               {labels.login.heroTitle}
             </h2>
-            <p className="max-w-md text-muted-foreground">{labels.register.subtitle}</p>
-            <div className="flex gap-6 text-sm text-muted-foreground">
+            <p className="max-w-md text-muted-foreground">
+              {labels.register.subtitle}
+            </p>
+            <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
-                <Trophy className="size-4 text-points" />
+                <Trophy className="size-4 text-points" aria-hidden />
                 <span>{labels.login.heroEarnPoints}</span>
               </div>
               <div className="flex items-center gap-2">
-                <Zap className="size-4 text-primary" />
+                <Zap className="size-4 text-primary" aria-hidden />
                 <span>{labels.login.heroAiFeedback}</span>
               </div>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">
+
+          <p className="relative text-xs text-muted-foreground">
             © {new Date().getFullYear()} {labels.nav.brand}
             <br />
             {labels.landing.footer.createdBy}
           </p>
         </div>
 
-        <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto bg-background p-6">
-          <Card className="my-6 w-full max-w-xl">
-            <CardHeader className="space-y-2 text-center">
-              <div className="mx-auto mb-2 lg:hidden">
-                <BrandLogo size="lg" className="mx-auto" priority />
+        <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto bg-background p-4 sm:p-6">
+          <Card className="my-6 w-full max-w-xl shadow-sm">
+            <CardHeader className="space-y-4 text-center">
+              <div className="lg:hidden">
+                <AuthBrandHeader priority showTitle={false} />
               </div>
-              <CardTitle className="text-xl">{labels.register.title}</CardTitle>
-              <CardDescription>{labels.register.subtitle}</CardDescription>
+              <div className="space-y-1.5">
+                <CardTitle className="text-xl">{labels.register.title}</CardTitle>
+                <CardDescription>{labels.register.subtitle}</CardDescription>
+              </div>
             </CardHeader>
             <CardContent>
               <RegisterForm />
               <p className="mt-6 text-center text-sm text-muted-foreground">
                 {labels.login.haveAccount}{" "}
-                <Link href="/login" className="font-medium text-primary hover:underline">
+                <Link
+                  href="/login"
+                  className="font-medium text-primary hover:underline"
+                >
                   {labels.auth.signIn}
                 </Link>
               </p>

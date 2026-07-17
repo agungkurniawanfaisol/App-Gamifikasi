@@ -24,7 +24,11 @@ export function LandingHowItWorks() {
   return (
     <section id="how-it-works" className="relative scroll-mt-20 overflow-hidden py-16 sm:py-20">
       <div
-        className="pointer-events-none absolute inset-0 landing-grid-bg opacity-15 dark:opacity-10"
+        className="pointer-events-none absolute inset-0 landing-grid-bg opacity-25 dark:opacity-12"
+        aria-hidden="true"
+      />
+      <div
+        className="landing-spotlight pointer-events-none absolute inset-x-0 top-0 h-1/2 opacity-50"
         aria-hidden="true"
       />
 
@@ -44,7 +48,7 @@ export function LandingHowItWorks() {
             aria-hidden="true"
           >
             <div
-              className="h-full w-full bg-gradient-to-r from-transparent via-primary/50 to-transparent"
+              className="h-full w-full bg-gradient-to-r from-transparent via-primary/55 to-transparent"
               style={{
                 backgroundSize: "200% 100%",
                 animation: "shimmer 3s linear infinite",
@@ -57,12 +61,12 @@ export function LandingHowItWorks() {
             return (
               <LandingRevealOnScroll key={key} delayMs={index * 120}>
                 <div className="relative flex flex-col items-center text-center">
-                  <div className="relative mb-5 flex size-16 items-center justify-center rounded-2xl border border-primary/20 bg-card shadow-sm transition-shadow hover:shadow-[0_0_20px_color-mix(in_srgb,var(--primary)_15%,transparent)]">
+                  <div className="landing-glass landing-gradient-border relative mb-5 flex size-16 items-center justify-center rounded-2xl shadow-sm transition-shadow hover:shadow-[0_0_24px_color-mix(in_srgb,var(--primary)_20%,transparent)]">
                     <Icon
                       className="landing-icon-float size-7 text-primary"
                       style={{ animationDelay: `${index * 0.5}s` }}
                     />
-                    <span className="absolute -right-2 -top-2 flex size-7 items-center justify-center rounded-full bg-primary font-mono text-[11px] font-bold text-primary-foreground">
+                    <span className="absolute -right-2 -top-2 flex size-7 items-center justify-center rounded-full bg-primary font-mono text-[11px] font-bold text-primary-foreground shadow-[0_0_12px_color-mix(in_srgb,var(--primary)_45%,transparent)]">
                       {step}
                     </span>
                   </div>

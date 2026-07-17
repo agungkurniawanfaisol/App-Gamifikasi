@@ -44,8 +44,8 @@ New Prisma model `PasswordResetToken`:
 |-------------|------------|----------------------------------------------------|
 | `id`        | Int PK     | `@id @default(autoincrement())`                    |
 | `userId`    | Int FK     | → `User.id`                                        |
-| `tokenHash` | String     | SHA-256 of the magic-link token (never store plain)|
-| `otpHash`   | String     | SHA-256 of the 6-digit OTP (never store plain)     |
+| `tokenHash` | String     | HMAC-SHA-256 of the magic-link token                |
+| `otpHash`   | String     | HMAC-SHA-256 of the 6-digit OTP                     |
 | `expiresAt` | DateTime   | 30 minutes after creation                          |
 | `usedAt`    | DateTime?  | null until consumed; single-use                    |
 | `createdAt` | DateTime   | `@default(now())`                                  |
@@ -63,7 +63,9 @@ Rules:
 ### Token generation
 - Link token: 32+ random bytes (crypto), hex/base64url → URL `/reset-password?token=...`.
 - OTP: cryptographically random 6 digits.
-- Store only SHA-256 hashes; compare by hashing the incoming value.
+- Store only keyed HMAC-SHA-256 hashes. The key comes from
+  `PASSWORD_RESET_SECRET` (falling back to `AUTH_SECRET`) so a database-only
+  compromise cannot cheaply brute-force the six-digit OTP space.
 
 ## Email adapter (`src/lib/mail/`)
 
@@ -113,6 +115,8 @@ EMAIL_PROVIDER=resend        # resend | sendgrid
 EMAIL_FROM=DeeLearn <noreply@universitaspgridelta.ac.id>
 RESEND_API_KEY=
 SENDGRID_API_KEY=
+# Optional dedicated HMAC key; falls back to AUTH_SECRET
+PASSWORD_RESET_SECRET=generate-another-long-random-secret
 # EMAIL_DEV_LOG=true         # log link+OTP to server logs instead of sending (dev)
 ```
 

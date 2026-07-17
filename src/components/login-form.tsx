@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useFormState } from "react-dom";
+import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { loginAction } from "@/actions/auth";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
@@ -74,6 +75,15 @@ export function LoginForm() {
               <div className="flex flex-col gap-2">
                 <Label htmlFor="password">{labels.auth.password}</Label>
                 <Input id="password" name="password" type="password" required />
+                <Button
+                  asChild
+                  variant="link"
+                  className="min-h-11 self-end px-0"
+                >
+                  <Link href="/forgot-password">
+                    {labels.passwordReset.forgotLink}
+                  </Link>
+                </Button>
               </div>
             </AuthFormFieldset>
             <AuthSubmitButton

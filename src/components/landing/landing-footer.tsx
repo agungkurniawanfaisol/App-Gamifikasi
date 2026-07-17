@@ -4,7 +4,7 @@ import { labels } from "@/lib/labels";
 
 export function LandingFooter() {
   return (
-    <footer className="border-t border-border/60 bg-muted/30 py-10">
+    <footer className="border-t border-border/60 bg-muted/40 py-10 dark:bg-muted/20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
           <BrandMark subtitle={labels.landing.footer.tagline} />
@@ -12,7 +12,7 @@ export function LandingFooter() {
           <div className="flex items-center gap-6 text-sm">
             <Link
               href="/login"
-              className="font-medium text-primary hover:underline"
+              className="font-medium text-primary transition-colors hover:text-primary/80 hover:underline"
             >
               {labels.landing.footer.signIn}
             </Link>

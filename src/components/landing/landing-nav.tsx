@@ -15,7 +15,7 @@ export function LandingNav({ page = "landing" }: { page?: PublicNavPage }) {
   const isAuthPage = page === "login" || page === "register";
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-border/60 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 md:sticky">
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-border/50 bg-background/90 shadow-[0_1px_0_color-mix(in_srgb,var(--primary)_6%,transparent)] backdrop-blur-md supports-[backdrop-filter]:bg-background/75 md:sticky">
       <div className="mx-auto flex h-14 min-w-0 max-w-6xl items-center gap-2 px-4 sm:gap-3 sm:px-6">
         {isLanding ? (
           <Link href="/" className="shrink-0">
@@ -33,22 +33,22 @@ export function LandingNav({ page = "landing" }: { page?: PublicNavPage }) {
 
         {isLanding && (
           <>
-            <nav className="hidden flex-1 items-center justify-center gap-6 lg:flex">
+            <nav className="hidden flex-1 items-center justify-center gap-1 lg:flex">
               <a
                 href="#leaderboard"
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/5 hover:text-foreground"
               >
                 {labels.landing.nav.leaderboard}
               </a>
               <a
                 href="#features"
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/5 hover:text-foreground"
               >
                 {labels.landing.nav.features}
               </a>
               <a
                 href="#how-it-works"
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/5 hover:text-foreground"
               >
                 {labels.landing.nav.howItWorks}
               </a>
@@ -76,12 +76,16 @@ export function LandingNav({ page = "landing" }: { page?: PublicNavPage }) {
           </Button>
           <Button
             asChild
-            variant={page === "register" ? "default" : "outline"}
+            variant={page === "register" ? "default" : isLanding ? "default" : "outline"}
             size="sm"
             className={cn(
               "min-h-11 px-3 sm:px-4",
               page === "register" && "pointer-events-none",
-              page !== "register" && "border-primary/30 bg-primary/5 hover:bg-primary/10"
+              isLanding &&
+                "landing-cta-glow border-transparent bg-primary text-primary-foreground hover:bg-primary/90",
+              !isLanding &&
+                page !== "register" &&
+                "border-primary/30 bg-primary/5 hover:bg-primary/10"
             )}
           >
             <Link
