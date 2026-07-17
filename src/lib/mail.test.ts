@@ -80,6 +80,34 @@ describe("sendMail", () => {
       /Unsupported email provider/
     );
   });
+
+  it("sends via SMTP using the campus mail account", async () => {
+    const sent: unknown[] = [];
+
+    await sendMail(message, {
+      env: {
+        EMAIL_PROVIDER: "smtp",
+        EMAIL_FROM: "DeeLearn <andiksusanto@universitaspgridelta.ac.id>",
+        SMTP_HOST: "mail.universitaspgridelta.ac.id",
+        SMTP_PORT: "587",
+        SMTP_USER: "andiksusanto@universitaspgridelta.ac.id",
+        SMTP_PASS: "secret",
+      },
+      smtpSendMail: async (mail) => {
+        sent.push(mail);
+      },
+    });
+
+    assert.deepEqual(sent, [
+      {
+        from: "DeeLearn <andiksusanto@universitaspgridelta.ac.id>",
+        to: "user@example.com",
+        subject: "Reset",
+        text: "Reset",
+        html: "<p>Reset</p>",
+      },
+    ]);
+  });
 });
 
 describe("buildPasswordResetEmail", () => {

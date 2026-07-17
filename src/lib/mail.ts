@@ -1,3 +1,5 @@
+import nodemailer from "nodemailer";
+import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import { labels } from "@/lib/labels";
 
 export type MailMessage = {
@@ -11,6 +13,14 @@ type MailOptions = {
   env?: Record<string, string | undefined>;
   fetchImpl?: typeof fetch;
   logger?: Pick<Console, "info">;
+  /** Test seam for SMTP provider */
+  smtpSendMail?: (mail: {
+    from: string;
+    to: string;
+    subject: string;
+    text: string;
+    html: string;
+  }) => Promise<unknown>;
 };
 
 type PasswordResetEmailInput = {
@@ -76,6 +86,42 @@ async function postEmail(
   }
 }
 
+async function sendViaSmtp(
+  message: MailMessage,
+  from: string,
+  env: Record<string, string | undefined>,
+  smtpSendMail?: MailOptions["smtpSendMail"]
+): Promise<void> {
+  const payload = {
+    from,
+    to: message.to,
+    subject: message.subject,
+    text: message.text,
+    html: message.html,
+  };
+
+  if (smtpSendMail) {
+    await smtpSendMail(payload);
+    return;
+  }
+
+  const host = requireConfig(env, "SMTP_HOST");
+  const user = requireConfig(env, "SMTP_USER");
+  const pass = requireConfig(env, "SMTP_PASS");
+  const port = Number.parseInt(env.SMTP_PORT?.trim() || "587", 10);
+  const secure =
+    env.SMTP_SECURE?.trim().toLowerCase() === "true" || port === 465;
+
+  const transport = nodemailer.createTransport({
+    host,
+    port: Number.isFinite(port) ? port : 587,
+    secure,
+    auth: { user, pass },
+  } satisfies SMTPTransport.Options);
+
+  await transport.sendMail(payload);
+}
+
 export async function sendMail(
   message: MailMessage,
   options: MailOptions = {}
@@ -88,9 +134,14 @@ export async function sendMail(
     return;
   }
 
-  const provider = env.EMAIL_PROVIDER?.trim().toLowerCase() || "resend";
+  const provider = env.EMAIL_PROVIDER?.trim().toLowerCase() || "smtp";
   const from = requireConfig(env, "EMAIL_FROM");
   const fetchImpl = options.fetchImpl ?? fetch;
+
+  if (provider === "smtp") {
+    await sendViaSmtp(message, from, env, options.smtpSendMail);
+    return;
+  }
 
   if (provider === "resend") {
     await postEmail(
