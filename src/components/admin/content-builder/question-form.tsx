@@ -111,7 +111,10 @@ function SubQuestionEditor({
   const formats = getFormatsForSkill(sub.skill);
   const mcqOpts = sub.options ?? ["", "", "", ""];
   const correctLetter = getInitialCorrect(mcqOpts, sub.correctAnswer ?? null);
-  const yesNoAnswer = syncYesNoCorrectAnswer(sub.correctAnswer);
+  const yesNoAnswer =
+    sub.correctAnswer === "Yes" || sub.correctAnswer === "No"
+      ? sub.correctAnswer
+      : "";
 
   function update(patch: Partial<SubQuestion>) {
     onChange({ ...sub, ...patch });
@@ -307,7 +310,8 @@ function SubQuestionEditor({
                             options: next,
                             correctAnswer: syncMcqCorrectAnswer(
                               next,
-                              sub.correctAnswer
+                              sub.correctAnswer,
+                              { previousOptions: mcqOpts }
                             ),
                           });
                         }}
@@ -348,8 +352,13 @@ function SubQuestionEditor({
               <FormSelect
                 label={labels.admin.correctAnswer}
                 value={yesNoAnswer}
-                onChange={(v) => update({ correctAnswer: syncYesNoCorrectAnswer(v) })}
+                onChange={(v) =>
+                  update({
+                    correctAnswer: syncYesNoCorrectAnswer(v),
+                  })
+                }
                 options={[
+                  { value: "", label: labels.admin.selectCorrectAnswer },
                   { value: "Yes", label: "Yes" },
                   { value: "No", label: "No" },
                 ]}

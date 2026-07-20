@@ -28,15 +28,36 @@ describe("syncMcqCorrectAnswer", () => {
     assert.equal(syncMcqCorrectAnswer(["a", "b"], "b"), "b");
   });
 
-  it("falls back to the first non-empty option when empty", () => {
-    assert.equal(syncMcqCorrectAnswer(["a", "b"], ""), "a");
+  it("does not invent an answer when empty", () => {
+    assert.equal(syncMcqCorrectAnswer(["a", "b"], ""), "");
+  });
+
+  it("follows renamed option text via previousOptions", () => {
+    assert.equal(
+      syncMcqCorrectAnswer(["a", "banana", "c"], "b", {
+        previousOptions: ["a", "b", "c"],
+      }),
+      "banana"
+    );
+  });
+
+  it("matches case-insensitively", () => {
+    assert.equal(syncMcqCorrectAnswer(["Apple", "b"], "apple"), "Apple");
+  });
+
+  it("can fall back to the first option for AI drafts", () => {
+    assert.equal(
+      syncMcqCorrectAnswer(["a", "b"], "", { fallbackToFirst: true }),
+      "a"
+    );
   });
 });
 
 describe("syncYesNoCorrectAnswer", () => {
-  it("defaults empty values to Yes", () => {
-    assert.equal(syncYesNoCorrectAnswer(undefined), "Yes");
-    assert.equal(syncYesNoCorrectAnswer(""), "Yes");
+  it("keeps empty values empty unless fallback requested", () => {
+    assert.equal(syncYesNoCorrectAnswer(undefined), "");
+    assert.equal(syncYesNoCorrectAnswer(""), "");
+    assert.equal(syncYesNoCorrectAnswer("", { fallbackToYes: true }), "Yes");
   });
 
   it("preserves No", () => {
@@ -45,22 +66,23 @@ describe("syncYesNoCorrectAnswer", () => {
 });
 
 describe("normalizeSubQuestionsForSave + validateSubQuestions", () => {
-  it("repairs empty MCQ correctAnswer before validation passes", () => {
+  it("keeps empty MCQ correctAnswer empty so validation can fail", () => {
     const normalized = normalizeSubQuestionsForSave([
       baseSub({ correctAnswer: "" }),
     ]);
-    assert.equal(normalized[0]?.correctAnswer, "a");
-    assert.equal(validateSubQuestions(normalized), null);
+    assert.equal(normalized[0]?.correctAnswer, "");
+    assert.match(
+      String(validateSubQuestions(normalized)),
+      /correct answer is required/
+    );
   });
 
   it("rejects MCQ correctAnswer that is not one of the options", () => {
-    const error = validateSubQuestions([
-      baseSub({ correctAnswer: "z" }),
-    ]);
+    const error = validateSubQuestions([baseSub({ correctAnswer: "z" })]);
     assert.match(String(error), /must match one of the options/);
   });
 
-  it("repairs empty YES_NO correctAnswer to Yes", () => {
+  it("keeps empty YES_NO correctAnswer empty so validation can fail", () => {
     const normalized = normalizeSubQuestionsForSave([
       baseSub({
         format: QuestionFormat.YES_NO,
@@ -68,7 +90,10 @@ describe("normalizeSubQuestionsForSave + validateSubQuestions", () => {
         correctAnswer: "",
       }),
     ]);
-    assert.equal(normalized[0]?.correctAnswer, "Yes");
-    assert.equal(validateSubQuestions(normalized), null);
+    assert.equal(normalized[0]?.correctAnswer, "");
+    assert.match(
+      String(validateSubQuestions(normalized)),
+      /correct answer is required/
+    );
   });
 });

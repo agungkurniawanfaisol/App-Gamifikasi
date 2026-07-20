@@ -212,7 +212,8 @@ export function normalizeAiSubQuestions(raw: unknown): SubQuestion[] {
         options,
         correctAnswer: syncMcqCorrectAnswer(
           options,
-          String(entry.correctAnswer ?? "")
+          String(entry.correctAnswer ?? ""),
+          { fallbackToFirst: true }
         ),
         explanation: entry.explanation ? String(entry.explanation) : undefined,
       };
@@ -222,7 +223,9 @@ export function normalizeAiSubQuestions(raw: unknown): SubQuestion[] {
       return {
         ...base,
         options: ["Yes", "No"],
-        correctAnswer: syncYesNoCorrectAnswer(String(entry.correctAnswer ?? "")),
+        correctAnswer: syncYesNoCorrectAnswer(String(entry.correctAnswer ?? ""), {
+          fallbackToYes: true,
+        }),
         explanation: entry.explanation ? String(entry.explanation) : undefined,
       };
     }

@@ -152,20 +152,51 @@ export function getTotalWeight(subQuestions: SubQuestion[]): number {
 
 /** Keep MCQ correctAnswer aligned with option text after edits. */
 export function syncMcqCorrectAnswer(
-  options: string[],
-  correctAnswer: string | undefined
+  optionTexts: string[],
+  correctAnswer: string | undefined,
+  syncOptions?: {
+    previousOptions?: string[];
+    /** When true (AI drafts), invent first option if answer missing/invalid. */
+    fallbackToFirst?: boolean;
+  }
 ): string {
-  const trimmed = options.map((o) => o.trim());
+  const trimmed = optionTexts.map((o) => o.trim());
   const current = correctAnswer?.trim() ?? "";
-  if (current && trimmed.includes(current)) {
+  if (!current) {
+    return syncOptions?.fallbackToFirst
+      ? (trimmed.find((o) => o.length > 0) ?? "")
+      : "";
+  }
+  if (trimmed.includes(current)) {
     return current;
   }
-  return trimmed.find((o) => o.length > 0) ?? "";
+
+  const previous = syncOptions?.previousOptions?.map((o) => o.trim());
+  if (previous) {
+    const prevIdx = previous.findIndex((o) => o === current);
+    if (prevIdx >= 0) {
+      const renamed = trimmed[prevIdx]?.trim() ?? "";
+      if (renamed) return renamed;
+    }
+  }
+
+  const caseMatch = trimmed.find(
+    (o) => o.length > 0 && o.toLowerCase() === current.toLowerCase()
+  );
+  if (caseMatch) return caseMatch;
+
+  return syncOptions?.fallbackToFirst
+    ? (trimmed.find((o) => o.length > 0) ?? "")
+    : "";
 }
 
-export function syncYesNoCorrectAnswer(correctAnswer: string | undefined): string {
+export function syncYesNoCorrectAnswer(
+  correctAnswer: string | undefined,
+  syncOptions?: { fallbackToYes?: boolean }
+): "Yes" | "No" | "" {
   const value = correctAnswer?.trim();
-  return value === "No" ? "No" : "Yes";
+  if (value === "Yes" || value === "No") return value;
+  return syncOptions?.fallbackToYes ? "Yes" : "";
 }
 
 /** Normalize answers before validate/save so UI defaults cannot diverge from state. */
@@ -238,7 +269,8 @@ export function validateSubQuestions(subQuestions: SubQuestion[]): string | null
     }
     if (sq.format === QuestionFormat.MULTIPLE_CHOICE) {
       const options = (sq.options ?? []).map((o) => o.trim()).filter(Boolean);
-      if (!options.includes(sq.correctAnswer!.trim())) {
+      const answer = sq.correctAnswer?.trim() ?? "";
+      if (!options.includes(answer)) {
         return `${label}: correct answer must match one of the options.`;
       }
     }
