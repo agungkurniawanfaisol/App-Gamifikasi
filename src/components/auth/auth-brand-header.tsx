@@ -15,29 +15,29 @@ const AUTH_LOGOS = [
     className: "h-10 w-10 sm:h-11 sm:w-11",
   },
   {
+    id: "dikti",
+    src: diktiLogo,
+    alt: labels.landing.hero.diktiBrand,
+    className: "h-9 w-auto max-w-[7.5rem] sm:h-10 sm:max-w-[9rem]",
+  },
+  {
+    id: "deeplink",
+    src: brandLogo,
+    alt: labels.nav.brand,
+    className: "h-14 w-14 sm:h-16 sm:w-16",
+  },
+  {
     id: "unipda",
     src: unipdaLogo,
     darkSrc: unipdaDarkLogo,
     alt: labels.nav.partnerBrand,
     className: "h-10 w-28 sm:h-11 sm:w-32",
   },
-  {
-    id: "deeptest",
-    src: brandLogo,
-    alt: labels.nav.brand,
-    className: "h-14 w-14 sm:h-16 sm:w-16",
-  },
-  {
-    id: "dikti",
-    src: diktiLogo,
-    alt: labels.landing.hero.diktiBrand,
-    className: "h-9 w-auto max-w-[7.5rem] sm:h-10 sm:max-w-[9rem]",
-  },
 ] as const;
 
 /**
  * Compact partner logo row for auth screens (login / register / password reset).
- * Same order as landing: Kementrian → UNIPDA → Deeptest → Dikti.
+ * Same order as landing (left → right): Tutwuri → DiktiSaintek → Deeplink → UNIPDA.
  */
 export function AuthBrandHeader({
   priority = false,
@@ -72,7 +72,7 @@ export function AuthBrandHeader({
               <span
                 className={cn(
                   "hidden w-px shrink-0 bg-border/70 sm:block",
-                  logo.id === "deeptest" || AUTH_LOGOS[index - 1]?.id === "deeptest"
+                  logo.id === "deeplink" || AUTH_LOGOS[index - 1]?.id === "deeplink"
                     ? "h-10"
                     : "h-8"
                 )}
