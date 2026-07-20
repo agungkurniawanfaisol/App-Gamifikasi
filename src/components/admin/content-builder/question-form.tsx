@@ -48,7 +48,19 @@ import { cn } from "@/lib/utils";
 
 function getInitialCorrect(opts: string[], correctAnswer: string | null): string {
   const idx = opts.findIndex((opt) => opt === correctAnswer);
-  return idx >= 0 ? String.fromCharCode(65 + idx) : "A";
+  return idx >= 0 ? String.fromCharCode(65 + idx) : "";
+}
+
+/** Keep MCQ correctAnswer aligned with option text after edits. */
+function syncMcqCorrectAnswer(
+  options: string[],
+  correctAnswer: string | undefined
+): string {
+  const trimmed = options.map((o) => o.trim());
+  if (correctAnswer?.trim() && trimmed.includes(correctAnswer.trim())) {
+    return correctAnswer.trim();
+  }
+  return trimmed.find((o) => o.length > 0) ?? "";
 }
 
 /** Styled select wrapper for consistency */
@@ -299,7 +311,13 @@ function SubQuestionEditor({
                         onChange={(e) => {
                           const next = [...mcqOpts];
                           next[i] = e.target.value;
-                          update({ options: next });
+                          update({
+                            options: next,
+                            correctAnswer: syncMcqCorrectAnswer(
+                              next,
+                              sub.correctAnswer
+                            ),
+                          });
                         }}
                         placeholder={
                           [labels.admin.optionA, labels.admin.optionB, labels.admin.optionC, labels.admin.optionD][i]
@@ -312,13 +330,18 @@ function SubQuestionEditor({
                   label={labels.admin.correctAnswer}
                   value={correctLetter}
                   onChange={(v) => {
+                    if (!v) {
+                      update({ correctAnswer: "" });
+                      return;
+                    }
                     const keyMap: Record<string, number> = {
                       A: 0, B: 1, C: 2, D: 3,
                     };
                     const idx = keyMap[v] ?? 0;
-                    update({ correctAnswer: mcqOpts[idx] ?? "" });
+                    update({ correctAnswer: mcqOpts[idx]?.trim() ?? "" });
                   }}
                   options={[
+                    { value: "", label: labels.admin.selectCorrectAnswer },
                     { value: "A", label: `A — ${mcqOpts[0] || "(empty)"}` },
                     { value: "B", label: `B — ${mcqOpts[1] || "(empty)"}` },
                     { value: "C", label: `C — ${mcqOpts[2] || "(empty)"}` },
@@ -468,26 +491,46 @@ export function QuestionForm({
     startTransition(async () => {
       try {
         const seedQuestionText = subQuestions[0]?.questionText?.trim() ?? "";
-        const normalizedSubQuestions =
-          seedQuestionText.length === 0
-            ? subQuestions
-            : subQuestions.map((sq) =>
-                sq.questionText.trim()
-                  ? sq
-                  : {
-                      ...sq,
-                      questionText: seedQuestionText,
-                    }
-              );
+        const normalizedSubQuestions = subQuestions.map((sq) => {
+          const withSeedText =
+            !sq.questionText.trim() && seedQuestionText
+              ? { ...sq, questionText: seedQuestionText }
+              : sq;
+
+          if (withSeedText.format !== QuestionFormat.MULTIPLE_CHOICE) {
+            return withSeedText;
+          }
+
+          return {
+            ...withSeedText,
+            options: (withSeedText.options ?? []).map((o) => o.trim()),
+            correctAnswer: syncMcqCorrectAnswer(
+              withSeedText.options ?? [],
+              withSeedText.correctAnswer
+            ),
+          };
+        });
 
         const data = { subQuestions: normalizedSubQuestions };
-        if (item) {
-          await updateQuestionItem(item.id, groupId, levelId, data);
-        } else {
-          await createQuestionItem(groupId, levelId, data);
+        const result = item
+          ? await updateQuestionItem(item.id, groupId, levelId, data)
+          : await createQuestionItem(groupId, levelId, data);
+
+        if (result?.error) {
+          setError(result.error);
+          return;
         }
         toast.success(labels.admin.saveSuccess);
-      } catch {
+      } catch (err) {
+        // redirect() throws; rethrow so navigation still works
+        if (
+          err &&
+          typeof err === "object" &&
+          "digest" in err &&
+          String((err as { digest?: unknown }).digest).startsWith("NEXT_REDIRECT")
+        ) {
+          throw err;
+        }
         setError(labels.admin.saveFailed);
       }
     });

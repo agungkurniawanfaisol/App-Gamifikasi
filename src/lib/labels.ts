@@ -247,6 +247,7 @@ export const labels = {
     optionC: "Option C",
     optionD: "Option D",
     correctAnswer: "Correct Answer",
+    selectCorrectAnswer: "Select the correct option",
     explanationOptional: "Explanation (optional)",
     addItem: "Add Item",
     pickType: "What do you want to add?",

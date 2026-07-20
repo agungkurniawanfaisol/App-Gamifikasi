@@ -78,11 +78,11 @@ export async function createQuestionItem(
   groupId: number,
   levelId: number,
   data: QuestionItemInput
-) {
+): Promise<{ error: string } | void> {
   await requireAdmin();
   const serialized = serializeSubQuestionsForDb(data.subQuestions);
   const error = validateSubQuestions(serialized);
-  if (error) throw new Error(error);
+  if (error) return { error };
 
   const legacy = mirrorFirstSubToLegacyFields(serialized);
 
@@ -104,11 +104,11 @@ export async function updateQuestionItem(
   groupId: number,
   levelId: number,
   data: QuestionItemInput
-) {
+): Promise<{ error: string } | void> {
   await requireAdmin();
   const serialized = serializeSubQuestionsForDb(data.subQuestions);
   const error = validateSubQuestions(serialized);
-  if (error) throw new Error(error);
+  if (error) return { error };
 
   const legacy = mirrorFirstSubToLegacyFields(serialized);
 
