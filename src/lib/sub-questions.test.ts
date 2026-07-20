@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { QuestionFormat, QuestionSkill } from "@prisma/client";
 import {
+  getMcqCorrectLetter,
   normalizeSubQuestionsForSave,
   syncMcqCorrectAnswer,
   syncYesNoCorrectAnswer,
@@ -22,6 +23,27 @@ function baseSub(overrides: Partial<SubQuestion> = {}): SubQuestion {
     ...overrides,
   };
 }
+
+describe("getMcqCorrectLetter", () => {
+  it("returns empty when correctAnswer is blank", () => {
+    assert.equal(getMcqCorrectLetter(["", "", "", ""], ""), "");
+    assert.equal(getMcqCorrectLetter(["a", "", "", ""], null), "");
+    assert.equal(getMcqCorrectLetter(["a", "b"], "   "), "");
+  });
+
+  it("does not falsely match empty option slots", () => {
+    assert.equal(getMcqCorrectLetter(["cat", "", "", ""], ""), "");
+  });
+
+  it("maps matching option text to A–D", () => {
+    assert.equal(getMcqCorrectLetter(["a", "b", "c", "d"], "c"), "C");
+    assert.equal(getMcqCorrectLetter(["  apple ", "b"], "apple"), "A");
+  });
+
+  it("returns empty when answer is not among options", () => {
+    assert.equal(getMcqCorrectLetter(["a", "b"], "z"), "");
+  });
+});
 
 describe("syncMcqCorrectAnswer", () => {
   it("keeps a matching correct answer", () => {

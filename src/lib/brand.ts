@@ -30,7 +30,7 @@ export const LANDING_STRIP_HEIGHT = {
 
 export type LandingStripHeightKey = keyof typeof LANDING_STRIP_HEIGHT;
 
-export type LandingLogoId = "kementrian" | "unipda" | "deeplink" | "dikti";
+export type LandingLogoId = "kementrian" | "unipda" | "deeptest" | "dikti";
 
 export type LandingLogoStripItem = {
   id: LandingLogoId;
@@ -59,7 +59,7 @@ export const LANDING_LOGO_STRIP: readonly LandingLogoStripItem[] = [
     heightKey: "sm",
   },
   {
-    id: "deeplink",
+    id: "deeptest",
     src: BRAND_LOGO_SRC,
     aspect: 507 / 492,
     heightKey: "hero",

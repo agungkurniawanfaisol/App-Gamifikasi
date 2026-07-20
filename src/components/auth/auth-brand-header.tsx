@@ -21,7 +21,7 @@ const AUTH_LOGOS = [
     className: "h-9 w-auto max-w-[7.5rem] sm:h-10 sm:max-w-[9rem]",
   },
   {
-    id: "deeplink",
+    id: "deeptest",
     src: brandLogo,
     alt: labels.nav.brand,
     className: "h-14 w-14 sm:h-16 sm:w-16",
@@ -72,7 +72,7 @@ export function AuthBrandHeader({
               <span
                 className={cn(
                   "hidden w-px shrink-0 bg-border/70 sm:block",
-                  logo.id === "deeplink" || AUTH_LOGOS[index - 1]?.id === "deeplink"
+                  logo.id === "deeptest" || AUTH_LOGOS[index - 1]?.id === "deeptest"
                     ? "h-10"
                     : "h-8"
                 )}

@@ -150,6 +150,20 @@ export function getTotalWeight(subQuestions: SubQuestion[]): number {
   return subQuestions.reduce((sum, sq) => sum + (sq.weightPercent || 0), 0);
 }
 
+/**
+ * Map stored MCQ correctAnswer text to select letter A–D.
+ * Blank answers must not match empty option slots (that made the select snap to A).
+ */
+export function getMcqCorrectLetter(
+  optionTexts: string[],
+  correctAnswer: string | null | undefined
+): string {
+  const answer = correctAnswer?.trim() ?? "";
+  if (!answer) return "";
+  const idx = optionTexts.findIndex((opt) => opt.trim() === answer);
+  return idx >= 0 ? String.fromCharCode(65 + idx) : "";
+}
+
 /** Keep MCQ correctAnswer aligned with option text after edits. */
 export function syncMcqCorrectAnswer(
   optionTexts: string[],

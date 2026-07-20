@@ -41,6 +41,7 @@ import { toast } from "sonner";
 import {
   createEmptySubQuestion,
   getFormatsForSkill,
+  getMcqCorrectLetter,
   getTotalWeight,
   normalizeSubQuestionsForSave,
   syncMcqCorrectAnswer,
@@ -48,11 +49,6 @@ import {
   type SubQuestion,
 } from "@/lib/sub-questions";
 import { cn } from "@/lib/utils";
-
-function getInitialCorrect(opts: string[], correctAnswer: string | null): string {
-  const idx = opts.findIndex((opt) => opt === correctAnswer);
-  return idx >= 0 ? String.fromCharCode(65 + idx) : "";
-}
 
 /** Styled select wrapper for consistency */
 function FormSelect({
@@ -64,7 +60,7 @@ function FormSelect({
   label: string;
   value: string;
   onChange: (value: string) => void;
-  options: { value: string; label: string }[];
+  options: { value: string; label: string; disabled?: boolean }[];
 }) {
   return (
     <div className="flex flex-col gap-1.5">
@@ -77,7 +73,11 @@ function FormSelect({
         onChange={(e) => onChange(e.target.value)}
       >
         {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
+          <option
+            key={opt.value || "__placeholder"}
+            value={opt.value}
+            disabled={opt.disabled}
+          >
             {opt.label}
           </option>
         ))}
@@ -110,7 +110,7 @@ function SubQuestionEditor({
   const [open, setOpen] = useState(true);
   const formats = getFormatsForSkill(sub.skill);
   const mcqOpts = sub.options ?? ["", "", "", ""];
-  const correctLetter = getInitialCorrect(mcqOpts, sub.correctAnswer ?? null);
+  const correctLetter = getMcqCorrectLetter(mcqOpts, sub.correctAnswer ?? null);
   const yesNoAnswer =
     sub.correctAnswer === "Yes" || sub.correctAnswer === "No"
       ? sub.correctAnswer
@@ -338,10 +338,26 @@ function SubQuestionEditor({
                   }}
                   options={[
                     { value: "", label: labels.admin.selectCorrectAnswer },
-                    { value: "A", label: `A — ${mcqOpts[0] || "(empty)"}` },
-                    { value: "B", label: `B — ${mcqOpts[1] || "(empty)"}` },
-                    { value: "C", label: `C — ${mcqOpts[2] || "(empty)"}` },
-                    { value: "D", label: `D — ${mcqOpts[3] || "(empty)"}` },
+                    {
+                      value: "A",
+                      label: `A — ${mcqOpts[0] || "(empty)"}`,
+                      disabled: !mcqOpts[0]?.trim(),
+                    },
+                    {
+                      value: "B",
+                      label: `B — ${mcqOpts[1] || "(empty)"}`,
+                      disabled: !mcqOpts[1]?.trim(),
+                    },
+                    {
+                      value: "C",
+                      label: `C — ${mcqOpts[2] || "(empty)"}`,
+                      disabled: !mcqOpts[2]?.trim(),
+                    },
+                    {
+                      value: "D",
+                      label: `D — ${mcqOpts[3] || "(empty)"}`,
+                      disabled: !mcqOpts[3]?.trim(),
+                    },
                   ]}
                 />
               </div>
