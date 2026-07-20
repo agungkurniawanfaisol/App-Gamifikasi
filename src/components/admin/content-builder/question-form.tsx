@@ -42,6 +42,9 @@ import {
   createEmptySubQuestion,
   getFormatsForSkill,
   getTotalWeight,
+  normalizeSubQuestionsForSave,
+  syncMcqCorrectAnswer,
+  syncYesNoCorrectAnswer,
   type SubQuestion,
 } from "@/lib/sub-questions";
 import { cn } from "@/lib/utils";
@@ -49,18 +52,6 @@ import { cn } from "@/lib/utils";
 function getInitialCorrect(opts: string[], correctAnswer: string | null): string {
   const idx = opts.findIndex((opt) => opt === correctAnswer);
   return idx >= 0 ? String.fromCharCode(65 + idx) : "";
-}
-
-/** Keep MCQ correctAnswer aligned with option text after edits. */
-function syncMcqCorrectAnswer(
-  options: string[],
-  correctAnswer: string | undefined
-): string {
-  const trimmed = options.map((o) => o.trim());
-  if (correctAnswer?.trim() && trimmed.includes(correctAnswer.trim())) {
-    return correctAnswer.trim();
-  }
-  return trimmed.find((o) => o.length > 0) ?? "";
 }
 
 /** Styled select wrapper for consistency */
@@ -120,6 +111,7 @@ function SubQuestionEditor({
   const formats = getFormatsForSkill(sub.skill);
   const mcqOpts = sub.options ?? ["", "", "", ""];
   const correctLetter = getInitialCorrect(mcqOpts, sub.correctAnswer ?? null);
+  const yesNoAnswer = syncYesNoCorrectAnswer(sub.correctAnswer);
 
   function update(patch: Partial<SubQuestion>) {
     onChange({ ...sub, ...patch });
@@ -355,8 +347,8 @@ function SubQuestionEditor({
             {sub.format === QuestionFormat.YES_NO && (
               <FormSelect
                 label={labels.admin.correctAnswer}
-                value={sub.correctAnswer ?? "Yes"}
-                onChange={(v) => update({ correctAnswer: v })}
+                value={yesNoAnswer}
+                onChange={(v) => update({ correctAnswer: syncYesNoCorrectAnswer(v) })}
                 options={[
                   { value: "Yes", label: "Yes" },
                   { value: "No", label: "No" },
@@ -491,25 +483,12 @@ export function QuestionForm({
     startTransition(async () => {
       try {
         const seedQuestionText = subQuestions[0]?.questionText?.trim() ?? "";
-        const normalizedSubQuestions = subQuestions.map((sq) => {
-          const withSeedText =
-            !sq.questionText.trim() && seedQuestionText
-              ? { ...sq, questionText: seedQuestionText }
-              : sq;
-
-          if (withSeedText.format !== QuestionFormat.MULTIPLE_CHOICE) {
-            return withSeedText;
-          }
-
-          return {
-            ...withSeedText,
-            options: (withSeedText.options ?? []).map((o) => o.trim()),
-            correctAnswer: syncMcqCorrectAnswer(
-              withSeedText.options ?? [],
-              withSeedText.correctAnswer
-            ),
-          };
-        });
+        const withSeedText = subQuestions.map((sq) =>
+          !sq.questionText.trim() && seedQuestionText
+            ? { ...sq, questionText: seedQuestionText }
+            : sq
+        );
+        const normalizedSubQuestions = normalizeSubQuestionsForSave(withSeedText);
 
         const data = { subQuestions: normalizedSubQuestions };
         const result = item

@@ -150,6 +150,50 @@ export function getTotalWeight(subQuestions: SubQuestion[]): number {
   return subQuestions.reduce((sum, sq) => sum + (sq.weightPercent || 0), 0);
 }
 
+/** Keep MCQ correctAnswer aligned with option text after edits. */
+export function syncMcqCorrectAnswer(
+  options: string[],
+  correctAnswer: string | undefined
+): string {
+  const trimmed = options.map((o) => o.trim());
+  const current = correctAnswer?.trim() ?? "";
+  if (current && trimmed.includes(current)) {
+    return current;
+  }
+  return trimmed.find((o) => o.length > 0) ?? "";
+}
+
+export function syncYesNoCorrectAnswer(correctAnswer: string | undefined): string {
+  const value = correctAnswer?.trim();
+  return value === "No" ? "No" : "Yes";
+}
+
+/** Normalize answers before validate/save so UI defaults cannot diverge from state. */
+export function normalizeSubQuestionsForSave(
+  subQuestions: SubQuestion[]
+): SubQuestion[] {
+  return subQuestions.map((sq, index) => {
+    if (sq.format === QuestionFormat.MULTIPLE_CHOICE) {
+      const options = (sq.options ?? []).map((o) => o.trim());
+      return {
+        ...sq,
+        order: index,
+        options,
+        correctAnswer: syncMcqCorrectAnswer(options, sq.correctAnswer),
+      };
+    }
+    if (sq.format === QuestionFormat.YES_NO) {
+      return {
+        ...sq,
+        order: index,
+        options: ["Yes", "No"],
+        correctAnswer: syncYesNoCorrectAnswer(sq.correctAnswer),
+      };
+    }
+    return { ...sq, order: index };
+  });
+}
+
 export function validateSubQuestions(subQuestions: SubQuestion[]): string | null {
   if (subQuestions.length === 0) {
     return "At least one sub-question is required.";
@@ -191,6 +235,19 @@ export function validateSubQuestions(subQuestions: SubQuestion[]): string | null
       !sq.correctAnswer?.trim()
     ) {
       return `${label}: correct answer is required.`;
+    }
+    if (sq.format === QuestionFormat.MULTIPLE_CHOICE) {
+      const options = (sq.options ?? []).map((o) => o.trim()).filter(Boolean);
+      if (!options.includes(sq.correctAnswer!.trim())) {
+        return `${label}: correct answer must match one of the options.`;
+      }
+    }
+    if (
+      sq.format === QuestionFormat.YES_NO &&
+      sq.correctAnswer !== "Yes" &&
+      sq.correctAnswer !== "No"
+    ) {
+      return `${label}: correct answer must be Yes or No.`;
     }
     if (
       sq.format === QuestionFormat.SPEECH_RECOGNITION &&

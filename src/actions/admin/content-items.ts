@@ -9,6 +9,7 @@ import { requireAdmin } from "@/lib/auth-helpers";
 import type { SubQuestion } from "@/lib/sub-questions";
 import {
   mirrorFirstSubToLegacyFields,
+  normalizeSubQuestionsForSave,
   serializeSubQuestionsForDb,
   validateSubQuestions,
 } from "@/lib/sub-questions";
@@ -80,7 +81,8 @@ export async function createQuestionItem(
   data: QuestionItemInput
 ): Promise<{ error: string } | void> {
   await requireAdmin();
-  const serialized = serializeSubQuestionsForDb(data.subQuestions);
+  const normalized = normalizeSubQuestionsForSave(data.subQuestions);
+  const serialized = serializeSubQuestionsForDb(normalized);
   const error = validateSubQuestions(serialized);
   if (error) return { error };
 
@@ -106,7 +108,8 @@ export async function updateQuestionItem(
   data: QuestionItemInput
 ): Promise<{ error: string } | void> {
   await requireAdmin();
-  const serialized = serializeSubQuestionsForDb(data.subQuestions);
+  const normalized = normalizeSubQuestionsForSave(data.subQuestions);
+  const serialized = serializeSubQuestionsForDb(normalized);
   const error = validateSubQuestions(serialized);
   if (error) return { error };
 

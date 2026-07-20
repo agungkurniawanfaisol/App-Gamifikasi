@@ -2,6 +2,8 @@ import { QuestionFormat, QuestionSkill } from "@prisma/client";
 import { ollamaChat } from "@/lib/ollama";
 import {
   getFormatsForSkill,
+  syncMcqCorrectAnswer,
+  syncYesNoCorrectAnswer,
   type SubQuestion,
   validateSubQuestions,
 } from "@/lib/sub-questions";
@@ -205,17 +207,13 @@ export function normalizeAiSubQuestions(raw: unknown): SubQuestion[] {
 
     if (format === QuestionFormat.MULTIPLE_CHOICE) {
       const options = normalizeMcqOptions(entry.options);
-      let correctAnswer = String(entry.correctAnswer ?? "").trim();
-      if (correctAnswer && !options.includes(correctAnswer)) {
-        const match = options.find(
-          (o) => o.toLowerCase() === correctAnswer.toLowerCase()
-        );
-        correctAnswer = match ?? options[0] ?? "";
-      }
       return {
         ...base,
         options,
-        correctAnswer: correctAnswer || options[0] || "",
+        correctAnswer: syncMcqCorrectAnswer(
+          options,
+          String(entry.correctAnswer ?? "")
+        ),
         explanation: entry.explanation ? String(entry.explanation) : undefined,
       };
     }
@@ -224,7 +222,7 @@ export function normalizeAiSubQuestions(raw: unknown): SubQuestion[] {
       return {
         ...base,
         options: ["Yes", "No"],
-        correctAnswer: String(entry.correctAnswer ?? "Yes"),
+        correctAnswer: syncYesNoCorrectAnswer(String(entry.correctAnswer ?? "")),
         explanation: entry.explanation ? String(entry.explanation) : undefined,
       };
     }
