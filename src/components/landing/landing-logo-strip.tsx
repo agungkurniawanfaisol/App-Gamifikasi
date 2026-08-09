@@ -1,6 +1,6 @@
 import Image from "next/image";
 import brandLogo from "../../../public/logo.png";
-import kementrianLogo from "../../../public/partners/kementrian.png";
+import bimaLogo from "../../../public/partners/bima.png";
 import unipdaLogo from "../../../public/partners/unipda.png";
 import unipdaDarkLogo from "../../../public/partners/unipda-dark.png";
 import diktiLogo from "../../../public/partners/dikti.png";
@@ -13,7 +13,7 @@ import { labels } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
 const LOGO_SRC = {
-  kementrian: kementrianLogo,
+  bima: bimaLogo,
   unipda: unipdaLogo,
   deeptest: brandLogo,
   dikti: diktiLogo,
@@ -21,8 +21,8 @@ const LOGO_SRC = {
 
 function logoAlt(id: LandingLogoId): string {
   switch (id) {
-    case "kementrian":
-      return labels.landing.hero.ministryBrand;
+    case "bima":
+      return labels.landing.hero.bimaBrand;
     case "unipda":
       return labels.nav.partnerBrand;
     case "deeptest":
@@ -40,11 +40,10 @@ function slotClass(id: LandingLogoId, isBrand: boolean): string {
     // Horizontal crest + wordmark; wide enough for readable text.
     return "h-14 w-[9.75rem] sm:h-16 sm:w-[11rem] md:h-[4.25rem] md:w-[12rem]";
   }
-  if (id === "dikti") {
-    // Landscape mark — same height as other partners, width grows from aspect
+  if (id === "bima" || id === "dikti") {
+    // Landscape marks — same height as other partners, width grows from aspect
     return "h-14 w-auto min-w-[7.5rem] sm:h-16 sm:min-w-[9rem] md:h-[4.25rem] md:min-w-[10.5rem]";
   }
-  // Square partner seals (Kementrian, UNIPDA) — equal size
   return "h-14 w-14 sm:h-16 sm:w-16 md:h-[4.25rem] md:w-[4.25rem]";
 }
 
@@ -136,7 +135,7 @@ export function LandingLogoStrip({
                     sizes={
                       isBrand
                         ? "(max-width: 640px) 72px, 104px"
-                        : item.id === "dikti"
+                        : item.id === "bima" || item.id === "dikti"
                           ? "(max-width: 640px) 150px, 200px"
                           : "(max-width: 640px) 56px, 68px"
                     }

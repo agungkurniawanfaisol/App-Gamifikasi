@@ -1,6 +1,6 @@
 import Image from "next/image";
 import brandLogo from "../../../public/logo.png";
-import kementrianLogo from "../../../public/partners/kementrian.png";
+import bimaLogo from "../../../public/partners/bima.png";
 import unipdaLogo from "../../../public/partners/unipda.png";
 import unipdaDarkLogo from "../../../public/partners/unipda-dark.png";
 import diktiLogo from "../../../public/partners/dikti.png";
@@ -9,10 +9,10 @@ import { cn } from "@/lib/utils";
 
 const AUTH_LOGOS = [
   {
-    id: "kementrian",
-    src: kementrianLogo,
-    alt: labels.landing.hero.ministryBrand,
-    className: "h-10 w-10 sm:h-11 sm:w-11",
+    id: "bima",
+    src: bimaLogo,
+    alt: labels.landing.hero.bimaBrand,
+    className: "h-9 w-auto max-w-[7.5rem] sm:h-10 sm:max-w-[9rem]",
   },
   {
     id: "dikti",
@@ -37,7 +37,7 @@ const AUTH_LOGOS = [
 
 /**
  * Compact partner logo row for auth screens (login / register / password reset).
- * Same order as landing (left → right): Tutwuri → DiktiSaintek → Deeplink → UNIPDA.
+ * Same order as landing (left → right): BIMA → DiktiSaintek → Deeptest → UNIPDA.
  */
 export function AuthBrandHeader({
   priority = false,

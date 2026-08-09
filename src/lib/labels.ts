@@ -1102,8 +1102,8 @@ export const labels = {
       getStarted: "Get Started",
       exploreFeatures: "Explore features",
       partnerStripAria: "Partner institutions",
-      ministryBrand:
-        "Ministry of Education, Culture, Research, and Technology",
+      bimaBrand:
+        "BIMA — Basis Informasi Penelitian dan Pengabdian kepada Masyarakat",
       diktiBrand: "DIKTISAINTEK BERDAMPAK",
       mockAria: "Product preview",
       mockWindowTitle: "Learner dashboard",

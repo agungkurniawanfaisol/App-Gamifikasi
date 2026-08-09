@@ -94,12 +94,19 @@ def resize_max(img: Image.Image, max_side: int) -> Image.Image:
     )
 
 
-def process_kementrian() -> None:
-    img = Image.open(DOCS / "Kementrian.jpeg")
-    out = flood_remove_bg(img, tolerance=50, seed_lightness=230)
-    out = crop_transparent(out, pad=2)
-    out.save(OUT / "kementrian.png", optimize=True)
-    print(f"kementrian.png {out.size} {out.mode}")
+def process_bima() -> None:
+    """BIMA horizontal lockup (icon + wordmark) — leftmost partner mark."""
+    img = Image.open(DOCS / "Bima.jpeg")
+    out = flood_remove_bg(img, tolerance=40, seed_lightness=240)
+    out = crop_transparent(out, pad=4)
+    if out.width > 800:
+        scale = 800 / out.width
+        out = out.resize(
+            (800, max(1, round(out.height * scale))),
+            Image.Resampling.LANCZOS,
+        )
+    out.save(OUT / "bima.png", optimize=True)
+    print(f"bima.png {out.size} {out.mode}")
 
 
 def process_unipda() -> None:
@@ -148,7 +155,7 @@ def process_dikti() -> None:
 
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
-    process_kementrian()
+    process_bima()
     process_unipda()
     process_dikti()
     print(f"Wrote PNGs to {OUT}")

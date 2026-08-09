@@ -19,18 +19,18 @@ export type BrandLogoSize = keyof typeof BRAND_LOGO_SIZE;
 
 /**
  * Landing strip heights (px).
- * Partners share one height for visual balance; Deeplink stays slightly larger.
+ * Partners share one height for visual balance; Deeptest stays slightly larger.
  */
 export const LANDING_STRIP_HEIGHT = {
-  /** Kementrian, UNIPDA, Dikti — equal visual weight */
+  /** BIMA, UNIPDA, Dikti — equal visual weight */
   sm: 64,
-  /** Deeplink focal logo */
+  /** Deeptest focal logo */
   hero: 96,
 } as const;
 
 export type LandingStripHeightKey = keyof typeof LANDING_STRIP_HEIGHT;
 
-export type LandingLogoId = "kementrian" | "unipda" | "deeptest" | "dikti";
+export type LandingLogoId = "bima" | "unipda" | "deeptest" | "dikti";
 
 export type LandingLogoStripItem = {
   id: LandingLogoId;
@@ -42,14 +42,14 @@ export type LandingLogoStripItem = {
 };
 
 /**
- * Landing hero order (left → right): Tutwuri → DiktiSaintek → Deeplink → UNIPDA.
+ * Landing hero order (left → right): BIMA → DiktiSaintek → Deeptest → UNIPDA.
  * Aspects match processed `public/partners/*.png` (+ brand logo).
  */
 export const LANDING_LOGO_STRIP: readonly LandingLogoStripItem[] = [
   {
-    id: "kementrian",
-    src: "/partners/kementrian.png",
-    aspect: 1,
+    id: "bima",
+    src: "/partners/bima.png",
+    aspect: 800 / 248,
     heightKey: "sm",
   },
   {
