@@ -17,6 +17,9 @@ import {
 import { Underline } from "@/lib/tiptap/underline";
 import { TextColor, TEXT_COLOR_OPTIONS } from "@/lib/tiptap/text-color";
 import { Highlight, HIGHLIGHT_COLOR_OPTIONS } from "@/lib/tiptap/highlight";
+import { Youtube } from "@/lib/tiptap/youtube";
+import { normalizeYoutubeEmbedUrl } from "@/lib/youtube";
+import { toast } from "sonner";
 import {
   AlignCenter,
   AlignJustify,
@@ -37,6 +40,7 @@ import {
   Strikethrough,
   Underline as UnderlineIcon,
   Undo2,
+  Youtube as YoutubeIcon,
 } from "lucide-react";
 
 type HeadingLevel = 1 | 2 | 3;
@@ -84,6 +88,7 @@ export function MaterialEditor({
       TextColor,
       Underline,
       Highlight,
+      Youtube,
     ],
     content: initialContent ? safeParse(initialContent) : undefined,
     onUpdate: ({ editor: ed }) => {
@@ -127,6 +132,19 @@ export function MaterialEditor({
       return;
     }
     editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+  }
+
+  function insertYoutube() {
+    if (!editor) return;
+    const url = window.prompt(labels.admin.youtubePrompt, "https://");
+    if (url === null || url.trim() === "") return;
+    const embed = normalizeYoutubeEmbedUrl(url);
+    if (!embed) {
+      toast.error(labels.admin.youtubeUrlInvalid);
+      return;
+    }
+    editor.chain().focus().setYoutubeVideo({ src: embed }).run();
+    onChange(JSON.stringify(editor.getJSON()));
   }
 
   function clearFormatting() {
@@ -373,6 +391,13 @@ export function MaterialEditor({
           </ToolbarButton>
           <ToolbarButton label={labels.admin.uploadImage} onClick={insertImage}>
             <ImageIcon className="size-4" />
+          </ToolbarButton>
+          <ToolbarButton
+            label={labels.admin.insertYoutube}
+            active={editor.isActive("youtube")}
+            onClick={insertYoutube}
+          >
+            <YoutubeIcon className="size-4" />
           </ToolbarButton>
 
           <ToolbarDivider />

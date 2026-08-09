@@ -59,6 +59,15 @@ export function MaterialAttachmentViewer({
 
       {kind === "pptx" && <PptxAttachmentPreview attachment={attachment} />}
 
+      {kind === "audio" && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            {labels.admin.attachmentPreviewAudio}
+          </p>
+          <audio controls src={attachment.url} className="w-full" />
+        </div>
+      )}
+
       {kind === "download" && (
         <p className="text-sm text-muted-foreground">
           {labels.admin.attachmentUnsupported}

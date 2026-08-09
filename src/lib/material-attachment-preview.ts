@@ -2,6 +2,7 @@ export type AttachmentPreviewKind =
   | "pdf"
   | "pptx"
   | "image"
+  | "audio"
   | "download";
 
 export function getAttachmentPreviewKind(mimeType: string): AttachmentPreviewKind {
@@ -14,10 +15,16 @@ export function getAttachmentPreviewKind(mimeType: string): AttachmentPreviewKin
     return "pptx";
   }
   if (mimeType.startsWith("image/")) return "image";
+  if (mimeType.startsWith("audio/")) return "audio";
   return "download";
 }
 
 export function canInlinePreview(mimeType: string): boolean {
   const kind = getAttachmentPreviewKind(mimeType);
-  return kind === "pdf" || kind === "pptx" || kind === "image";
+  return (
+    kind === "pdf" ||
+    kind === "pptx" ||
+    kind === "image" ||
+    kind === "audio"
+  );
 }

@@ -26,6 +26,7 @@ import type { SubQuestion } from "@/lib/sub-questions";
 import { Badge } from "@/components/ui/badge";
 import { labels } from "@/lib/labels";
 import { cn } from "@/lib/utils";
+import { QuestionMedia } from "@/components/shared/question-media";
 
 const OPTION_LABELS = ["A", "B", "C", "D"];
 
@@ -188,14 +189,14 @@ function SubQuestionPreview({
           />
         )}
 
-        {/* Listening audio */}
-        {sub.skill === QuestionSkill.LISTENING && sub.audioUrl && (
-          <div className="mb-3 rounded-lg border border-border bg-muted/30 p-3">
-            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              <Headphones className="size-3" />
-              Audio
-            </p>
-            <audio controls src={sub.audioUrl} className="h-9 w-full" />
+        {/* Media (YouTube + audio) */}
+        {(sub.youtubeUrl || sub.audioUrl) && (
+          <div className="mb-3">
+            <QuestionMedia
+              youtubeUrl={sub.youtubeUrl}
+              audioUrl={sub.audioUrl}
+              compact
+            />
           </div>
         )}
 

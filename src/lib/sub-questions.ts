@@ -2,6 +2,7 @@ import {
   QuestionFormat,
   QuestionSkill,
 } from "@prisma/client";
+import { normalizeYoutubeEmbedUrl } from "@/lib/youtube";
 
 export type SubQuestion = {
   id: string;
@@ -14,6 +15,8 @@ export type SubQuestion = {
   correctAnswer?: string;
   expectedSpeech?: string;
   audioUrl?: string;
+  /** Normalized YouTube nocookie embed URL */
+  youtubeUrl?: string;
   explanation?: string;
   essayRubric?: string;
 };
@@ -63,6 +66,10 @@ export function parseSubQuestions(raw: unknown): SubQuestion[] {
         ? String(sq.expectedSpeech)
         : undefined,
       audioUrl: sq.audioUrl ? String(sq.audioUrl) : undefined,
+      youtubeUrl: (() => {
+        const raw = sq.youtubeUrl ? String(sq.youtubeUrl) : "";
+        return normalizeYoutubeEmbedUrl(raw) ?? undefined;
+      })(),
       explanation: sq.explanation ? String(sq.explanation) : undefined,
       essayRubric: sq.essayRubric ? String(sq.essayRubric) : undefined,
     });
@@ -106,6 +113,7 @@ export function getSubQuestionsFromItem(item: {
         correctAnswer: item.correctAnswer ?? undefined,
         expectedSpeech: item.expectedSpeech ?? undefined,
         audioUrl: item.audioUrl ?? undefined,
+        youtubeUrl: undefined,
         explanation: item.explanation ?? undefined,
         essayRubric: item.essayRubric ?? undefined,
       },
@@ -218,6 +226,12 @@ export function normalizeSubQuestionsForSave(
   subQuestions: SubQuestion[]
 ): SubQuestion[] {
   return subQuestions.map((sq, index) => {
+    const youtubeRaw = sq.youtubeUrl?.trim() ?? "";
+    const youtubeUrl = youtubeRaw
+      ? (normalizeYoutubeEmbedUrl(youtubeRaw) ?? youtubeRaw)
+      : undefined;
+    const audioUrl = sq.audioUrl?.trim() || undefined;
+
     if (sq.format === QuestionFormat.MULTIPLE_CHOICE) {
       const options = (sq.options ?? []).map((o) => o.trim());
       return {
@@ -225,6 +239,8 @@ export function normalizeSubQuestionsForSave(
         order: index,
         options,
         correctAnswer: syncMcqCorrectAnswer(options, sq.correctAnswer),
+        audioUrl,
+        youtubeUrl,
       };
     }
     if (sq.format === QuestionFormat.YES_NO) {
@@ -233,9 +249,11 @@ export function normalizeSubQuestionsForSave(
         order: index,
         options: ["Yes", "No"],
         correctAnswer: syncYesNoCorrectAnswer(sq.correctAnswer),
+        audioUrl,
+        youtubeUrl,
       };
     }
-    return { ...sq, order: index };
+    return { ...sq, order: index, audioUrl, youtubeUrl };
   });
 }
 
@@ -301,8 +319,11 @@ export function validateSubQuestions(subQuestions: SubQuestion[]): string | null
     ) {
       return `${label}: expected speech is required.`;
     }
-    if (sq.skill === QuestionSkill.LISTENING && !sq.audioUrl?.trim()) {
-      return `${label}: audio file is required for Listening.`;
+    if (sq.youtubeUrl?.trim()) {
+      const normalized = normalizeYoutubeEmbedUrl(sq.youtubeUrl);
+      if (!normalized) {
+        return `${label}: YouTube URL is invalid.`;
+      }
     }
   }
 
@@ -331,8 +352,12 @@ export function serializeSubQuestionsForDb(
       sq.format === QuestionFormat.SPEECH_RECOGNITION
         ? sq.expectedSpeech?.trim()
         : undefined,
-    audioUrl:
-      sq.skill === QuestionSkill.LISTENING ? sq.audioUrl?.trim() : undefined,
+    audioUrl: sq.audioUrl?.trim() || undefined,
+    youtubeUrl: (() => {
+      const raw = sq.youtubeUrl?.trim() ?? "";
+      if (!raw) return undefined;
+      return normalizeYoutubeEmbedUrl(raw) ?? undefined;
+    })(),
     essayRubric:
       sq.format === QuestionFormat.ESSAY ? sq.essayRubric?.trim() : undefined,
     explanation: sq.explanation?.trim() || undefined,

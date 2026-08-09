@@ -263,6 +263,19 @@
     @apply leading-relaxed text-foreground;
   }
 
+  .youtube-embed {
+    @apply relative w-full overflow-hidden rounded-md;
+    aspect-ratio: 16 / 9;
+  }
+
+  .youtube-embed iframe {
+    @apply absolute inset-0 size-full border-0;
+  }
+
+  .prose-content .youtube-embed {
+    @apply my-4;
+  }
+
   .prose-content p {
     @apply mb-3 leading-relaxed;
   }

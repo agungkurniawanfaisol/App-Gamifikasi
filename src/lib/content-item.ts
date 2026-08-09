@@ -11,6 +11,7 @@ import {
 import type { MaterialAttachment } from "@/lib/material-attachments";
 import { sanitizeFontSize } from "@/lib/tiptap/font-size";
 import { sanitizeColor } from "@/lib/tiptap/text-color";
+import { youtubeIframeHtml } from "@/lib/youtube";
 
 export type ContentItemPayload = {
   id: number;
@@ -209,6 +210,10 @@ function renderNode(node: TipTapNode): string {
       const src = typeof node.attrs?.src === "string" ? node.attrs.src : "";
       const alt = typeof node.attrs?.alt === "string" ? node.attrs.alt : "";
       return `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" class="my-3 max-w-full rounded-md" />`;
+    }
+    case "youtube": {
+      const src = typeof node.attrs?.src === "string" ? node.attrs.src : "";
+      return youtubeIframeHtml(src);
     }
     case "blockquote":
       return `<blockquote class="mb-3 border-l-4 border-border pl-4 italic"${styleAttr(alignStyles)}>${inner}</blockquote>`;

@@ -118,4 +118,22 @@ describe("normalizeSubQuestionsForSave + validateSubQuestions", () => {
       /correct answer is required/
     );
   });
+
+  it("allows Listening without audio or YouTube", () => {
+    const error = validateSubQuestions([
+      baseSub({
+        skill: QuestionSkill.LISTENING,
+        audioUrl: undefined,
+        youtubeUrl: undefined,
+      }),
+    ]);
+    assert.equal(error, null);
+  });
+
+  it("rejects invalid YouTube URLs", () => {
+    const error = validateSubQuestions([
+      baseSub({ youtubeUrl: "https://vimeo.com/123" }),
+    ]);
+    assert.match(String(error), /YouTube URL is invalid/);
+  });
 });

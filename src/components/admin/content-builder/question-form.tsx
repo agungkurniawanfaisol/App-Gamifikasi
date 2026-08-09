@@ -48,6 +48,8 @@ import {
   syncYesNoCorrectAnswer,
   type SubQuestion,
 } from "@/lib/sub-questions";
+import { normalizeYoutubeEmbedUrl } from "@/lib/youtube";
+import { QuestionMedia } from "@/components/shared/question-media";
 import { cn } from "@/lib/utils";
 
 /** Styled select wrapper for consistency */
@@ -130,12 +132,24 @@ function SubQuestionEditor({
       format,
       options:
         format === QuestionFormat.MULTIPLE_CHOICE
-          ? ["", "", "", ""]
+          ? sub.format === QuestionFormat.MULTIPLE_CHOICE
+            ? sub.options
+            : ["", "", "", ""]
           : format === QuestionFormat.YES_NO
             ? ["Yes", "No"]
             : undefined,
-      correctAnswer: format === QuestionFormat.YES_NO ? "Yes" : "",
-      audioUrl: skill === QuestionSkill.LISTENING ? sub.audioUrl : undefined,
+      correctAnswer:
+        format === QuestionFormat.YES_NO
+          ? sub.format === QuestionFormat.YES_NO
+            ? sub.correctAnswer || "Yes"
+            : "Yes"
+          : format === QuestionFormat.MULTIPLE_CHOICE &&
+              sub.format === QuestionFormat.MULTIPLE_CHOICE
+            ? sub.correctAnswer
+            : "",
+      // Preserve media across skill changes
+      audioUrl: sub.audioUrl,
+      youtubeUrl: sub.youtubeUrl,
     });
   }
 
@@ -278,8 +292,48 @@ function SubQuestionEditor({
               />
             </div>
 
-            {/* Listening audio upload */}
-            {sub.skill === QuestionSkill.LISTENING && (
+            {/* Optional media — all skills */}
+            <div className="flex flex-col gap-3 rounded-md border border-border/70 bg-muted/10 p-3 sm:p-4">
+              <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                {labels.admin.questionMedia}
+              </Label>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor={`youtube-${sub.id}`} className="text-sm font-medium">
+                  {labels.admin.youtubeUrl}
+                </Label>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <Input
+                    id={`youtube-${sub.id}`}
+                    value={sub.youtubeUrl ?? ""}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      if (!raw.trim()) {
+                        update({ youtubeUrl: "" });
+                        return;
+                      }
+                      update({ youtubeUrl: raw });
+                    }}
+                    onBlur={() => {
+                      const raw = sub.youtubeUrl?.trim() ?? "";
+                      if (!raw) return;
+                      const normalized = normalizeYoutubeEmbedUrl(raw);
+                      update({ youtubeUrl: normalized ?? raw });
+                    }}
+                    placeholder={labels.admin.youtubeUrlPlaceholder}
+                    className="min-h-11"
+                  />
+                  {sub.youtubeUrl ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="min-h-11 w-full shrink-0 sm:w-auto"
+                      onClick={() => update({ youtubeUrl: "" })}
+                    >
+                      {labels.admin.clearYoutube}
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
               <FileUploadField
                 groupId={groupId}
                 accept="audio/*"
@@ -287,7 +341,14 @@ function SubQuestionEditor({
                 currentUrl={sub.audioUrl ?? ""}
                 onUploaded={(url) => update({ audioUrl: url })}
               />
-            )}
+              {(sub.youtubeUrl || sub.audioUrl) && (
+                <QuestionMedia
+                  youtubeUrl={sub.youtubeUrl}
+                  audioUrl={sub.audioUrl}
+                  compact
+                />
+              )}
+            </div>
 
             {/* Multiple Choice options */}
             {sub.format === QuestionFormat.MULTIPLE_CHOICE && (

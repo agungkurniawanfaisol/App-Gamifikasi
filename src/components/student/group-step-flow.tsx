@@ -612,6 +612,7 @@ function SubQuestionRenderer({
         expectedSpeech: sub.expectedSpeech,
         correctAnswer: sub.correctAnswer,
         audioUrl: sub.audioUrl,
+        youtubeUrl: sub.youtubeUrl,
         essayRubric: sub.essayRubric,
       }}
       initiallyAnswered={initiallyAnswered}

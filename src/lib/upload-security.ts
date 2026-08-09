@@ -214,6 +214,8 @@ function classifyMime(
   }
 
   if (allowed === "document") {
+    const audioExt = AUDIO_MIMES[mimeType];
+    if (audioExt) return { category: "audio", extension: audioExt };
     const ext = DOCUMENT_MIMES[mimeType];
     if (ext) return { category: "document", extension: ext };
   }

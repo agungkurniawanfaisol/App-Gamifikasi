@@ -162,6 +162,7 @@ export type DailyChallengeQuestionView = {
   expectedSpeech: string | null;
   correctAnswer: string | null;
   audioUrl: string | null;
+  youtubeUrl: string | null;
   essayRubric: string | null;
 };
 
@@ -224,6 +225,7 @@ export async function getDailyChallengeQuestions(
       expectedSpeech: sub?.expectedSpeech ?? item.expectedSpeech,
       correctAnswer: sub?.correctAnswer ?? item.correctAnswer,
       audioUrl: sub?.audioUrl ?? item.audioUrl,
+      youtubeUrl: sub?.youtubeUrl ?? null,
       essayRubric: sub?.essayRubric ?? item.essayRubric,
     };
   });

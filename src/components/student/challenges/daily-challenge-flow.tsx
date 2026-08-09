@@ -202,6 +202,7 @@ function DailyQuestionStep({
         expectedSpeech: question.expectedSpeech,
         correctAnswer: question.correctAnswer,
         audioUrl: question.audioUrl,
+        youtubeUrl: question.youtubeUrl,
         essayRubric: question.essayRubric,
       }}
       onAnswered={onAnswered}
