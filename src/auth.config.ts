@@ -15,17 +15,24 @@ export const authConfig = {
       const isLoggedIn = !!auth?.user;
       const path = request.nextUrl.pathname;
       const role = auth?.user?.role;
+      const hasAppIdentity = Boolean(auth?.user?.id && role);
 
       if (path.startsWith("/admin")) {
-        return isLoggedIn && role === Role.ADMIN;
+        return isLoggedIn && role === Role.ADMIN && hasAppIdentity;
       }
 
       if (path.startsWith("/dashboard")) {
-        return isLoggedIn;
+        if (!isLoggedIn || !hasAppIdentity) return false;
+        if (role === Role.ADMIN) {
+          return Response.redirect(
+            new URL("/admin/dashboard", request.nextUrl)
+          );
+        }
+        return role === Role.STUDENT;
       }
 
       if (path === "/login") {
-        if (isLoggedIn) {
+        if (isLoggedIn && hasAppIdentity) {
           return Response.redirect(
             new URL(
               role === Role.ADMIN ? "/admin/dashboard" : "/dashboard",
@@ -40,8 +47,12 @@ export const authConfig = {
     },
     session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as Role;
+        if (typeof token.id === "string" && /^\d+$/.test(token.id)) {
+          session.user.id = token.id;
+        }
+        if (token.role === Role.ADMIN || token.role === Role.STUDENT) {
+          session.user.role = token.role;
+        }
       }
       return session;
     },

@@ -53,6 +53,10 @@ async function provisionGoogleUser(
   });
 }
 
+function isAppUserId(value: unknown): value is string {
+  return typeof value === "string" && /^\d+$/.test(value);
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   providers: [
@@ -103,18 +107,45 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return dbUser !== null;
     },
     async jwt({ token, user, account }) {
-      if (account?.provider === "google" && user?.email) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: user.email.toLowerCase() },
-        });
-        if (dbUser) {
-          token.id = String(dbUser.id);
-          token.role = dbUser.role;
-        }
-      } else if (user) {
-        token.id = user.id as string;
-        token.role = user.role;
+      // OAuth avatars bloat the JWT into chunked cookies that can corrupt after logout/re-login.
+      if ("picture" in token) {
+        delete (token as { picture?: unknown }).picture;
       }
+
+      if (account?.provider === "google") {
+        if (!user?.email) {
+          delete token.id;
+          delete (token as { role?: Role }).role;
+          return token;
+        }
+
+        // Re-resolve from DB on every Google sign-in (do not trust Google `sub` as app id).
+        const dbUser = await provisionGoogleUser(
+          user.email,
+          user.name,
+          user.image
+        );
+        if (!dbUser) {
+          delete token.id;
+          delete (token as { role?: Role }).role;
+          return token;
+        }
+
+        token.id = String(dbUser.id);
+        token.role = dbUser.role;
+        token.name = dbUser.name;
+        token.email = dbUser.email;
+        return token;
+      }
+
+      if (user) {
+        // Credentials (or other providers): only accept numeric app user ids.
+        if (isAppUserId(user.id) && user.role) {
+          token.id = user.id;
+          token.role = user.role;
+        }
+      }
+
       return token;
     },
   },
