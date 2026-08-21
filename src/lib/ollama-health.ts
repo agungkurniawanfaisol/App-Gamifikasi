@@ -3,8 +3,8 @@ import { isOllamaModelAvailable } from "@/lib/ollama-model";
 
 const OLLAMA_CONNECT_TIMEOUT_MS = 180_000;
 const OLLAMA_WARMUP_TIMEOUT_MS = 180_000;
-/** Default 3 minutes — refresh keep_alive well before any 5m server default unload. */
-const DEFAULT_KEEP_WARM_INTERVAL_MS = 3 * 60 * 1000;
+/** Default 10 minutes — only re-warm if unloaded; avoid competing with user chat. */
+const DEFAULT_KEEP_WARM_INTERVAL_MS = 10 * 60 * 1000;
 
 function getKeepWarmIntervalMs(): number {
   const raw = process.env.OLLAMA_KEEP_WARM_INTERVAL_MS?.trim();
@@ -185,11 +185,15 @@ async function unloadOtherModels(
 /**
  * Load the model into RAM (cold start). Safe to call on startup or before chat.
  * No-op when Ollama env is missing.
+ * Skips inference if the target model is already loaded (avoids blocking user chat).
  * If another model is pinned with keep_alive=-1, unload it and retry once.
  */
 export async function warmOllamaModel(): Promise<boolean> {
   const config = getConfig();
   if (!config) return false;
+
+  const status = await getOllamaStatus();
+  if (status.modelLoaded) return true;
 
   const doWarm = () =>
     fetch(`${config.baseUrl}/api/generate`, {

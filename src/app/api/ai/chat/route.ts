@@ -10,6 +10,7 @@ import {
   CHAT_HISTORY_LIMIT,
   getOllamaChatOptions,
   getOllamaKeepAlive,
+  trimChatHistoryMessage,
   trimLearnStepContent,
   type LearnChatContextInput,
 } from "@/lib/ollama";
@@ -183,7 +184,7 @@ export async function POST(request: Request) {
 
   const messages = [...historyRows].reverse().map((h) => ({
     role: h.role === ChatRole.USER ? ("user" as const) : ("assistant" as const),
-    content: h.message,
+    content: trimChatHistoryMessage(h.message),
   }));
 
   let baseUrl: string;

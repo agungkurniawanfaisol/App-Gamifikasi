@@ -82,16 +82,16 @@ services:
         condition: service_completed_successfully
     environment:
       OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:3b}
-      # Seconds between warm pings (default 3 minutes)
-      OLLAMA_KEEP_WARM_SECONDS: ${OLLAMA_KEEP_WARM_SECONDS:-180}
+      # Seconds between checks (default 10 min). Skips generate when already loaded.
+      OLLAMA_KEEP_WARM_SECONDS: ${OLLAMA_KEEP_WARM_SECONDS:-600}
     networks:
       - app_network
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
         MODEL="$${OLLAMA_MODEL:-qwen2.5:3b}"
-        INTERVAL="$${OLLAMA_KEEP_WARM_SECONDS:-180}"
-        echo "[ollama-keepwarm] keeping $$MODEL loaded (every $${INTERVAL}s, keep_alive=-1)"
+        INTERVAL="$${OLLAMA_KEEP_WARM_SECONDS:-600}"
+        echo "[ollama-keepwarm] ensuring $$MODEL stays loaded (check every $${INTERVAL}s)"
         unload_other() {
           for OLD in qwen2.5:3b qwen2.5:7b qwen2.5:0.5b qwen2.5:1.5b; do
             if [ "$$OLD" = "$$MODEL" ]; then
@@ -103,19 +103,24 @@ services:
               >/dev/null 2>&1 || true
           done
         }
+        is_loaded() {
+          curl -sfS -m 15 "http://ollama:11434/api/ps" | grep -F "$$MODEL" >/dev/null 2>&1
+        }
         warm() {
           curl -sfS -m 180 -X POST "http://ollama:11434/api/generate" \
             -H "Content-Type: application/json" \
             -d "{\"model\":\"$$MODEL\",\"prompt\":\"ping\",\"stream\":false,\"keep_alive\":-1}"
         }
         while true; do
-          if warm >/dev/null; then
-            echo "[ollama-keepwarm] ok $$(date -u +%H:%M:%S)"
+          if is_loaded; then
+            echo "[ollama-keepwarm] already loaded $$(date -u +%H:%M:%S)"
+          elif warm >/dev/null; then
+            echo "[ollama-keepwarm] warmed $$(date -u +%H:%M:%S)"
           else
             echo "[ollama-keepwarm] failed — unloading other models, retry $$(date -u +%H:%M:%S)"
             unload_other
             if warm >/dev/null; then
-              echo "[ollama-keepwarm] ok after unload $$(date -u +%H:%M:%S)"
+              echo "[ollama-keepwarm] warmed after unload $$(date -u +%H:%M:%S)"
             else
               echo "[ollama-keepwarm] still failing $$(date -u +%H:%M:%S)"
             fi
@@ -175,7 +180,7 @@ services:
       OLLAMA_MODEL: ${OLLAMA_MODEL}
       OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:--1}
       # App-side warm interval (ms). Sidecar also warms independently.
-      OLLAMA_KEEP_WARM_INTERVAL_MS: ${OLLAMA_KEEP_WARM_INTERVAL_MS:-180000}
+      OLLAMA_KEEP_WARM_INTERVAL_MS: ${OLLAMA_KEEP_WARM_INTERVAL_MS:-600000}
     depends_on:
       mysql:
         condition: service_healthy

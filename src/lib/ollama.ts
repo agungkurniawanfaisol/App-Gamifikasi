@@ -15,13 +15,23 @@ const DEFAULT_OLLAMA_KEEP_ALIVE = -1;
 /** Cap learn-step excerpt size to keep chat prompts fast. */
 export const MAX_LEARN_STEP_CONTENT_CHARS = 2_500;
 
-export const CHAT_HISTORY_LIMIT = 12;
+/** Fewer turns = faster/stabler replies on small CPU models (0.5b / 1.5b). */
+export const CHAT_HISTORY_LIMIT = 6;
+
+/** Truncate each history message so context stays within small num_ctx. */
+export const MAX_CHAT_HISTORY_CHARS = 800;
 
 export function trimLearnStepContent(content?: string | null): string | null {
   const trimmed = content?.trim();
   if (!trimmed) return null;
   if (trimmed.length <= MAX_LEARN_STEP_CONTENT_CHARS) return trimmed;
   return `${trimmed.slice(0, MAX_LEARN_STEP_CONTENT_CHARS)}…`;
+}
+
+export function trimChatHistoryMessage(content: string): string {
+  const trimmed = content.trim();
+  if (trimmed.length <= MAX_CHAT_HISTORY_CHARS) return trimmed;
+  return `${trimmed.slice(0, MAX_CHAT_HISTORY_CHARS)}…`;
 }
 
 export function getOllamaKeepAlive(): string | number {
@@ -267,8 +277,9 @@ export function getOllamaChatOptions(userMessage: string): Record<string, number
   const short = userMessage.trim().length <= 100;
   const threads = Number.parseInt(process.env.OLLAMA_NUM_THREADS ?? "", 10);
   const options: Record<string, number> = {
-    num_predict: short ? 256 : 1536,
-    num_ctx: short ? 2048 : 4096,
+    // Keep replies short so CPU-bound models finish before proxy/browser timeouts.
+    num_predict: short ? 192 : 512,
+    num_ctx: short ? 1024 : 2048,
     temperature: 0.3,
   };
   if (Number.isFinite(threads) && threads > 0) {
