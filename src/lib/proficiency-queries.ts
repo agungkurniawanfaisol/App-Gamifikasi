@@ -14,27 +14,39 @@ export type ProficiencySummary = {
   progress: ProficiencyProgress;
 };
 
-async function fetchProficiencySummary(
+/** Serializable — no Lucide icons inside `unstable_cache`. */
+type CachedProficiencySummary = {
+  score: number;
+};
+
+async function fetchProficiencyScore(
   userId: number
-): Promise<ProficiencySummary> {
+): Promise<CachedProficiencySummary> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { proficiencyScore: true },
   });
 
-  const score = user?.proficiencyScore ?? 0;
-  const level = getProficiencyLevel(score);
-  const progress = getProficiencyProgress(score);
+  return { score: user?.proficiencyScore ?? 0 };
+}
 
-  return { score, level, progress };
+function hydrateProficiencySummary(
+  cached: CachedProficiencySummary
+): ProficiencySummary {
+  const score = cached.score;
+  return {
+    score,
+    level: getProficiencyLevel(score),
+    progress: getProficiencyProgress(score),
+  };
 }
 
 export async function getProficiencySummary(
   userId: number
 ): Promise<ProficiencySummary> {
-  return unstable_cache(
-    () => fetchProficiencySummary(userId),
-    ["user-proficiency-summary", String(userId)],
+  const cached = await unstable_cache(
+    () => fetchProficiencyScore(userId),
+    ["user-proficiency-summary-v2", String(userId)],
     {
       revalidate: 60,
       tags: [
@@ -43,4 +55,6 @@ export async function getProficiencySummary(
       ],
     }
   )();
+
+  return hydrateProficiencySummary(cached);
 }

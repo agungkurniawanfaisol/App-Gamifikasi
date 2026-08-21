@@ -6,6 +6,8 @@ import {
   getTier,
   getTierProgress,
   type LeaderboardResult,
+  type TierConfig,
+  type TierProgress,
 } from "@/lib/ranking";
 
 export type UserRankSummary = {
@@ -13,9 +15,71 @@ export type UserRankSummary = {
   totalParticipants: number;
   points: number;
   groupsCompleted: number;
-  tier: ReturnType<typeof getTier>;
-  tierProgress: ReturnType<typeof getTierProgress>;
+  tier: TierConfig;
+  tierProgress: TierProgress;
 };
+
+/** Serializable payload only — Lucide icons must not enter `unstable_cache`. */
+type CachedUserRankSummary = {
+  rank: number;
+  totalParticipants: number;
+  points: number;
+  groupsCompleted: number;
+};
+
+async function fetchUserRankSummaryCached(
+  userId: number
+): Promise<CachedUserRankSummary | null> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      role: true,
+      isActive: true,
+      points: true,
+      _count: {
+        select: {
+          progress: { where: { isGroupCompleted: true } },
+        },
+      },
+    },
+  });
+  if (!user || user.role !== "STUDENT" || !user.isActive) return null;
+
+  const [aheadCount, totalParticipants] = await Promise.all([
+    prisma.user.count({
+      where: {
+        role: "STUDENT",
+        isActive: true,
+        OR: [
+          { points: { gt: user.points } },
+          { AND: [{ points: user.points }, { id: { lt: user.id } }] },
+        ],
+      },
+    }),
+    prisma.user.count({
+      where: { role: "STUDENT", isActive: true },
+    }),
+  ]);
+
+  return {
+    rank: aheadCount + 1,
+    totalParticipants,
+    points: user.points,
+    groupsCompleted: user._count.progress,
+  };
+}
+
+function hydrateUserRankSummary(
+  cached: CachedUserRankSummary
+): UserRankSummary {
+  const points = cached.points;
+  return {
+    ...cached,
+    tier: getTier(points),
+    tierProgress: getTierProgress(points),
+  };
+}
 
 export async function fetchLeaderboardUsers() {
   return prisma.user.findMany({
@@ -69,55 +133,6 @@ export async function getPublicLeaderboardPreview(
   };
 }
 
-async function fetchUserRankSummary(
-  userId: number
-): Promise<UserRankSummary | null> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      role: true,
-      isActive: true,
-      points: true,
-      _count: {
-        select: {
-          progress: { where: { isGroupCompleted: true } },
-        },
-      },
-    },
-  });
-  if (!user || user.role !== "STUDENT" || !user.isActive) return null;
-
-  const [aheadCount, totalParticipants] = await Promise.all([
-    prisma.user.count({
-      where: {
-        role: "STUDENT",
-        isActive: true,
-        OR: [
-          { points: { gt: user.points } },
-          { AND: [{ points: user.points }, { id: { lt: user.id } }] },
-        ],
-      },
-    }),
-    prisma.user.count({
-      where: { role: "STUDENT", isActive: true },
-    }),
-  ]);
-
-  const points = user.points;
-  const tier = getTier(points);
-  const tierProgress = getTierProgress(points);
-
-  return {
-    rank: aheadCount + 1,
-    totalParticipants,
-    points,
-    groupsCompleted: user._count.progress,
-    tier,
-    tierProgress,
-  };
-}
-
 /**
  * Cheap rank for shell/sidebar: avoid scanning every student + `_count` joins.
  * Matches leaderboard order: points DESC, then id ASC.
@@ -125,12 +140,17 @@ async function fetchUserRankSummary(
 export async function getUserRankSummary(
   userId: number
 ): Promise<UserRankSummary | null> {
-  return unstable_cache(
-    () => fetchUserRankSummary(userId),
-    ["user-rank-summary", String(userId)],
+  const cached = await unstable_cache(
+    () => fetchUserRankSummaryCached(userId),
+    ["user-rank-summary-v2", String(userId)],
     {
       revalidate: 60,
-      tags: [studentCacheTag(userId, "ranking"), studentCacheTag(userId, "dashboard")],
+      tags: [
+        studentCacheTag(userId, "ranking"),
+        studentCacheTag(userId, "dashboard"),
+      ],
     }
   )();
+
+  return cached ? hydrateUserRankSummary(cached) : null;
 }
