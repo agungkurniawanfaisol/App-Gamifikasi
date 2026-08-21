@@ -92,12 +92,34 @@ services:
         MODEL="$${OLLAMA_MODEL:-qwen2.5:3b}"
         INTERVAL="$${OLLAMA_KEEP_WARM_SECONDS:-180}"
         echo "[ollama-keepwarm] keeping $$MODEL loaded (every $${INTERVAL}s, keep_alive=-1)"
-        while true; do
-          curl -sS -m 180 -X POST "http://ollama:11434/api/generate" \
+        unload_other() {
+          for OLD in qwen2.5:3b qwen2.5:7b qwen2.5:0.5b qwen2.5:1.5b; do
+            if [ "$$OLD" = "$$MODEL" ]; then
+              continue
+            fi
+            curl -sS -m 60 -X POST "http://ollama:11434/api/generate" \
+              -H "Content-Type: application/json" \
+              -d "{\"model\":\"$$OLD\",\"prompt\":\"\",\"stream\":false,\"keep_alive\":0}" \
+              >/dev/null 2>&1 || true
+          done
+        }
+        warm() {
+          curl -sfS -m 180 -X POST "http://ollama:11434/api/generate" \
             -H "Content-Type: application/json" \
-            -d "{\"model\":\"$$MODEL\",\"prompt\":\"ping\",\"stream\":false,\"keep_alive\":-1}" \
-            >/dev/null && echo "[ollama-keepwarm] ok $$(date -u +%H:%M:%S)" \
-            || echo "[ollama-keepwarm] failed $$(date -u +%H:%M:%S)"
+            -d "{\"model\":\"$$MODEL\",\"prompt\":\"ping\",\"stream\":false,\"keep_alive\":-1}"
+        }
+        while true; do
+          if warm >/dev/null; then
+            echo "[ollama-keepwarm] ok $$(date -u +%H:%M:%S)"
+          else
+            echo "[ollama-keepwarm] failed — unloading other models, retry $$(date -u +%H:%M:%S)"
+            unload_other
+            if warm >/dev/null; then
+              echo "[ollama-keepwarm] ok after unload $$(date -u +%H:%M:%S)"
+            else
+              echo "[ollama-keepwarm] still failing $$(date -u +%H:%M:%S)"
+            fi
+          fi
           sleep "$$INTERVAL"
         done
 

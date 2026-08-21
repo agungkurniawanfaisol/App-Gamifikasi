@@ -144,15 +144,55 @@ export async function getOllamaStatus(): Promise<OllamaStatus> {
 }
 
 /**
+ * Unload runners that are not the configured model (frees RAM after model switch).
+ */
+async function unloadOtherModels(
+  baseUrl: string,
+  targetModel: string
+): Promise<void> {
+  try {
+    const psRes = await fetch(`${baseUrl}/api/ps`, {
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!psRes.ok) return;
+    const psData = (await psRes.json()) as {
+      models?: Array<{ name?: string; model?: string }>;
+    };
+    const loaded = psData.models ?? [];
+    for (const entry of loaded) {
+      const name = (entry.name ?? entry.model ?? "").trim();
+      if (!name) continue;
+      if (isOllamaModelAvailable([entry], targetModel)) continue;
+      await fetch(`${baseUrl}/api/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: name,
+          prompt: "",
+          stream: false,
+          keep_alive: 0,
+        }),
+        signal: AbortSignal.timeout(60_000),
+      }).catch(() => {
+        /* best-effort unload */
+      });
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
  * Load the model into RAM (cold start). Safe to call on startup or before chat.
  * No-op when Ollama env is missing.
+ * If another model is pinned with keep_alive=-1, unload it and retry once.
  */
 export async function warmOllamaModel(): Promise<boolean> {
   const config = getConfig();
   if (!config) return false;
 
-  try {
-    const response = await fetch(`${config.baseUrl}/api/generate`, {
+  const doWarm = () =>
+    fetch(`${config.baseUrl}/api/generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -163,10 +203,29 @@ export async function warmOllamaModel(): Promise<boolean> {
       }),
       signal: AbortSignal.timeout(OLLAMA_WARMUP_TIMEOUT_MS),
     });
-    return response.ok;
+
+  try {
+    const response = await doWarm();
+    if (response.ok) return true;
+
+    console.warn(
+      "[ollama-health] warm-up HTTP",
+      response.status,
+      "— unloading other models and retrying"
+    );
+    await unloadOtherModels(config.baseUrl, config.model);
+    const retry = await doWarm();
+    return retry.ok;
   } catch (error) {
-    console.warn("[ollama-health] warm-up failed:", error);
-    return false;
+    console.warn("[ollama-health] warm-up failed, trying unload+retry:", error);
+    try {
+      await unloadOtherModels(config.baseUrl, config.model);
+      const retry = await doWarm();
+      return retry.ok;
+    } catch (retryError) {
+      console.warn("[ollama-health] warm-up retry failed:", retryError);
+      return false;
+    }
   }
 }
 

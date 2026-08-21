@@ -590,6 +590,10 @@ Common causes on production:
 Verify Ollama from the server:
 
 ```bash
+# After switching OLLAMA_MODEL, unload the previous model from RAM first:
+docker exec gamifikasi-ollama ollama stop qwen2.5:3b
+# (or whatever model /api/ps still shows)
+```
 # Container health
 docker compose ps
 docker inspect --format='{{.State.Health.Status}}' gamifikasi-ollama
