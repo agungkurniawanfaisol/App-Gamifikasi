@@ -4,6 +4,7 @@ import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
 import { z } from "zod";
+import { isAppUserId } from "@/lib/auth-identity";
 import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/auth.config";
 
@@ -53,8 +54,19 @@ async function provisionGoogleUser(
   });
 }
 
-function isAppUserId(value: unknown): value is string {
-  return typeof value === "string" && /^\d+$/.test(value);
+async function attachDbUserToToken(
+  token: {
+    id?: string;
+    role?: Role;
+    name?: string | null;
+    email?: string | null;
+  },
+  dbUser: { id: number; role: Role; name: string; email: string }
+) {
+  token.id = String(dbUser.id);
+  token.role = dbUser.role;
+  token.name = dbUser.name;
+  token.email = dbUser.email;
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -119,7 +131,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return token;
         }
 
-        // Re-resolve from DB on every Google sign-in (do not trust Google `sub` as app id).
         const dbUser = await provisionGoogleUser(
           user.email,
           user.name,
@@ -131,18 +142,41 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return token;
         }
 
-        token.id = String(dbUser.id);
-        token.role = dbUser.role;
-        token.name = dbUser.name;
-        token.email = dbUser.email;
+        await attachDbUserToToken(token, dbUser);
         return token;
       }
 
       if (user) {
-        // Credentials (or other providers): only accept numeric app user ids.
         if (isAppUserId(user.id) && user.role) {
           token.id = user.id;
           token.role = user.role;
+        }
+      }
+
+      // Heal corrupt sessions (e.g. Google `sub` stored as token.id from older builds).
+      const needsHeal =
+        typeof token.email === "string" &&
+        token.email.includes("@") &&
+        (!isAppUserId(token.id) ||
+          (token.role !== Role.ADMIN && token.role !== Role.STUDENT));
+
+      if (needsHeal) {
+        const email = String(token.email).toLowerCase();
+        const dbUser = await prisma.user.findUnique({
+          where: { email },
+          select: {
+            id: true,
+            role: true,
+            name: true,
+            email: true,
+            isActive: true,
+          },
+        });
+        if (dbUser?.isActive) {
+          await attachDbUserToToken(token, dbUser);
+        } else {
+          delete token.id;
+          delete (token as { role?: Role }).role;
         }
       }
 

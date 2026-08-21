@@ -2,17 +2,16 @@ import { cache } from "react";
 import { auth } from "@/auth";
 import { Role } from "@prisma/client";
 import { redirect } from "next/navigation";
+import { isAppUserId, parseAppUserId } from "@/lib/auth-identity";
 
 const getSession = cache(async () => auth());
 
 function hasValidAppSession(session: {
   user?: { id?: string; role?: Role };
 }): boolean {
-  const id = session.user?.id;
   const role = session.user?.role;
   return (
-    typeof id === "string" &&
-    /^\d+$/.test(id) &&
+    isAppUserId(session.user?.id) &&
     (role === Role.ADMIN || role === Role.STUDENT)
   );
 }
@@ -42,8 +41,8 @@ export async function requireStudent() {
 }
 
 export function getUserId(session: { user: { id: string } }): number {
-  const id = Number.parseInt(session.user.id, 10);
-  if (!Number.isInteger(id) || id <= 0) {
+  const id = parseAppUserId(session.user.id);
+  if (id == null) {
     redirect("/login");
   }
   return id;
