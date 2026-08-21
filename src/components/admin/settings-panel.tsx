@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useTransition } from "react";
-import { Database, KeyRound, Trophy } from "lucide-react";
+import { useCallback, useEffect, useState, useTransition } from "react";
+import { Database, KeyRound, RefreshCw, Trophy } from "lucide-react";
 import type { SettingsOverview } from "@/actions/admin/settings";
 import { saveSettingsCorsAction } from "@/actions/admin/settings";
+import { AiServiceStatusBadge } from "@/components/ai/ai-service-status-badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,14 +19,46 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { labels } from "@/lib/labels";
 
+type AiStatusDetail = "ready" | "cold" | "unreachable" | "misconfigured";
+
 export function SettingsPanel({ data }: { data: SettingsOverview }) {
   const [pending, startTransition] = useTransition();
+  const [aiDetail, setAiDetail] = useState<AiStatusDetail | null>(null);
+  const [aiChecking, setAiChecking] = useState(true);
+
+  const refreshAiStatus = useCallback(async () => {
+    setAiChecking(true);
+    try {
+      const res = await fetch("/api/ai/status", {
+        cache: "no-store",
+        signal: AbortSignal.timeout(20_000),
+      });
+      const body = (await res.json()) as { detail?: AiStatusDetail };
+      setAiDetail(body.detail ?? "unreachable");
+    } catch {
+      setAiDetail("unreachable");
+    } finally {
+      setAiChecking(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshAiStatus();
+  }, [refreshAiStatus]);
 
   function handleCorsSubmit(formData: FormData) {
     startTransition(async () => {
       await saveSettingsCorsAction(formData);
     });
   }
+
+  const aiStatusText = aiChecking
+    ? labels.admin.settingsAiStatusChecking
+    : aiDetail === "ready"
+      ? labels.admin.settingsAiStatusReady
+      : aiDetail === "cold"
+        ? labels.admin.settingsAiStatusWarming
+        : labels.admin.settingsAiStatusOffline;
 
   return (
     <div className="space-y-6">
@@ -84,6 +117,29 @@ export function SettingsPanel({ data }: { data: SettingsOverview }) {
               </dt>
               <dd>
                 <Input readOnly value={data.authUrl} className="bg-muted/50" />
+              </dd>
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <dt className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                {labels.admin.settingsAiStatus}
+              </dt>
+              <dd className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <AiServiceStatusBadge />
+                  <p className="text-sm text-muted-foreground">{aiStatusText}</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="min-h-11 w-full sm:w-auto"
+                  onClick={() => void refreshAiStatus()}
+                  disabled={aiChecking}
+                >
+                  <RefreshCw
+                    className={`size-4 ${aiChecking ? "animate-spin" : ""}`}
+                  />
+                  {labels.admin.settingsAiStatusRefresh}
+                </Button>
               </dd>
             </div>
           </dl>

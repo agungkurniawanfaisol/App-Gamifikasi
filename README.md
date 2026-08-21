@@ -62,11 +62,12 @@ npm run docker:dev
 
 This starts:
 
-| Service       | Container               | Purpose                            |
-| ------------- | ----------------------- | ---------------------------------- |
-| MySQL 8       | `gamifikasi-mysql`      | Database                           |
-| Ollama        | `gamifikasi-ollama`     | Local LLM for AI chat and feedback |
-| Next.js (dev) | `gamifikasi-nextjs-dev` | App with HMR on port **5174**      |
+| Service       | Container                    | Purpose                                     |
+| ------------- | ---------------------------- | ------------------------------------------- |
+| MySQL 8       | `gamifikasi-mysql`           | Database                                    |
+| Ollama        | `gamifikasi-ollama`          | Local LLM for AI chat and feedback          |
+| Ollama warm   | `gamifikasi-ollama-keepwarm` | Keeps model loaded in RAM (`keep_alive=-1`) |
+| Next.js (dev) | `gamifikasi-nextjs-dev`      | App with HMR on port **5174**               |
 
 On every start, the dev app runs `prisma migrate deploy`, `prisma generate`, then `next dev`.
 
@@ -575,9 +576,13 @@ The first `docker compose up` waits for `ollama-pull` to download `OLLAMA_MODEL`
 
 Common causes on production:
 
-1. **Cold start** — After idle time, Ollama unloads the model from RAM. The first request can take 1–3 minutes to reload. Traefik or the browser may cut the connection before the model is ready.
-   - Set `OLLAMA_KEEP_ALIVE=-1` in `.env` (default in `docker-compose.yml`) so the model stays loaded.
+1. **Cold start** — After idle time, Ollama may unload the model from RAM. The first request can take 1–3 minutes to reload. Traefik or the browser may cut the connection before the model is ready.
+   - Set `OLLAMA_KEEP_ALIVE=-1` in `.env` (compose default) so the model stays loaded indefinitely when RAM allows.
+   - `ollama-keepwarm` sidecar pings the model every 3 minutes with `keep_alive: -1`.
+   - Next.js also warms on boot and every 3 minutes (`instrumentation.ts`).
+   - Chat UI and **Admin → Settings** show an AI status badge (`ready` / `warming` / `offline`).
    - Rebuild: `docker compose up --build -d`
+   - Confirm model stays loaded: `docker exec gamifikasi-nextjs wget -qO- http://ollama:11434/api/ps`
 2. **Ollama out of memory** — The `ollama` container is limited to 6 GB. Heavy chat after several turns can exhaust RAM. Check: `docker logs gamifikasi-ollama --tail 50`
 3. **External API daily quota** — If you use `/api/v1/chat` with a token, check **Admin → API Tokens → Daily quota**. A quota of `5` blocks the 6th request (HTTP 429, not always shown as JSON in some clients).
 4. **Rate limit** — External API allows 60 requests per 10 minutes per token (unlikely at 5 questions unless shared token).
@@ -585,9 +590,29 @@ Common causes on production:
 Verify Ollama from the server:
 
 ```bash
+# Container health
+docker compose ps
+docker inspect --format='{{.State.Health.Status}}' gamifikasi-ollama
+
+# API reachable + models installed
 docker exec gamifikasi-nextjs wget -qO- http://ollama:11434/api/tags
+
+# Which models are currently loaded in RAM (empty = cold / unloaded)
+docker exec gamifikasi-nextjs wget -qO- http://ollama:11434/api/ps
+
+# App-level status (must be logged in as admin/student in the browser):
+# GET /api/ai/status  →  { ok, reachable, modelLoaded, detail }
+
+# Manual warm-up (loads model; may take 1–3 minutes on CPU)
+docker exec gamifikasi-nextjs wget -qO- --post-data='{"model":"qwen2.5:3b","prompt":"ping","stream":false,"keep_alive":-1}' \
+  --header='Content-Type: application/json' http://ollama:11434/api/generate
+
 docker logs gamifikasi-ollama --tail 30
 docker stats gamifikasi-ollama gamifikasi-nextjs --no-stream
+
+# Confirm keep-alive env inside containers
+docker exec gamifikasi-ollama printenv OLLAMA_KEEP_ALIVE
+docker exec gamifikasi-nextjs printenv OLLAMA_KEEP_ALIVE
 ```
 
 ### Stale Next.js cache in dev

@@ -790,6 +790,12 @@ export const labels = {
       "Quick links to related admin tools and read-only deployment info.",
     settingsOllamaModel: "Ollama model",
     settingsOllamaBaseUrl: "Ollama base URL",
+    settingsAiStatus: "AI service status",
+    settingsAiStatusReady: "Ready — model loaded",
+    settingsAiStatusWarming: "Reachable — model warming up (first reply may be slow)",
+    settingsAiStatusOffline: "Offline — Ollama is not reachable",
+    settingsAiStatusChecking: "Checking AI service…",
+    settingsAiStatusRefresh: "Refresh status",
     settingsAuthUrl: "Public URL",
     settingsManageApiTokens: "Manage API tokens",
     settingsManageGamification: "Point values & gamification",
@@ -997,6 +1003,14 @@ export const labels = {
       "Connection failed. The AI service may be starting up — wait a moment and try again.",
     chatTimeoutError:
       "The request took too long. Try a shorter question or try again in a moment.",
+    aiStatusReady: "AI ready",
+    aiStatusWarming: "AI warming up",
+    aiStatusOffline: "AI offline",
+    aiStatusChecking: "Checking AI…",
+    aiStatusWarmingHint:
+      "The model is loading into memory. The next reply may take 1–3 minutes.",
+    aiStatusOfflineHint:
+      "The AI service is not responding. Try again later or ask an admin to check Ollama.",
     aiAssistantTitle: "AI Assistant",
     aiAssistantOpen: "Open AI Assistant",
     aiAssistantClose: "Collapse AI Assistant",

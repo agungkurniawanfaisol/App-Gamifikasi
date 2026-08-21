@@ -6,8 +6,11 @@ function getOllamaConfig(): { baseUrl: string; model: string } {
   return { baseUrl, model };
 }
 
-/** Ollama default is 5m; longer keep_alive avoids cold reload between chat turns. */
-const DEFAULT_OLLAMA_KEEP_ALIVE = "30m";
+/**
+ * Keep the model in RAM indefinitely when env is unset.
+ * Ollama's own default is 5m unload — that causes "AI died after idle".
+ */
+const DEFAULT_OLLAMA_KEEP_ALIVE = -1;
 
 /** Cap learn-step excerpt size to keep chat prompts fast. */
 export const MAX_LEARN_STEP_CONTENT_CHARS = 2_500;
@@ -121,15 +124,12 @@ Write encouraging completion feedback in English (3–5 short sentences). Mentio
 export async function generateFeedback(prompt: string): Promise<string> {
   try {
     const { baseUrl, model } = getOllamaConfig();
-    const response = await fetch(`${baseUrl}/api/generate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model,
-        prompt,
-        stream: false,
-        keep_alive: getOllamaKeepAlive(),
-      }),
+    const { fetchOllamaGenerate } = await import("@/lib/ollama-health");
+    const response = await fetchOllamaGenerate(baseUrl, {
+      model,
+      prompt,
+      stream: false,
+      keep_alive: getOllamaKeepAlive(),
     });
     if (!response.ok) {
       throw new Error(`Ollama error ${response.status}`);

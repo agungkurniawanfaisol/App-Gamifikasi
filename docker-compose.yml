@@ -68,6 +68,40 @@ services:
       - app_network
 
   # ---------------------------------------------------------------------------
+  # ollama-keepwarm — ping the model every few minutes with keep_alive=-1
+  # Keeps the LLM resident in RAM when the VPS has spare memory.
+  # ---------------------------------------------------------------------------
+  ollama-keepwarm:
+    image: curlimages/curl:8.11.1
+    container_name: gamifikasi-ollama-keepwarm
+    restart: unless-stopped
+    depends_on:
+      ollama:
+        condition: service_healthy
+      ollama-pull:
+        condition: service_completed_successfully
+    environment:
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:3b}
+      # Seconds between warm pings (default 3 minutes)
+      OLLAMA_KEEP_WARM_SECONDS: ${OLLAMA_KEEP_WARM_SECONDS:-180}
+    networks:
+      - app_network
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        MODEL="$${OLLAMA_MODEL:-qwen2.5:3b}"
+        INTERVAL="$${OLLAMA_KEEP_WARM_SECONDS:-180}"
+        echo "[ollama-keepwarm] keeping $$MODEL loaded (every $${INTERVAL}s, keep_alive=-1)"
+        while true; do
+          curl -sS -m 180 -X POST "http://ollama:11434/api/generate" \
+            -H "Content-Type: application/json" \
+            -d "{\"model\":\"$$MODEL\",\"prompt\":\"ping\",\"stream\":false,\"keep_alive\":-1}" \
+            >/dev/null && echo "[ollama-keepwarm] ok $$(date -u +%H:%M:%S)" \
+            || echo "[ollama-keepwarm] failed $$(date -u +%H:%M:%S)"
+          sleep "$$INTERVAL"
+        done
+
+  # ---------------------------------------------------------------------------
   # db-seed — one-shot migrate + seed (run manually on first setup)
   # Usage: docker compose --profile seed run --rm db-seed
   # ---------------------------------------------------------------------------
@@ -118,6 +152,8 @@ services:
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL}
       OLLAMA_MODEL: ${OLLAMA_MODEL}
       OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:--1}
+      # App-side warm interval (ms). Sidecar also warms independently.
+      OLLAMA_KEEP_WARM_INTERVAL_MS: ${OLLAMA_KEEP_WARM_INTERVAL_MS:-180000}
     depends_on:
       mysql:
         condition: service_healthy
@@ -125,6 +161,8 @@ services:
         condition: service_healthy
       ollama-pull:
         condition: service_completed_successfully
+      ollama-keepwarm:
+        condition: service_started
     volumes:
       # Bind mount so scp/rsync to ./public/uploads on the host is visible in the app
       - ./public/uploads:/app/public/uploads

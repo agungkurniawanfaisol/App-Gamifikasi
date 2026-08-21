@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChatMessageTime } from "@/components/chat/chat-message-time";
+import { AiServiceStatusBadge } from "@/components/ai/ai-service-status-badge";
 import { cn } from "@/lib/utils";
 import { labels } from "@/lib/labels";
 import { notifyPointsResult } from "@/lib/points-toast";
@@ -244,16 +245,22 @@ export function ChatInterface({
         className
       )}
     >
-      <p
+      <div
         className={cn(
-          "shrink-0 border-b border-sidebar-border bg-muted/30 text-muted-foreground",
-          isCompact
-            ? "px-3 py-2 text-[10px] leading-snug"
-            : "px-4 py-2.5 text-xs leading-snug sm:px-5"
+          "flex shrink-0 flex-col gap-2 border-b border-sidebar-border bg-muted/30 sm:flex-row sm:items-center sm:justify-between",
+          isCompact ? "px-3 py-2" : "px-4 py-2.5 sm:px-5"
         )}
       >
-        {labels.student.chatDailyResetHint}
-      </p>
+        <p
+          className={cn(
+            "min-w-0 text-muted-foreground",
+            isCompact ? "text-[10px] leading-snug" : "text-xs leading-snug"
+          )}
+        >
+          {labels.student.chatDailyResetHint}
+        </p>
+        <AiServiceStatusBadge compact={isCompact} className="self-start sm:self-auto" />
+      </div>
       <ScrollArea
         className={cn(
           "h-0 min-h-0 flex-1",

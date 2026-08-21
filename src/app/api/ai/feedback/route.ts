@@ -63,7 +63,13 @@ export async function POST(request: Request) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "AI feedback failed";
-    if (message.includes("ECONNREFUSED") || message.includes("fetch failed")) {
+    if (
+      message.includes("ECONNREFUSED") ||
+      message.includes("fetch failed") ||
+      message.includes("TimeoutError") ||
+      message.includes("aborted") ||
+      message.includes("timed out")
+    ) {
       return NextResponse.json(
         { feedback: labels.api.feedbackUnavailable, isCorrect },
         { status: 200 }
