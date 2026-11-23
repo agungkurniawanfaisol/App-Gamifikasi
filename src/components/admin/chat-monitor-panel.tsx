@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { Loader2, MessageSquare } from "lucide-react";
+import { Eye, Loader2, MessageSquare } from "lucide-react";
 import {
   getChatMonitorEntries,
   type ChatMonitorEntry,
 } from "@/actions/admin/chat-monitor";
 import type { ChatMonitorDatePreset } from "@/lib/chat-day";
+import { ChatConversationDetailDialog } from "@/components/admin/chat-conversation-detail-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Label } from "@/components/ui/label";
 import {
@@ -17,7 +19,7 @@ import {
 import { labels } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
-function formatDateTime(value: Date) {
+function formatDateTime(value: string) {
   return new Date(value).toLocaleString("en-US", {
     dateStyle: "medium",
     timeStyle: "short",
@@ -35,6 +37,9 @@ export function ChatMonitorPanel({
   const [entries, setEntries] = useState(initialEntries);
   const [studentFilter, setStudentFilter] = useState<string>("all");
   const [datePreset, setDatePreset] = useState<ChatMonitorDatePreset>("all");
+  const [selectedEntry, setSelectedEntry] = useState<ChatMonitorEntry | null>(
+    null
+  );
   const [isPending, startTransition] = useTransition();
   const skipInitialFetch = useRef(true);
 
@@ -116,10 +121,10 @@ export function ChatMonitorPanel({
       ) : (
         <ResponsiveTable
           mobile={entries.map((entry) => (
-            <ResponsiveTableCard key={entry.id}>
+            <ResponsiveTableCard key={entry.id} className="space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="font-semibold">{entry.userName}</p>
+                  <p className="truncate font-semibold">{entry.userName}</p>
                   <p className="text-xs text-muted-foreground">
                     {formatDateTime(entry.createdAt)}
                   </p>
@@ -134,31 +139,57 @@ export function ChatMonitorPanel({
                     : labels.admin.chatMonitorRoleUser}
                 </Badge>
               </div>
-              <p className="mt-2 text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {entry.groupTitle ?? labels.admin.chatMonitorGeneralChat}
               </p>
-              <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">
+              <p className="line-clamp-4 whitespace-pre-wrap text-sm leading-relaxed">
                 {entry.message}
               </p>
+              <Button
+                type="button"
+                variant="outline"
+                className="min-h-11 w-full gap-2"
+                onClick={() => setSelectedEntry(entry)}
+              >
+                <Eye className="size-4" aria-hidden />
+                {labels.admin.chatMonitorViewDetail}
+              </Button>
             </ResponsiveTableCard>
           ))}
           desktop={
             <div className="overflow-x-auto rounded-lg border border-border">
-              <table className="w-full min-w-[720px] text-sm">
+              <table className="w-full min-w-[800px] text-sm">
                 <thead className="border-b border-border bg-muted/40">
                   <tr>
-                    <th className="px-4 py-3 text-start font-medium">Student</th>
-                    <th className="px-4 py-3 text-start font-medium">Group</th>
-                    <th className="px-4 py-3 text-start font-medium">Role</th>
-                    <th className="px-4 py-3 text-start font-medium">Message</th>
-                    <th className="px-4 py-3 text-end font-medium">Time</th>
+                    <th className="px-4 py-3 text-start font-medium">
+                      {labels.admin.chatMonitorFilterStudent}
+                    </th>
+                    <th className="px-4 py-3 text-start font-medium">
+                      {labels.admin.chatMonitorColumnGroup}
+                    </th>
+                    <th className="px-4 py-3 text-start font-medium">
+                      {labels.admin.chatMonitorColumnRole}
+                    </th>
+                    <th className="px-4 py-3 text-start font-medium">
+                      {labels.admin.chatMonitorColumnMessage}
+                    </th>
+                    <th className="px-4 py-3 text-end font-medium">
+                      {labels.admin.chatMonitorColumnTime}
+                    </th>
+                    <th className="px-4 py-3 text-end font-medium">
+                      <span className="sr-only">
+                        {labels.admin.chatMonitorViewDetail}
+                      </span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {entries.map((entry) => (
                     <tr key={entry.id}>
-                      <td className="px-4 py-3 font-medium">{entry.userName}</td>
-                      <td className="px-4 py-3 text-muted-foreground">
+                      <td className="max-w-[10rem] truncate px-4 py-3 font-medium">
+                        {entry.userName}
+                      </td>
+                      <td className="max-w-[10rem] truncate px-4 py-3 text-muted-foreground">
                         {entry.groupTitle ?? labels.admin.chatMonitorGeneralChat}
                       </td>
                       <td className="px-4 py-3">
@@ -182,8 +213,21 @@ export function ChatMonitorPanel({
                           {entry.message}
                         </p>
                       </td>
-                      <td className="px-4 py-3 text-end text-muted-foreground">
+                      <td className="whitespace-nowrap px-4 py-3 text-end text-muted-foreground">
                         {formatDateTime(entry.createdAt)}
+                      </td>
+                      <td className="px-4 py-3 text-end">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="min-h-11 gap-1.5"
+                          onClick={() => setSelectedEntry(entry)}
+                          aria-label={`${labels.admin.chatMonitorViewDetail}: ${entry.userName}`}
+                        >
+                          <Eye className="size-3.5" aria-hidden />
+                          {labels.admin.chatMonitorViewDetail}
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -193,6 +237,12 @@ export function ChatMonitorPanel({
           }
         />
       )}
+
+      <ChatConversationDetailDialog
+        entry={selectedEntry}
+        datePreset={datePreset}
+        onClose={() => setSelectedEntry(null)}
+      />
     </div>
   );
 }
