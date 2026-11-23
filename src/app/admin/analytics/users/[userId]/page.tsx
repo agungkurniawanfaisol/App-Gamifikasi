@@ -43,7 +43,10 @@ export default async function AdminAnalyticsUserReviewPage({
       <StudentAnswerReviewDetail
         studentName={user.name}
         studentEmail={user.email}
+        institution={user.institution}
+        studentId={user.studentId}
         overview={overview}
+        generatedAt={new Date().toISOString()}
       />
     </div>
   );
