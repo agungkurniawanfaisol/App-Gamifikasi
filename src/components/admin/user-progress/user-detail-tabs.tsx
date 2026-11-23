@@ -73,18 +73,20 @@ export function UserDetailTabs({
 
   return (
     <Tabs value={tab} onValueChange={onTabChange}>
-      <ScrollableTabsList>
-        <TabsTrigger value="profile">
-          {labels.admin.userProgress.tabProfile}
-        </TabsTrigger>
-        <TabsTrigger value="progress">
-          {labels.admin.userProgress.tabProgress}
-        </TabsTrigger>
-        <TabsTrigger value="feedback" className="gap-1.5">
-          <Sparkles className="size-3.5" />
-          {labels.admin.userProgress.tabFeedback}
-        </TabsTrigger>
-      </ScrollableTabsList>
+      <div className="print:hidden">
+        <ScrollableTabsList>
+          <TabsTrigger value="profile">
+            {labels.admin.userProgress.tabProfile}
+          </TabsTrigger>
+          <TabsTrigger value="progress">
+            {labels.admin.userProgress.tabProgress}
+          </TabsTrigger>
+          <TabsTrigger value="feedback" className="gap-1.5">
+            <Sparkles className="size-3.5" />
+            {labels.admin.userProgress.tabFeedback}
+          </TabsTrigger>
+        </ScrollableTabsList>
+      </div>
 
       <TabsContent value="profile" className="mt-6">
         <UserForm user={user} />

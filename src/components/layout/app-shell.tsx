@@ -70,7 +70,6 @@ function AppShellInner({
   enableAiRail?: boolean;
   aiCollapsed?: boolean;
 }) {
-  const pathname = usePathname();
   const { collapsed, toggle } = useSidebar();
   const { fullWidth } = usePageLayout();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -80,7 +79,7 @@ function AppShellInner({
     <div className="h-dvh overflow-hidden bg-background">
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 hidden transition-[width] duration-200 ease-in-out lg:block",
+          "fixed inset-y-0 left-0 z-50 hidden transition-[width] duration-200 ease-in-out print:hidden lg:block",
           collapsed ? "w-16" : "w-64"
         )}
       >
@@ -95,7 +94,7 @@ function AppShellInner({
           aria-label={
             collapsed ? labels.nav.expandSidebar : labels.nav.collapseSidebar
           }
-          className="absolute right-0 top-6 z-50 size-7 translate-x-1/2 rounded-full border-border bg-background shadow-md hover:bg-muted"
+          className="absolute right-0 top-6 z-50 size-7 translate-x-1/2 rounded-full border-border bg-background shadow-md hover:bg-muted print:hidden"
         >
           {collapsed ? (
             <ChevronRight className="size-3.5" />
@@ -105,7 +104,11 @@ function AppShellInner({
         </Button>
       </div>
 
-      {showGlobalAiRail && <DashboardAiRail />}
+      {showGlobalAiRail && (
+        <div className="print:hidden">
+          <DashboardAiRail />
+        </div>
+      )}
 
       <MobileNavSheet
         open={mobileOpen}
@@ -115,7 +118,7 @@ function AppShellInner({
 
       <main
         className={cn(
-          "flex h-dvh flex-col overflow-hidden transition-[margin] duration-200 ease-in-out",
+          "flex h-dvh flex-col overflow-hidden transition-[margin] duration-200 ease-in-out print:ml-0 print:h-auto print:overflow-visible",
           "ml-0 lg:ml-16",
           !collapsed && "lg:ml-64",
           showGlobalAiRail && (aiCollapsed ? "lg:mr-16" : "lg:mr-72 xl:mr-80"),
@@ -123,16 +126,18 @@ function AppShellInner({
         )}
       >
         <BreadcrumbProvider>
-          <AppTopHeader
-            onMenuClick={() => setMobileOpen(true)}
-            headerProfile={headerProfile}
-            mobileActions={showGlobalAiRail ? <DashboardAiMobileButton /> : undefined}
-          />
+          <div className="print:hidden">
+            <AppTopHeader
+              onMenuClick={() => setMobileOpen(true)}
+              headerProfile={headerProfile}
+              mobileActions={showGlobalAiRail ? <DashboardAiMobileButton /> : undefined}
+            />
+          </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto bg-muted/30">
+          <div className="min-h-0 flex-1 overflow-y-auto bg-muted/30 print:overflow-visible print:bg-white">
             <div
               className={cn(
-                "mx-auto w-full animate-fade-in p-4 sm:p-6 md:p-8",
+                "mx-auto w-full animate-fade-in p-4 sm:p-6 md:p-8 print:max-w-none print:p-0",
                 fullWidth ? "max-w-none" : "max-w-6xl"
               )}
             >

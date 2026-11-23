@@ -71,7 +71,12 @@ export type AdminGroupProgress = {
   stepProgress: { completed: number; total: number; percent: number };
   pretest: AdminAssessmentPhaseProgress;
   posttest: AdminAssessmentPhaseProgress;
-  contentAnswers: { correct: number; incorrect: number; totalSlots: number };
+  contentAnswers: {
+    correct: number;
+    incorrect: number;
+    unanswered: number;
+    totalSlots: number;
+  };
   contentHistory: AdminContentAnswerDetail[];
   groupScorePercent: number | null;
   aiCompletionFeedback: string | null;
@@ -253,6 +258,106 @@ async function getBatchAssessmentData(
   return result;
 }
 
+export type ContentAnswerStats = {
+  correct: number;
+  incorrect: number;
+  unanswered: number;
+  totalSlots: number;
+};
+
+export type AdminAnswerReportCurrentPosition = {
+  levelName: string;
+  groupTitle: string;
+  status: GroupStatus;
+  phase: LearningPhase;
+  stepProgress: { completed: number; total: number; percent: number };
+};
+
+export type AdminAnswerReport = {
+  answers: ContentAnswerStats;
+  accuracyPercent: number | null;
+  groupsCompleted: { completed: number; total: number };
+  currentPosition: AdminAnswerReportCurrentPosition | null;
+  progressLabel: "notStarted" | "inProgress" | "completed";
+};
+
+function emptyContentAnswerStats(): ContentAnswerStats {
+  return { correct: 0, incorrect: 0, unanswered: 0, totalSlots: 0 };
+}
+
+function sumContentAnswerStats(
+  levels: Array<{ groups: Array<{ contentAnswers: ContentAnswerStats }> }>
+): ContentAnswerStats {
+  const totals = emptyContentAnswerStats();
+  for (const level of levels) {
+    for (const group of level.groups) {
+      totals.correct += group.contentAnswers.correct;
+      totals.incorrect += group.contentAnswers.incorrect;
+      totals.unanswered += group.contentAnswers.unanswered;
+      totals.totalSlots += group.contentAnswers.totalSlots;
+    }
+  }
+  return totals;
+}
+
+export function summarizeAnswerReport(overview: {
+  groupsCompleted: { completed: number; total: number };
+  levels: Array<{
+    levelName: string;
+    groups: Array<{
+      group: { title: string };
+      status: GroupStatus;
+      phase: LearningPhase;
+      stepProgress: { completed: number; total: number; percent: number };
+      contentAnswers: ContentAnswerStats;
+    }>;
+  }>;
+}): AdminAnswerReport {
+  const answers = sumContentAnswerStats(overview.levels);
+  const answered = answers.correct + answers.incorrect;
+  const accuracyPercent =
+    answered > 0 ? Math.round((answers.correct / answered) * 100) : null;
+
+  let currentPosition: AdminAnswerReportCurrentPosition | null = null;
+  let lastCompleted: AdminAnswerReportCurrentPosition | null = null;
+
+  for (const level of overview.levels) {
+    for (const group of level.groups) {
+      const position: AdminAnswerReportCurrentPosition = {
+        levelName: level.levelName,
+        groupTitle: group.group.title,
+        status: group.status,
+        phase: group.phase,
+        stepProgress: group.stepProgress,
+      };
+      if (group.status === "inProgress") {
+        currentPosition = position;
+        break;
+      }
+      if (group.status === "completed") {
+        lastCompleted = position;
+      }
+    }
+    if (currentPosition) break;
+  }
+
+  const { completed, total } = overview.groupsCompleted;
+  let progressLabel: AdminAnswerReport["progressLabel"] = "notStarted";
+  if (total > 0 && completed >= total) {
+    progressLabel = "completed";
+  } else if (currentPosition || completed > 0) {
+    progressLabel = "inProgress";
+  }
+
+  return {
+    answers,
+    accuracyPercent,
+    groupsCompleted: overview.groupsCompleted,
+    currentPosition: currentPosition ?? (progressLabel === "completed" ? lastCompleted : null),
+    progressLabel,
+  };
+}
+
 async function getBatchContentAnswerDetails(
   userId: number,
   groupIds: number[]
@@ -260,7 +365,7 @@ async function getBatchContentAnswerDetails(
   Map<
     number,
     {
-      stats: { correct: number; incorrect: number; totalSlots: number };
+      stats: ContentAnswerStats;
       history: AdminContentAnswerDetail[];
     }
   >
@@ -268,7 +373,7 @@ async function getBatchContentAnswerDetails(
   const result = new Map<
     number,
     {
-      stats: { correct: number; incorrect: number; totalSlots: number };
+      stats: ContentAnswerStats;
       history: AdminContentAnswerDetail[];
     }
   >();
@@ -277,47 +382,89 @@ async function getBatchContentAnswerDetails(
 
   for (const groupId of groupIds) {
     result.set(groupId, {
-      stats: { correct: 0, incorrect: 0, totalSlots: 0 },
+      stats: emptyContentAnswerStats(),
       history: [],
     });
   }
 
-  const answers = await prisma.userAnswer.findMany({
-    where: {
-      userId,
-      contentItem: { groupId: { in: groupIds } },
-    },
-    orderBy: { createdAt: "asc" },
-    select: {
-      contentItemId: true,
-      subQuestionIndex: true,
-      answer: true,
-      isCorrect: true,
-      scorePercent: true,
-      aiFeedback: true,
-      createdAt: true,
-      contentItem: {
-        select: {
-          groupId: true,
-          type: true,
-          title: true,
-          questionText: true,
-          skill: true,
-          format: true,
-          subQuestions: true,
+  const [questionItems, answers] = await Promise.all([
+    prisma.groupContentItem.findMany({
+      where: {
+        groupId: { in: groupIds },
+        type: ContentItemType.QUESTION,
+      },
+      select: {
+        id: true,
+        groupId: true,
+        type: true,
+        title: true,
+        questionText: true,
+        skill: true,
+        format: true,
+        options: true,
+        correctAnswer: true,
+        expectedSpeech: true,
+        audioUrl: true,
+        explanation: true,
+        essayRubric: true,
+        subQuestions: true,
+      },
+    }),
+    prisma.userAnswer.findMany({
+      where: {
+        userId,
+        contentItem: { groupId: { in: groupIds } },
+      },
+      orderBy: { createdAt: "asc" },
+      select: {
+        contentItemId: true,
+        subQuestionIndex: true,
+        answer: true,
+        isCorrect: true,
+        scorePercent: true,
+        aiFeedback: true,
+        createdAt: true,
+        contentItem: {
+          select: {
+            groupId: true,
+            type: true,
+            title: true,
+            questionText: true,
+            skill: true,
+            format: true,
+            subQuestions: true,
+          },
         },
       },
-    },
-  });
+    }),
+  ]);
+
+  const expectedByGroup = new Map<number, number>();
+  for (const item of questionItems) {
+    const slots = getSubQuestionsFromItem(item).length;
+    expectedByGroup.set(
+      item.groupId,
+      (expectedByGroup.get(item.groupId) ?? 0) + slots
+    );
+  }
+
+  for (const [groupId, totalSlots] of expectedByGroup) {
+    const bucket = result.get(groupId);
+    if (!bucket) continue;
+    bucket.stats.totalSlots = totalSlots;
+    bucket.stats.unanswered = totalSlots;
+  }
 
   for (const row of answers) {
     const groupId = row.contentItem.groupId;
     const bucket = result.get(groupId);
     if (!bucket) continue;
 
-    bucket.stats.totalSlots += 1;
     if (row.isCorrect) bucket.stats.correct += 1;
     else bucket.stats.incorrect += 1;
+
+    const answered = bucket.stats.correct + bucket.stats.incorrect;
+    bucket.stats.unanswered = Math.max(0, bucket.stats.totalSlots - answered);
 
     const subQuestions = getSubQuestionsFromItem(row.contentItem);
     const subQuestion = subQuestions[row.subQuestionIndex];
@@ -606,7 +753,7 @@ export async function getAdminUserProgressOverview(
         );
 
         const contentDetails = contentDetailsMap.get(group.id) ?? {
-          stats: { correct: 0, incorrect: 0, totalSlots: 0 },
+          stats: emptyContentAnswerStats(),
           history: [],
         };
 

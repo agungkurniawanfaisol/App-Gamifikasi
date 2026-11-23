@@ -1,15 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { submitContentAnswer } from "@/actions/student/quiz";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { labels } from "@/lib/labels";
 import { notifySubmitRewards } from "@/lib/proficiency-toast";
-import type { SubmitAnswerHandler } from "@/lib/submit-answer";
+import {
+  postSubmitContentAnswer,
+  type SubmitAnswerHandler,
+} from "@/lib/submit-answer";
 import { Send, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export function EssayStep({
   contentItemId,
@@ -28,6 +31,7 @@ export function EssayStep({
   submitAnswer?: SubmitAnswerHandler;
   initiallyAnswered?: boolean;
 }) {
+  const router = useRouter();
   const [text, setText] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -40,7 +44,7 @@ export function EssayStep({
     try {
       const result = submitAnswer
         ? await submitAnswer(answerText)
-        : await submitContentAnswer(
+        : await postSubmitContentAnswer(
             contentItemId,
             answerText,
             undefined,
@@ -49,7 +53,13 @@ export function EssayStep({
       setSubmitted(true);
       onAnswered();
       if (!submitAnswer) {
-        notifySubmitRewards(result);
+        notifySubmitRewards(result, () => {
+          try {
+            router.refresh();
+          } catch {
+            /* sidebar refresh is best-effort */
+          }
+        });
       }
       void loadFeedback(answerText);
     } catch (error) {

@@ -4,12 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
-import { submitContentAnswer } from "@/actions/student/quiz";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { labels } from "@/lib/labels";
 import { notifySubmitRewards } from "@/lib/proficiency-toast";
-import type { SubmitAnswerHandler } from "@/lib/submit-answer";
+import {
+  postSubmitContentAnswer,
+  type SubmitAnswerHandler,
+} from "@/lib/submit-answer";
 import { scoreSpeechMatch } from "@/lib/speech-score";
 import { SPEECH_PASS_THRESHOLD } from "@/lib/content-item";
 import { cn } from "@/lib/utils";
@@ -31,6 +34,7 @@ export function SpeakingStepClient({
   onAnswered: (correct: boolean) => void;
   submitAnswer?: SubmitAnswerHandler;
 }) {
+  const router = useRouter();
   const [typedAnswer, setTypedAnswer] = useState("");
   const [score, setScore] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -59,14 +63,20 @@ export function SpeakingStepClient({
     try {
       const answerResult = submitAnswer
         ? await submitAnswer(transcriptText, speechResult.percent)
-        : await submitContentAnswer(
+        : await postSubmitContentAnswer(
             contentItemId,
             transcriptText,
             speechResult.percent,
             subQuestionIndex
           );
       if (!submitAnswer) {
-        notifySubmitRewards(answerResult);
+        notifySubmitRewards(answerResult, () => {
+          try {
+            router.refresh();
+          } catch {
+            /* sidebar refresh is best-effort */
+          }
+        });
       }
       onAnswered(passed);
     } catch (error) {

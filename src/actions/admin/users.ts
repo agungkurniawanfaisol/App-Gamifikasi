@@ -102,16 +102,97 @@ function toUserData(
   return payload;
 }
 
-export async function getUsers(options?: {
+export const USERS_PAGE_SIZE = 20;
+
+export const USER_SORT_FIELDS = [
+  "name",
+  "email",
+  "role",
+  "points",
+  "createdAt",
+  "isActive",
+] as const;
+
+export type UserSortField = (typeof USER_SORT_FIELDS)[number];
+export type UserSortDir = "asc" | "desc";
+export type UserStatusFilter = "active" | "inactive";
+
+export type UsersListResult = {
+  items: UserListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
+const userListSelect = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+  phone: true,
+  institution: true,
+  studentId: true,
+  isActive: true,
+  points: true,
+  createdAt: true,
+} satisfies Prisma.UserSelect;
+
+function parseUserSortField(value?: string): UserSortField | undefined {
+  if (!value) return undefined;
+  return (USER_SORT_FIELDS as readonly string[]).includes(value)
+    ? (value as UserSortField)
+    : undefined;
+}
+
+function parseUserSortDir(value?: string): UserSortDir {
+  return value === "desc" ? "desc" : "asc";
+}
+
+function buildUserOrderBy(
+  sort?: UserSortField,
+  dir: UserSortDir = "asc"
+): Prisma.UserOrderByWithRelationInput[] {
+  if (!sort) {
+    return [{ role: "asc" }, { name: "asc" }];
+  }
+  if (sort === "name") {
+    return [{ name: dir }, { id: "asc" }];
+  }
+  return [{ [sort]: dir }, { name: "asc" }];
+}
+
+function clampPage(page: number, totalPages: number): number {
+  if (totalPages <= 0) return 1;
+  return Math.min(Math.max(1, page), totalPages);
+}
+
+export async function getUsersPaginated(options?: {
+  page?: number;
+  pageSize?: number;
   role?: Role;
   search?: string;
-}): Promise<UserListItem[]> {
+  status?: UserStatusFilter;
+  sort?: string;
+  dir?: string;
+}): Promise<UsersListResult> {
   await requireAdmin();
+
+  const pageSize = options?.pageSize ?? USERS_PAGE_SIZE;
+  const requestedPage = Math.max(1, options?.page ?? 1);
+  const sort = parseUserSortField(options?.sort);
+  const dir = parseUserSortDir(options?.dir);
 
   const where: Prisma.UserWhereInput = {};
 
   if (options?.role) {
     where.role = options.role;
+  }
+
+  if (options?.status === "active") {
+    where.isActive = true;
+  } else if (options?.status === "inactive") {
+    where.isActive = false;
   }
 
   if (options?.search?.trim()) {
@@ -125,22 +206,25 @@ export async function getUsers(options?: {
     ];
   }
 
-  return prisma.user.findMany({
+  const total = await prisma.user.count({ where });
+  const totalPages = total > 0 ? Math.ceil(total / pageSize) : 0;
+  const page = clampPage(requestedPage, totalPages);
+
+  const items = await prisma.user.findMany({
     where,
-    orderBy: [{ role: "asc" }, { name: "asc" }],
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      phone: true,
-      institution: true,
-      studentId: true,
-      isActive: true,
-      points: true,
-      createdAt: true,
-    },
+    orderBy: buildUserOrderBy(sort, dir),
+    skip: (page - 1) * pageSize,
+    take: pageSize,
+    select: userListSelect,
   });
+
+  return {
+    items,
+    total,
+    page,
+    pageSize,
+    totalPages,
+  };
 }
 
 export async function getUserById(id: number): Promise<UserDetail | null> {

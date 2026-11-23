@@ -56,3 +56,6 @@ Location: `~/.agents/skills/`
 3. All copy in `src/lib/labels.ts` — English only (UI and Ollama AI)
 4. Empty and loading states explain what to do next
 5. Audit with `web-design-guidelines` before shipping major UI changes
+
+## Token Efficiency
+- **Caveman Mode (Active)**: Ultra-terse output, zero filler, zero pleasantries. Code, diffs, and file paths remain 100% exact.

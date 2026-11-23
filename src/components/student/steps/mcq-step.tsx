@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { submitContentAnswer } from "@/actions/student/quiz";
+import { useRouter } from "next/navigation";
 import { AnswerFeedback } from "@/components/student/answer-feedback";
 import { notifySubmitRewards } from "@/lib/proficiency-toast";
-import type { SubmitAnswerHandler } from "@/lib/submit-answer";
+import {
+  postSubmitContentAnswer,
+  type SubmitAnswerHandler,
+} from "@/lib/submit-answer";
 import { labels } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -25,6 +28,7 @@ export function McqStep({
   onAnswered: (correct: boolean) => void;
   submitAnswer?: SubmitAnswerHandler;
 }) {
+  const router = useRouter();
   const [selected, setSelected] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [correctAnswer, setCorrectAnswer] = useState<string | null>(null);
@@ -39,7 +43,7 @@ export function McqStep({
     try {
       const result = submitAnswer
         ? await submitAnswer(option)
-        : await submitContentAnswer(
+        : await postSubmitContentAnswer(
             contentItemId,
             option,
             undefined,
@@ -49,7 +53,13 @@ export function McqStep({
       setCorrectAnswer(result.correctAnswer ?? null);
       setExplanation(result.explanation ?? null);
       if (!submitAnswer) {
-        notifySubmitRewards(result);
+        notifySubmitRewards(result, () => {
+          try {
+            router.refresh();
+          } catch {
+            /* sidebar refresh is best-effort */
+          }
+        });
       }
       onAnswered(result.isCorrect);
     } catch (error) {

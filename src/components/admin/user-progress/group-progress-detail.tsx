@@ -93,7 +93,8 @@ export function GroupProgressDetail({ group }: { group: AdminGroupProgressClient
           <p className="text-sm text-muted-foreground">
             {labels.admin.userProgress.contentAnswerStats(
               group.contentAnswers.correct,
-              group.contentAnswers.incorrect
+              group.contentAnswers.incorrect,
+              group.contentAnswers.unanswered
             )}
           </p>
         </div>

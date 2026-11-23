@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { submitContentAnswer } from "@/actions/student/quiz";
+import { useRouter } from "next/navigation";
 import { AnswerFeedback } from "@/components/student/answer-feedback";
 import { notifySubmitRewards } from "@/lib/proficiency-toast";
-import type { SubmitAnswerHandler } from "@/lib/submit-answer";
+import {
+  postSubmitContentAnswer,
+  type SubmitAnswerHandler,
+} from "@/lib/submit-answer";
 import { cn } from "@/lib/utils";
 import { labels } from "@/lib/labels";
 import { toast } from "sonner";
@@ -23,6 +26,7 @@ export function YesNoStep({
   onAnswered: (correct: boolean) => void;
   submitAnswer?: SubmitAnswerHandler;
 }) {
+  const router = useRouter();
   const [selected, setSelected] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [correctAnswer, setCorrectAnswer] = useState<string | null>(null);
@@ -36,7 +40,7 @@ export function YesNoStep({
     try {
       const result = submitAnswer
         ? await submitAnswer(answer)
-        : await submitContentAnswer(
+        : await postSubmitContentAnswer(
             contentItemId,
             answer,
             undefined,
@@ -46,7 +50,13 @@ export function YesNoStep({
       setCorrectAnswer(result.correctAnswer ?? null);
       setExplanation(result.explanation ?? null);
       if (!submitAnswer) {
-        notifySubmitRewards(result);
+        notifySubmitRewards(result, () => {
+          try {
+            router.refresh();
+          } catch {
+            /* sidebar refresh is best-effort */
+          }
+        });
       }
       onAnswered(result.isCorrect);
     } catch (error) {

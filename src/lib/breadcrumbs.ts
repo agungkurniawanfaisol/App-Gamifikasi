@@ -62,7 +62,23 @@ function buildAdminBreadcrumbs(segments: string[]): BreadcrumbItem[] {
   }
 
   if (segments[0] === "analytics") {
-    items.push(crumb(labels.nav.breadcrumb.analytics, undefined, true));
+    items.push(crumb(labels.nav.breadcrumb.analytics, "/admin/analytics"));
+
+    if (segments[1] === "users" && segments[2] && /^\d+$/.test(segments[2])) {
+      items.push(
+        crumb(
+          labels.nav.breadcrumb.studentReview,
+          "/admin/analytics?tab=review"
+        )
+      );
+      items.push(
+        crumb(labels.nav.breadcrumb.editUser, undefined, true)
+      );
+      return items;
+    }
+
+    items[items.length - 1]!.isCurrent = true;
+    items[items.length - 1]!.href = undefined;
     return items;
   }
 

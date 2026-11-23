@@ -109,6 +109,7 @@ export const labels = {
       apiTokenAudit: "Token audit",
       assistantKnowledge: "Assistant Knowledge",
       analytics: "Analytics",
+      studentReview: "Student review",
       gamification: "Gamification",
       announcements: "Announcements",
       chatMonitor: "Chat Monitor",
@@ -399,6 +400,20 @@ export const labels = {
     filterAll: "All",
     filterStudents: "Students",
     filterAdmins: "Admins",
+    filterStatusAll: "All statuses",
+    filterStatusActive: "Active",
+    filterStatusInactive: "Inactive",
+    sortBy: "Sort by",
+    sortName: "Name",
+    sortEmail: "Email",
+    sortRole: "Role",
+    sortPoints: "Points",
+    sortCreatedAt: "Created",
+    sortIsActive: "Status",
+    sortAsc: "Ascending",
+    sortDesc: "Descending",
+    userPoints: (points: number) => `${points} pts`,
+    userCreatedAt: (date: string) => `Joined ${date}`,
     accountSection: "Account",
     profileSection: "Personal Data",
     fullName: "Full Name",
@@ -681,6 +696,32 @@ export const labels = {
     analyticsSkillHeatmap: "Skill performance",
     analyticsDropOff: "Drop-off hotspots",
     analyticsStuckStudents: "Stuck students",
+    analyticsTabOverview: "Overview",
+    analyticsTabStudentReview: "Student review",
+    analyticsStudentReviewTitle: "Student answer review",
+    analyticsStudentReviewDescription:
+      "Correct, incorrect, and unanswered question counts per student.",
+    analyticsStudentName: "Student",
+    analyticsStudentEmail: "Email",
+    analyticsCorrect: "Correct",
+    analyticsIncorrect: "Incorrect",
+    analyticsUnanswered: "Unanswered",
+    analyticsTotalSlots: "Total questions",
+    analyticsOpenReview: "Open review",
+    analyticsReviewEmpty: "No students found. Add student accounts to review answers.",
+    analyticsReviewDetailTitle: "Answer review",
+    analyticsReviewDetailDescription: (name: string) =>
+      `Question results for ${name}.`,
+    analyticsReviewSummary: "Answer summary",
+    analyticsReviewByGroup: "Results by group",
+    analyticsPageOf: (page: number, totalPages: number) =>
+      `Page ${page} of ${totalPages}`,
+    analyticsPrevPage: "Previous",
+    analyticsNextPage: "Next",
+    printPreview: "Print preview",
+    generatePdf: "Generate PDF",
+    printHint:
+      "Use your browser print dialog. Choose Save as PDF to download a PDF.",
     gamificationTitle: "Gamification",
     gamificationDescription:
       "Manage challenges, achievements, certificates, and point values.",
@@ -834,6 +875,25 @@ export const labels = {
       feedbackListTitle: "AI Feedback Library",
       feedbackListSubtitle:
         "Browse AI feedback for every answer and group completion in one place.",
+      reportTitle: "Learning report",
+      reportCorrect: "Correct",
+      reportIncorrect: "Incorrect",
+      reportUnanswered: "Unanswered",
+      reportAccuracy: "Accuracy",
+      reportAccuracyValue: (percent: number) => `${percent}%`,
+      reportProgress: "Progress",
+      reportGroupsProgress: (completed: number, total: number) =>
+        `${completed}/${total} groups`,
+      reportCurrentPosition: (
+        level: string,
+        group: string,
+        stepsCompleted: number,
+        stepsTotal: number,
+        phase: string
+      ) =>
+        `${level} · ${group} · ${stepsCompleted}/${stepsTotal} steps · ${phase}`,
+      reportAllCompleted: "All published groups completed",
+      reportNotStarted: "Not started yet",
       feedbackFilterAll: "All",
       feedbackFilterWithAi: "With AI feedback",
       feedbackFilterCorrect: "Correct",
@@ -869,8 +929,12 @@ export const labels = {
         `Posttest ${answered}/${total}`,
       contentSteps: (completed: number, total: number) =>
         `Content ${completed}/${total}`,
-      contentAnswerStats: (correct: number, incorrect: number) =>
-        `${correct} correct · ${incorrect} incorrect`,
+      contentAnswerStats: (
+        correct: number,
+        incorrect: number,
+        unanswered: number
+      ) =>
+        `${correct} correct · ${incorrect} incorrect · ${unanswered} unanswered`,
       groupScore: (score: number) => `Score: ${score}%`,
       testimonialRating: (rating: number) => `Rating: ${rating}/5`,
       lastActive: (date: string) => `Last active: ${date}`,

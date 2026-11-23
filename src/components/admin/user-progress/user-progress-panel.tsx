@@ -1,4 +1,5 @@
 import type { AdminUserProgressOverviewClient } from "@/lib/admin-user-progress";
+import { PrintReportToolbar } from "@/components/admin/print-report-toolbar";
 import { UserLevelProgressAccordion } from "@/components/admin/user-progress/user-level-progress-accordion";
 import { UserProgressHistory } from "@/components/admin/user-progress/user-progress-history";
 import { UserProgressOverview } from "@/components/admin/user-progress/user-progress-overview";
@@ -13,10 +14,13 @@ export function UserProgressPanel({
 }) {
   return (
     <div className="space-y-6">
-      <UserProgressOverview overview={overview} />
-      <UserProgressHistory history={overview.history} userId={userId} />
-      <UserProgressSkills summary={overview.summary} />
-      <UserLevelProgressAccordion levels={overview.levels} userId={userId} />
+      <PrintReportToolbar />
+      <div id="user-progress-print" className="space-y-6">
+        <UserProgressOverview overview={overview} />
+        <UserProgressHistory history={overview.history} userId={userId} />
+        <UserProgressSkills summary={overview.summary} />
+        <UserLevelProgressAccordion levels={overview.levels} userId={userId} />
+      </div>
     </div>
   );
 }
