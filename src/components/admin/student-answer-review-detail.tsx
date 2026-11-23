@@ -7,26 +7,35 @@ import { aggregateContentAnswerStatsFromOverview } from "@/lib/admin-student-ans
 import { formatAdminDateShort, formatAdminDateTime } from "@/lib/format-date";
 import { PrintReportToolbar } from "@/components/admin/print-report-toolbar";
 import { Badge } from "@/components/ui/badge";
-import { getLevelLabel, labels } from "@/lib/labels";
+import { getLevelLabel, getStatusLabel, labels } from "@/lib/labels";
 
 function groupHasActivity(group: AdminGroupProgressClient): boolean {
   if (group.status !== "notStarted") return true;
   const answered =
     group.contentAnswers.correct + group.contentAnswers.incorrect;
-  return answered > 0 || group.contentHistory.length > 0;
+  return (
+    answered > 0 ||
+    group.contentHistory.length > 0 ||
+    Boolean(group.aiCompletionFeedback?.trim()) ||
+    Boolean(group.testimonialText?.trim()) ||
+    group.testimonialRating != null ||
+    group.groupScorePercent != null
+  );
 }
 
-function activeLevels(
-  levels: AdminLevelProgressClient[]
-): Array<{
+function levelsWithActivity(levels: AdminLevelProgressClient[]): Array<{
   levelId: number;
   levelName: string;
+  completed: number;
+  total: number;
   groups: AdminGroupProgressClient[];
 }> {
   return levels
     .map((level) => ({
       levelId: level.levelId,
       levelName: level.levelName,
+      completed: level.completed,
+      total: level.total,
       groups: level.groups.filter(groupHasActivity),
     }))
     .filter((level) => level.groups.length > 0);
@@ -48,8 +57,9 @@ export function StudentAnswerReviewDetail({
   generatedAt: string;
 }) {
   const summary = aggregateContentAnswerStatsFromOverview(overview.levels);
-  const levels = activeLevels(overview.levels);
+  const levels = levelsWithActivity(overview.levels);
   const generatedLabel = formatAdminDateTime(generatedAt);
+  const levelNames = levels.map((level) => getLevelLabel(level.levelName));
 
   return (
     <div className="space-y-6">
@@ -84,7 +94,7 @@ export function StudentAnswerReviewDetail({
           <table className="w-full border-collapse text-sm">
             <tbody>
               <tr className="border-b border-border print:border-neutral-400">
-                <th className="w-40 py-2 pr-4 text-left font-medium text-muted-foreground print:text-black">
+                <th className="w-44 py-2 pr-4 text-left font-medium text-muted-foreground print:text-black">
                   {labels.admin.analyticsReportFieldName}
                 </th>
                 <td className="py-2 font-medium">{studentName}</td>
@@ -111,6 +121,25 @@ export function StudentAnswerReviewDetail({
                   <td className="py-2">{studentId}</td>
                 </tr>
               ) : null}
+              <tr className="border-b border-border print:border-neutral-400">
+                <th className="py-2 pr-4 text-left font-medium text-muted-foreground print:text-black">
+                  {labels.admin.analyticsReportFieldLevels}
+                </th>
+                <td className="py-2">
+                  {levelNames.length > 0 ? (
+                    <div className="space-y-1">
+                      <p className="font-medium">
+                        {labels.admin.analyticsReportLevelsCount(
+                          levelNames.length
+                        )}
+                      </p>
+                      <p>{levelNames.join(" · ")}</p>
+                    </div>
+                  ) : (
+                    labels.admin.userProgress.listNotStarted
+                  )}
+                </td>
+              </tr>
             </tbody>
           </table>
         </section>
@@ -159,9 +188,9 @@ export function StudentAnswerReviewDetail({
           </table>
         </section>
 
-        <section className="space-y-4">
+        <section className="space-y-6">
           <h3 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground print:text-black">
-            {labels.admin.analyticsReviewByGroup}
+            {labels.admin.analyticsReportByLevel}
           </h3>
 
           {levels.length === 0 ? (
@@ -170,19 +199,38 @@ export function StudentAnswerReviewDetail({
             </p>
           ) : (
             levels.map((level) => (
-              <div key={level.levelId} className="space-y-4">
-                <h4 className="border-b border-border pb-2 text-base font-semibold print:border-black">
-                  {getLevelLabel(level.levelName)}
-                </h4>
+              <div
+                key={level.levelId}
+                className="space-y-4 break-inside-avoid rounded-xl border border-border p-4 sm:p-5 print:border print:border-neutral-500"
+              >
+                <div className="flex flex-col gap-2 border-b border-border pb-3 sm:flex-row sm:items-center sm:justify-between print:border-black">
+                  <h4 className="text-lg font-bold tracking-tight">
+                    {getLevelLabel(level.levelName)}
+                  </h4>
+                  <p className="text-sm text-muted-foreground print:text-neutral-700">
+                    {labels.admin.userProgress.groupsInLevel(
+                      level.completed,
+                      level.total
+                    )}
+                  </p>
+                </div>
 
                 {level.groups.map((group) => (
                   <div
                     key={group.group.id}
-                    className="space-y-3 break-inside-avoid rounded-lg border border-border/70 p-3 sm:p-4 print:border print:border-neutral-400 print:p-3"
+                    className="space-y-4 break-inside-avoid rounded-lg border border-border/70 p-3 sm:p-4 print:border print:border-neutral-400 print:p-3"
                   >
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="min-w-0">
-                        <p className="font-medium">{group.group.title}</p>
+                      <div className="min-w-0 space-y-1">
+                        <p className="font-semibold">{group.group.title}</p>
+                        <p className="text-sm text-muted-foreground print:text-neutral-700">
+                          {getStatusLabel(group.status)}
+                          {group.groupScorePercent != null
+                            ? ` · ${labels.admin.analyticsReportGroupScore(
+                                group.groupScorePercent
+                              )}`
+                            : ""}
+                        </p>
                         <p className="text-sm text-muted-foreground print:text-neutral-700">
                           {labels.admin.userProgress.contentAnswerStats(
                             group.contentAnswers.correct,
@@ -216,58 +264,128 @@ export function StudentAnswerReviewDetail({
                           {labels.admin.analyticsReportNoQuestions}
                         </p>
                       ) : (
-                        <div className="overflow-x-auto">
-                          <table className="w-full min-w-[32rem] border-collapse text-sm">
-                            <thead>
-                              <tr className="border-b-2 border-border print:border-black">
-                                <th className="py-2 pr-3 text-left font-semibold">
-                                  {labels.admin.analyticsReportColQuestion}
-                                </th>
-                                <th className="py-2 pr-3 text-left font-semibold">
-                                  {labels.admin.analyticsReportColResult}
-                                </th>
-                                <th className="py-2 pr-3 text-right font-semibold">
-                                  {labels.admin.analyticsReportColScore}
-                                </th>
-                                <th className="py-2 text-left font-semibold">
-                                  {labels.admin.analyticsReportColAnsweredAt}
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {group.contentHistory.map((entry) => (
-                                <tr
-                                  key={`${entry.contentItemId}-${entry.subQuestionIndex}-${entry.createdAt}`}
-                                  className="border-b border-border/70 align-top print:border-neutral-300"
-                                >
-                                  <td className="max-w-[18rem] py-2 pr-3">
-                                    <span className="line-clamp-3 print:line-clamp-none">
-                                      {entry.itemLabel}
-                                    </span>
-                                  </td>
-                                  <td className="py-2 pr-3">
-                                    {entry.isCorrect
-                                      ? labels.admin.userProgress.answerCorrect
-                                      : labels.admin.userProgress
-                                          .answerIncorrect}
-                                  </td>
-                                  <td className="py-2 pr-3 text-right tabular-nums">
-                                    {entry.scorePercent != null
-                                      ? labels.admin.userProgress.answerScore(
-                                          entry.scorePercent
-                                        )
-                                      : labels.admin.userProgress.noAnswer}
-                                  </td>
-                                  <td className="py-2 whitespace-nowrap text-muted-foreground print:text-neutral-700">
-                                    {formatAdminDateShort(entry.createdAt)}
-                                  </td>
+                        <div className="space-y-3">
+                          <div className="overflow-x-auto">
+                            <table className="w-full min-w-[36rem] border-collapse text-sm">
+                              <thead>
+                                <tr className="border-b-2 border-border print:border-black">
+                                  <th className="py-2 pr-3 text-left font-semibold">
+                                    {labels.admin.analyticsReportColQuestion}
+                                  </th>
+                                  <th className="py-2 pr-3 text-left font-semibold">
+                                    {labels.admin.analyticsReportColResult}
+                                  </th>
+                                  <th className="py-2 pr-3 text-right font-semibold">
+                                    {labels.admin.analyticsReportColScore}
+                                  </th>
+                                  <th className="py-2 text-left font-semibold">
+                                    {
+                                      labels.admin
+                                        .analyticsReportColAnsweredAt
+                                    }
+                                  </th>
                                 </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                              </thead>
+                              <tbody>
+                                {group.contentHistory.map((entry) => (
+                                  <tr
+                                    key={`${entry.contentItemId}-${entry.subQuestionIndex}-${entry.createdAt}`}
+                                    className="border-b border-border/70 align-top print:border-neutral-300"
+                                  >
+                                    <td className="max-w-[18rem] py-2 pr-3">
+                                      <span className="line-clamp-3 print:line-clamp-none">
+                                        {entry.itemLabel}
+                                      </span>
+                                    </td>
+                                    <td className="py-2 pr-3">
+                                      {entry.isCorrect
+                                        ? labels.admin.userProgress
+                                            .answerCorrect
+                                        : labels.admin.userProgress
+                                            .answerIncorrect}
+                                    </td>
+                                    <td className="py-2 pr-3 text-right tabular-nums">
+                                      {entry.scorePercent != null
+                                        ? labels.admin.userProgress.answerScore(
+                                            entry.scorePercent
+                                          )
+                                        : labels.admin.userProgress.noAnswer}
+                                    </td>
+                                    <td className="py-2 whitespace-nowrap text-muted-foreground print:text-neutral-700">
+                                      {formatAdminDateShort(entry.createdAt)}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+
+                          {group.contentHistory.some((entry) =>
+                            Boolean(entry.aiFeedback?.trim())
+                          ) ? (
+                            <div className="space-y-3">
+                              <h6 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground print:text-black">
+                                {labels.admin.analyticsReportAiReview}
+                              </h6>
+                              {group.contentHistory
+                                .filter((entry) =>
+                                  Boolean(entry.aiFeedback?.trim())
+                                )
+                                .map((entry) => (
+                                  <div
+                                    key={`ai-${entry.contentItemId}-${entry.subQuestionIndex}-${entry.createdAt}`}
+                                    className="rounded-md border border-border/60 bg-muted/30 p-3 print:border-neutral-400 print:bg-white"
+                                  >
+                                    <p className="mb-1 text-sm font-medium">
+                                      {entry.itemLabel}
+                                    </p>
+                                    <p className="whitespace-pre-wrap text-sm text-muted-foreground print:text-neutral-800">
+                                      {entry.aiFeedback}
+                                    </p>
+                                  </div>
+                                ))}
+                            </div>
+                          ) : null}
                         </div>
                       )}
                     </div>
+
+                    {group.aiCompletionFeedback?.trim() ? (
+                      <div className="space-y-2 break-inside-avoid rounded-md border border-border/60 p-3 print:border-neutral-400">
+                        <h5 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground print:text-black">
+                          {labels.admin.analyticsReportCompletionReview}
+                        </h5>
+                        <p className="whitespace-pre-wrap text-sm print:text-neutral-800">
+                          {group.aiCompletionFeedback}
+                        </p>
+                      </div>
+                    ) : null}
+
+                    {group.testimonialText?.trim() ||
+                    group.testimonialRating != null ? (
+                      <div className="space-y-2 break-inside-avoid rounded-md border border-border/60 p-3 print:border-neutral-400">
+                        <h5 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground print:text-black">
+                          {labels.admin.analyticsReportTestimonial}
+                        </h5>
+                        {group.testimonialRating != null ? (
+                          <p className="text-sm font-medium">
+                            {labels.admin.userProgress.testimonialRating(
+                              group.testimonialRating
+                            )}
+                          </p>
+                        ) : null}
+                        {group.testimonialText?.trim() ? (
+                          <p className="whitespace-pre-wrap text-sm italic print:text-neutral-800">
+                            &ldquo;{group.testimonialText.trim()}&rdquo;
+                          </p>
+                        ) : null}
+                        {group.testimonialSubmittedAt ? (
+                          <p className="text-xs text-muted-foreground print:text-neutral-700">
+                            {formatAdminDateShort(group.testimonialSubmittedAt)}
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
                 ))}
               </div>
