@@ -1,10 +1,8 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { Role } from "@prisma/client";
-import {
-  getUsersPaginated,
-  type UserStatusFilter,
-} from "@/actions/admin/users";
+import { getUsersPaginated } from "@/actions/admin/users";
+import type { UserStatusFilter } from "@/lib/admin-users";
 import { UserList } from "@/components/admin/user-list";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";

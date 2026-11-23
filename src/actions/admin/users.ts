@@ -5,8 +5,25 @@ import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { Gender, Role, type Prisma } from "@prisma/client";
 import { z } from "zod";
+import {
+  USERS_PAGE_SIZE,
+  USER_SORT_FIELDS,
+  type UserListItem,
+  type UserSortDir,
+  type UserSortField,
+  type UserStatusFilter,
+  type UsersListResult,
+} from "@/lib/admin-users";
 import { prisma } from "@/lib/prisma";
 import { getUserId, requireAdmin } from "@/lib/auth-helpers";
+
+export type {
+  UserListItem,
+  UserSortDir,
+  UserSortField,
+  UserStatusFilter,
+  UsersListResult,
+} from "@/lib/admin-users";
 
 const emptyToUndefined = (v: unknown) =>
   v === "" || v === null || v === undefined ? undefined : v;
@@ -37,19 +54,6 @@ const updateUserSchema = userBaseSchema.extend({
     .or(z.literal(""))
     .transform((v) => (v?.trim() ? v.trim() : undefined)),
 });
-
-export type UserListItem = {
-  id: number;
-  name: string;
-  email: string;
-  role: Role;
-  phone: string | null;
-  institution: string | null;
-  studentId: string | null;
-  isActive: boolean;
-  points: number;
-  createdAt: Date;
-};
 
 export type UserDetail = UserListItem & {
   dateOfBirth: Date | null;
@@ -101,29 +105,6 @@ function toUserData(
   }
   return payload;
 }
-
-export const USERS_PAGE_SIZE = 20;
-
-export const USER_SORT_FIELDS = [
-  "name",
-  "email",
-  "role",
-  "points",
-  "createdAt",
-  "isActive",
-] as const;
-
-export type UserSortField = (typeof USER_SORT_FIELDS)[number];
-export type UserSortDir = "asc" | "desc";
-export type UserStatusFilter = "active" | "inactive";
-
-export type UsersListResult = {
-  items: UserListItem[];
-  total: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-};
 
 const userListSelect = {
   id: true,

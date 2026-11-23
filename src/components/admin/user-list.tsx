@@ -15,14 +15,14 @@ import {
   UserCircle,
 } from "lucide-react";
 import { Role } from "@prisma/client";
+import { deleteUser } from "@/actions/admin/users";
 import {
-  deleteUser,
   USER_SORT_FIELDS,
   type UserListItem,
   type UserSortDir,
   type UserSortField,
   type UserStatusFilter,
-} from "@/actions/admin/users";
+} from "@/lib/admin-users";
 import type { UserProgressListSummary } from "@/lib/admin-user-progress";
 import { formatAdminDateShort } from "@/lib/format-date";
 import { getLevelLabel, labels } from "@/lib/labels";
