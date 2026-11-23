@@ -21,8 +21,13 @@ import {
   type ChallengeCompletionResult,
 } from "@/lib/challenge-service";
 import { ChatRole } from "@prisma/client";
+import { canAccessGroup } from "@/lib/progression";
+import { checkRateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 import { revalidateStudentGamification } from "@/lib/revalidate-student";
 import { startOfWibDay } from "@/lib/chat-day";
+
+const CHAT_RATE_LIMIT = 40;
+const CHAT_RATE_WINDOW_MS = 60 * 1000;
 
 type ChatRequestBody = {
   message?: string;
@@ -80,7 +85,25 @@ export async function POST(request: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const userId = getUserId(session);
+  let userId: number;
+  try {
+    userId = getUserId(session);
+  } catch {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  const rate = checkRateLimit(
+    `ai-chat:user:${userId}`,
+    CHAT_RATE_LIMIT,
+    CHAT_RATE_WINDOW_MS
+  );
+  if (!rate.allowed) {
+    return new Response(labels.errors.tooManyRequests, {
+      status: 429,
+      headers: rateLimitHeaders(rate),
+    });
+  }
+
   const body = (await request.json()) as ChatRequestBody;
   const message = body.message?.trim();
   if (!message) {
@@ -94,13 +117,20 @@ export async function POST(request: Request) {
     groupId != null
       ? prisma.learningGroup.findFirst({
           where: { id: groupId, isPublished: true },
-          include: { level: { select: { name: true } } },
+          include: { level: { select: { id: true, name: true } } },
         })
       : Promise.resolve(null),
   ]);
 
   if (groupId != null && !group) {
     return new Response("Group not found", { status: 404 });
+  }
+
+  if (group) {
+    const allowed = await canAccessGroup(userId, group.id, group.level.id);
+    if (!allowed) {
+      return new Response("Forbidden", { status: 403 });
+    }
   }
 
   let systemPrompt = buildBraderSystemPrompt(knowledge.referenceFacts);

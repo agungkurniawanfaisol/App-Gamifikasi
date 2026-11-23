@@ -17,6 +17,7 @@ import {
   type ChallengeCompletionResult,
 } from "@/lib/challenge-service";
 import type { AchievementGrantResult } from "@/lib/achievement-engine";
+import { canAccessGroup } from "@/lib/progression";
 import { revalidateStudentGamification } from "@/lib/revalidate-student";
 import type { SubmitAnswerResult } from "@/lib/submit-answer";
 
@@ -44,10 +45,27 @@ export async function executeSubmitContentAnswer(
 ): Promise<SubmitAnswerResult> {
   const item = await prisma.groupContentItem.findUnique({
     where: { id: contentItemId },
-    include: { group: { select: { levelId: true } } },
+    include: {
+      group: {
+        select: { id: true, levelId: true, isPublished: true },
+      },
+    },
   });
   if (!item || item.type !== ContentItemType.QUESTION) {
     throw new SubmitContentAnswerError("Question not found", 404);
+  }
+
+  if (!item.group.isPublished) {
+    throw new SubmitContentAnswerError("Question not found", 404);
+  }
+
+  const allowed = await canAccessGroup(
+    userId,
+    item.group.id,
+    item.group.levelId
+  );
+  if (!allowed) {
+    throw new SubmitContentAnswerError("Forbidden", 403);
   }
 
   const subQuestions = getSubQuestionsFromItem(item);
@@ -67,6 +85,7 @@ export async function executeSubmitContentAnswer(
     sub.format === QuestionFormat.SPEECH_RECOGNITION &&
     sub.expectedSpeech
   ) {
+    // Always score speech on the server; client scorePercent is ignored.
     const result = scoreSpeechMatch(sub.expectedSpeech, answer);
     finalScore = result.percent;
     isCorrect = result.percent >= SPEECH_PASS_THRESHOLD;
@@ -74,10 +93,8 @@ export async function executeSubmitContentAnswer(
     isCorrect = answer.trim().length > 0;
   }
 
-  if (scorePercent !== undefined) {
-    finalScore = scorePercent;
-    isCorrect = scorePercent >= SPEECH_PASS_THRESHOLD;
-  }
+  // Client-supplied scorePercent must not override server grading for any format.
+  void scorePercent;
 
   const existing = await prisma.userAnswer.findUnique({
     where: {

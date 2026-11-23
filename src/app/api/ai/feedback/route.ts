@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import { ContentItemType } from "@prisma/client";
 import { auth } from "@/auth";
+import { getUserId } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { buildFeedbackPrompt, generateFeedback } from "@/lib/ollama";
 import { updateAnswerFeedback } from "@/actions/student/quiz";
 import { getSubQuestionsFromItem } from "@/lib/content-item";
 import { labels } from "@/lib/labels";
+import { checkRateLimit, rateLimitHeaders } from "@/lib/rate-limit";
+
+const FEEDBACK_RATE_LIMIT = 30;
+const FEEDBACK_RATE_WINDOW_MS = 60 * 1000;
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -13,7 +18,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userId = parseInt(session.user.id, 10);
+  let userId: number;
+  try {
+    userId = getUserId(session);
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rate = checkRateLimit(
+    `ai-feedback:user:${userId}`,
+    FEEDBACK_RATE_LIMIT,
+    FEEDBACK_RATE_WINDOW_MS
+  );
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: labels.errors.tooManyRequests },
+      { status: 429, headers: rateLimitHeaders(rate) }
+    );
+  }
+
   const body = (await request.json()) as {
     contentItemId?: number;
     questionId?: number;

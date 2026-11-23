@@ -71,6 +71,8 @@ export async function snapshotContentItemVersion(
   contentItemId: number,
   changedByUserId?: number
 ) {
+  await requireAdmin();
+
   const item = await prisma.groupContentItem.findUnique({
     where: { id: contentItemId },
   });

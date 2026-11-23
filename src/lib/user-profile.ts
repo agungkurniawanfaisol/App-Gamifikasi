@@ -16,6 +16,17 @@ export function parseDateOfBirth(value: string | undefined): Date | null {
   return date;
 }
 
+const profileImageUrlSchema = z
+  .string()
+  .trim()
+  .refine(
+    (value) =>
+      value.startsWith("/uploads/profiles/") &&
+      !value.includes("..") &&
+      !value.includes("\\"),
+    { message: "Invalid profile image URL." }
+  );
+
 export const selfProfileSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters."),
   phone: z.preprocess(emptyToUndefined, z.string().trim().optional()),
@@ -26,7 +37,10 @@ export const selfProfileSchema = z.object({
   ),
   institution: z.preprocess(emptyToUndefined, z.string().trim().optional()),
   studentId: z.preprocess(emptyToUndefined, z.string().trim().optional()),
-  profileImageUrl: z.preprocess(emptyToUndefined, z.string().trim().optional()),
+  profileImageUrl: z.preprocess(
+    emptyToUndefined,
+    profileImageUrlSchema.optional()
+  ),
   password: z
     .string()
     .optional()

@@ -3,10 +3,24 @@
 import bcrypt from "bcryptjs";
 import { Gender, Role } from "@prisma/client";
 import { z } from "zod";
+import { headers } from "next/headers";
 import { signIn } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { labels } from "@/lib/labels";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { redirect } from "next/navigation";
+
+const REGISTER_RATE_LIMIT = 5;
+const REGISTER_RATE_WINDOW_MS = 15 * 60 * 1000;
+
+function getRegisterClientIp(): string {
+  const requestHeaders = headers();
+  return (
+    requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    requestHeaders.get("x-real-ip")?.trim() ||
+    "unknown"
+  );
+}
 
 const emptyToUndefined = (v: unknown) =>
   v === "" || v === null || v === undefined ? undefined : v;
@@ -39,6 +53,16 @@ export async function registerAction(
   _prev: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
+  const ip = getRegisterClientIp();
+  const ipLimit = checkRateLimit(
+    `register:ip:${ip}`,
+    REGISTER_RATE_LIMIT,
+    REGISTER_RATE_WINDOW_MS
+  );
+  if (!ipLimit.allowed) {
+    return labels.errors.tooManyRequests;
+  }
+
   const parsed = registerSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
@@ -60,6 +84,15 @@ export async function registerAction(
   }
 
   const email = parsed.data.email.toLowerCase();
+  const emailLimit = checkRateLimit(
+    `register:email:${email}`,
+    REGISTER_RATE_LIMIT,
+    REGISTER_RATE_WINDOW_MS
+  );
+  if (!emailLimit.allowed) {
+    return labels.errors.tooManyRequests;
+  }
+
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     return labels.register.emailTaken;

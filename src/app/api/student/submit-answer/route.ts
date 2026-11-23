@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Role } from "@prisma/client";
 import { auth } from "@/auth";
 import { isAppUserId, parseAppUserId } from "@/lib/auth-identity";
+import { prisma } from "@/lib/prisma";
 import {
   executeSubmitContentAnswer,
   SubmitContentAnswerError,
@@ -20,6 +21,17 @@ export async function POST(request: Request) {
 
   const userId = parseAppUserId(session.user.id);
   if (userId == null) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const activeUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isActive: true, role: true },
+  });
+  if (
+    !activeUser?.isActive ||
+    activeUser.role !== Role.STUDENT
+  ) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

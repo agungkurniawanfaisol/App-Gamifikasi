@@ -4,14 +4,9 @@ import path from "path";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getUserId } from "@/lib/auth-helpers";
+import { validateUploadFile } from "@/lib/upload-security";
 
-const IMAGE_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-]);
-const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+const MAX_PROFILE_IMAGE_BYTES = 2 * 1024 * 1024;
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -19,7 +14,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userId = getUserId(session);
+  let userId: number;
+  try {
+    userId = getUserId(session);
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const formData = await request.formData();
   const file = formData.get("file");
 
@@ -27,21 +28,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
-  if (!IMAGE_TYPES.has(file.type)) {
-    return NextResponse.json({ error: "Unsupported file type" }, { status: 400 });
+  let validated;
+  try {
+    validated = await validateUploadFile(file, "image");
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Unsupported file type";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 
-  if (file.size > MAX_IMAGE_BYTES) {
+  if (validated.buffer.length > MAX_PROFILE_IMAGE_BYTES) {
     return NextResponse.json({ error: "File too large" }, { status: 400 });
   }
 
-  const ext = path.extname(file.name) || ".jpg";
-  const safeName = `avatar-${Date.now()}${ext}`;
-  const dir = path.join(process.cwd(), "public", "uploads", "profiles", String(userId));
+  const safeName = `avatar-${Date.now()}${validated.extension}`;
+  const dir = path.join(
+    process.cwd(),
+    "public",
+    "uploads",
+    "profiles",
+    String(userId)
+  );
   await mkdir(dir, { recursive: true });
-
-  const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(dir, safeName), buffer);
+  await writeFile(path.join(dir, safeName), validated.buffer);
 
   const url = `/uploads/profiles/${userId}/${safeName}`;
 

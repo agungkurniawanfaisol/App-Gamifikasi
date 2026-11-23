@@ -61,8 +61,19 @@ export async function updateMyProfile(input: SelfProfileInput): Promise<void> {
     gender: data.gender ? (data.gender as Gender) : null,
     institution: data.institution?.trim() || null,
     studentId: data.studentId?.trim() || null,
-    profileImageUrl: data.profileImageUrl?.trim() || null,
   };
+
+  if (data.profileImageUrl !== undefined) {
+    const rawImageUrl = data.profileImageUrl?.trim() || "";
+    const ownPrefix = `/uploads/profiles/${userId}/`;
+    if (!rawImageUrl) {
+      updateData.profileImageUrl = null;
+    } else if (rawImageUrl.startsWith(ownPrefix) && !rawImageUrl.includes("..")) {
+      updateData.profileImageUrl = rawImageUrl;
+    } else {
+      throw new Error("Invalid profile image URL.");
+    }
+  }
 
   if (data.password) {
     updateData.password = await bcrypt.hash(data.password, 10);

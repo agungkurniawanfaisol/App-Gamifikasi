@@ -123,13 +123,43 @@ function textAlignStyle(attrs?: Record<string, unknown>): string[] {
   return [`text-align: ${align}`];
 }
 
+function isSafeHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+/** Allow relative app paths and http(s) only — block javascript:/data:/etc. */
+export function sanitizeContentHref(href: string): string {
+  const raw = href.trim();
+  if (!raw) return "#";
+  if (raw.startsWith("/") && !raw.startsWith("//")) {
+    return raw;
+  }
+  if (isSafeHttpUrl(raw)) return raw;
+  return "#";
+}
+
+/** Material images: local uploads only. */
+export function sanitizeContentImageSrc(src: string): string {
+  const raw = src.trim();
+  if (!raw) return "";
+  if (raw.startsWith("/uploads/") && !raw.includes("..")) {
+    return raw;
+  }
+  return "";
+}
+
 export function tiptapJsonToHtml(doc: string | null): string {
   if (!doc) return "";
   try {
     const parsed = JSON.parse(doc) as TipTapNode;
     return renderNode(parsed);
   } catch {
-    return doc;
+    return "";
   }
 }
 
@@ -168,8 +198,9 @@ function renderNode(node: TipTapNode): string {
         text = `<mark style="background-color: ${escapeHtml(highlightColor)}">${text}</mark>`;
       }
       if (mark.type === "link") {
-        const href =
-          typeof mark.attrs?.href === "string" ? mark.attrs.href : "#";
+        const href = sanitizeContentHref(
+          typeof mark.attrs?.href === "string" ? mark.attrs.href : "#"
+        );
         text = `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" class="text-primary underline">${text}</a>`;
       }
     }
@@ -207,7 +238,10 @@ function renderNode(node: TipTapNode): string {
     case "listItem":
       return `<li>${inner}</li>`;
     case "image": {
-      const src = typeof node.attrs?.src === "string" ? node.attrs.src : "";
+      const src = sanitizeContentImageSrc(
+        typeof node.attrs?.src === "string" ? node.attrs.src : ""
+      );
+      if (!src) return "";
       const alt = typeof node.attrs?.alt === "string" ? node.attrs.alt : "";
       return `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" class="my-3 max-w-full rounded-md" />`;
     }

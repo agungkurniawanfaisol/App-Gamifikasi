@@ -4,9 +4,23 @@ import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
 import { z } from "zod";
+import { headers } from "next/headers";
 import { isAppUserId } from "@/lib/auth-identity";
 import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/auth.config";
+import { checkRateLimit } from "@/lib/rate-limit";
+
+const LOGIN_RATE_LIMIT = 10;
+const LOGIN_RATE_WINDOW_MS = 15 * 60 * 1000;
+
+function getLoginClientIp(): string {
+  const requestHeaders = headers();
+  return (
+    requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    requestHeaders.get("x-real-ip")?.trim() ||
+    "unknown"
+  );
+}
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -83,8 +97,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!parsed.success) return null;
 
         const { email, password } = parsed.data;
+        const normalizedEmail = email.toLowerCase();
+        const ip = getLoginClientIp();
+        const ipLimit = checkRateLimit(
+          `login:ip:${ip}`,
+          LOGIN_RATE_LIMIT,
+          LOGIN_RATE_WINDOW_MS
+        );
+        const emailLimit = checkRateLimit(
+          `login:email:${normalizedEmail}`,
+          LOGIN_RATE_LIMIT,
+          LOGIN_RATE_WINDOW_MS
+        );
+        if (!ipLimit.allowed || !emailLimit.allowed) {
+          return null;
+        }
+
         const user = await prisma.user.findUnique({
-          where: { email: email.toLowerCase() },
+          where: { email: normalizedEmail },
         });
         if (!user || !user.isActive || !user.password) return null;
 

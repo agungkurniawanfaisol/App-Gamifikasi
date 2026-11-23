@@ -1,6 +1,8 @@
 import { readFile } from "fs/promises";
 import path from "path";
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { isAppUserId } from "@/lib/auth-identity";
 
 const MIME_TYPES: Record<string, string> = {
   ".png": "image/png",
@@ -24,12 +26,25 @@ const MIME_TYPES: Record<string, string> = {
   ".mp4": "video/mp4",
 };
 
-const INLINE_EXTENSIONS = new Set([".pdf", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".mp4"]);
+const INLINE_EXTENSIONS = new Set([
+  ".pdf",
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".gif",
+  ".webp",
+  ".mp4",
+]);
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: { path: string[] } }
 ) {
+  const session = await auth();
+  if (!session?.user?.id || !isAppUserId(session.user.id)) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
   const segments = params.path;
   if (!segments?.length) {
     return new NextResponse("Not found", { status: 404 });
@@ -53,7 +68,7 @@ export async function GET(
     const headers: Record<string, string> = {
       "Content-Type": contentType,
       "X-Content-Type-Options": "nosniff",
-      "Cache-Control": "public, max-age=31536000, immutable",
+      "Cache-Control": "private, max-age=3600",
     };
 
     if (!INLINE_EXTENSIONS.has(ext)) {
