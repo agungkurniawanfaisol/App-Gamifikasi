@@ -12,10 +12,10 @@ export async function fetchAdminAnalytics() {
   return buildAdminAnalyticsSnapshot();
 }
 
-export async function fetchStudentAnswerReview(page = 1) {
+export async function fetchStudentAnswerReview(
+  page = 1,
+  pageSize = STUDENT_ANSWER_REVIEW_PAGE_SIZE
+) {
   await requireAdmin();
-  return buildStudentAnswerReviewRoster(
-    page,
-    STUDENT_ANSWER_REVIEW_PAGE_SIZE
-  );
+  return buildStudentAnswerReviewRoster(page, pageSize);
 }

@@ -785,6 +785,16 @@ export const labels = {
     analyticsReportTotalStudents: "Total students",
     analyticsReportTotalAnswered: "Total questions answered",
     analyticsReportAverageAccuracy: "Average accuracy",
+    analyticsPageSize: "Per page",
+    analyticsPageSizeAll: "All",
+    analyticsFilterSelected: (count: number) => `Selected (${count})`,
+    analyticsShowingRange: (start: number, end: number, total: number) =>
+      `Showing ${start}–${end} of ${total} students`,
+    analyticsShowingAll: (total: number) => `Showing all ${total} students`,
+    analyticsSelectedAcrossPages: (total: number, onPage: number) =>
+      onPage === total
+        ? `${total} selected`
+        : `${total} selected (${onPage} on page)`,
     analyticsReportBatchFooterNote:
       "This document was generated from DeeLearn admin analytics for the selected students.",
     analyticsReportViewSingleDetail: "Open individual review",

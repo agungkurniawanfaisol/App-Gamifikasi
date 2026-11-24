@@ -757,6 +757,22 @@ export async function getAdminUserProgressOverview(
           history: [],
         };
 
+        const answeredCount =
+          contentDetails.stats.correct + contentDetails.stats.incorrect;
+        const pretestAnswered = assessment?.pretest.answered ?? 0;
+        const posttestAnswered = assessment?.posttest.answered ?? 0;
+
+        let effectiveStatus = status;
+        if (
+          effectiveStatus === "notStarted" &&
+          (answeredCount > 0 ||
+            pretestAnswered > 0 ||
+            posttestAnswered > 0 ||
+            stepProgress.completed > 0)
+        ) {
+          effectiveStatus = "inProgress";
+        }
+
         return {
           group: {
             id: group.id,
@@ -764,7 +780,7 @@ export async function getAdminUserProgressOverview(
             order: group.order,
             isPremium: group.isPremium,
           },
-          status,
+          status: effectiveStatus,
           phase,
           stepProgress,
           pretest: assessment?.pretest ?? { answered: 0, total: 0, answers: [] },

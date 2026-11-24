@@ -56,9 +56,10 @@ export async function buildStudentAnswerReviewRoster(
   page = 1,
   pageSize = STUDENT_ANSWER_REVIEW_PAGE_SIZE
 ): Promise<StudentAnswerReviewRoster> {
-  const safePageSize = Math.min(Math.max(pageSize, 1), 100);
+  const isAll = pageSize === 0 || pageSize >= 10000;
+  const safePageSize = isAll ? 10000 : Math.min(Math.max(pageSize, 1), 500);
   const safePage = Math.max(page, 1);
-  const skip = (safePage - 1) * safePageSize;
+  const skip = isAll ? 0 : (safePage - 1) * safePageSize;
 
   const studentWhere = { role: Role.STUDENT, isActive: true } as const;
 
@@ -68,8 +69,8 @@ export async function buildStudentAnswerReviewRoster(
     prisma.user.findMany({
       where: studentWhere,
       orderBy: [{ name: "asc" }, { id: "asc" }],
-      skip,
-      take: safePageSize,
+      skip: isAll ? undefined : skip,
+      take: isAll ? undefined : safePageSize,
       select: {
         id: true,
         name: true,
@@ -116,13 +117,15 @@ export async function buildStudentAnswerReviewRoster(
     };
   });
 
-  const totalPages = Math.max(1, Math.ceil(totalStudents / safePageSize));
+  const totalPages = isAll
+    ? 1
+    : Math.max(1, Math.ceil(totalStudents / safePageSize));
 
   return {
     rows,
     totalStudents,
     page: safePage,
-    pageSize: safePageSize,
+    pageSize: isAll ? totalStudents : safePageSize,
     totalPages,
     expectedSlots,
   };

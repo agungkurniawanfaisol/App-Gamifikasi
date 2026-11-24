@@ -10,12 +10,18 @@ import { labels } from "@/lib/labels";
 export default async function AdminAnalyticsPage({
   searchParams,
 }: {
-  searchParams?: { tab?: string; page?: string };
+  searchParams?: { tab?: string; page?: string; pageSize?: string };
 }) {
   const page = Math.max(1, parseInt(searchParams?.page ?? "1", 10) || 1);
+  const pageSizeParam = searchParams?.pageSize;
+  const pageSize =
+    pageSizeParam === "all"
+      ? 0
+      : Math.max(1, parseInt(pageSizeParam ?? "50", 10) || 50);
+
   const [analytics, roster] = await Promise.all([
     fetchAdminAnalytics(),
-    fetchStudentAnswerReview(page),
+    fetchStudentAnswerReview(page, pageSize),
   ]);
 
   return (

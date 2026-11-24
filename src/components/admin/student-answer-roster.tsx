@@ -1,15 +1,20 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   CheckSquare,
   FileText,
   RotateCcw,
   Search,
   Sparkles,
+  Users,
 } from "lucide-react";
-import type { StudentAnswerReviewRoster } from "@/lib/admin-student-answer-review";
+import type {
+  StudentAnswerReviewRoster,
+  StudentAnswerReviewRow,
+} from "@/lib/admin-student-answer-review";
 import { StudentAnswerBatchReport } from "@/components/admin/student-answer-batch-report";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,28 +31,132 @@ import {
 } from "@/components/ui/responsive-table";
 import { labels } from "@/lib/labels";
 
+const SESSION_STORAGE_KEY = "admin_analytics_selected_students_v1";
+const PAGE_SIZE_OPTIONS = ["25", "50", "75", "100", "all"] as const;
+
+function getInitialSelectedMap(): Record<number, StudentAnswerReviewRow> {
+  if (typeof window === "undefined") return {};
+  try {
+    const stored = sessionStorage.getItem(SESSION_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed && typeof parsed === "object") {
+        return parsed;
+      }
+    }
+  } catch (err) {
+    console.error("Failed to parse selected students from sessionStorage", err);
+  }
+  return {};
+}
+
 export function StudentAnswerRoster({
   roster,
 }: {
   roster: StudentAnswerReviewRoster;
 }) {
   const { rows, page, totalPages, totalStudents } = roster;
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const [selectedUserIds, setSelectedUserIds] = useState<Set<number>>(new Set());
+  const [selectedMap, setSelectedMap] = useState<
+    Record<number, StudentAnswerReviewRow>
+  >(() => getInitialSelectedMap());
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "unstarted">("all");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "active" | "unstarted" | "selected"
+  >("all");
   const [isReportMode, setIsReportMode] = useState(false);
   const searchInputId = useId();
+  const headerCheckboxRef = useRef<HTMLInputElement>(null);
 
+  function updateSelectedMap(
+    updater: (
+      prev: Record<number, StudentAnswerReviewRow>
+    ) => Record<number, StudentAnswerReviewRow>
+  ) {
+    setSelectedMap((prev) => {
+      const next = updater(prev);
+      try {
+        sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(next));
+      } catch (err) {
+        console.error("Failed to store selected students to sessionStorage", err);
+      }
+      return next;
+    });
+  }
+
+  const selectedRows = useMemo(() => {
+    return Object.values(selectedMap);
+  }, [selectedMap]);
+
+  const selectedCount = selectedRows.length;
+
+  // Selected students on current page
+  const selectedOnCurrentPageCount = useMemo(() => {
+    return rows.filter((r) => Boolean(selectedMap[r.userId])).length;
+  }, [rows, selectedMap]);
+
+  // Current page size query
+  const rawPageSizeParam = searchParams.get("pageSize");
+  const currentPageSize =
+    rawPageSizeParam === "all"
+      ? "all"
+      : rawPageSizeParam && PAGE_SIZE_OPTIONS.includes(rawPageSizeParam as (typeof PAGE_SIZE_OPTIONS)[number])
+        ? rawPageSizeParam
+        : "50";
+
+  // Build page URL helper
+  function buildNavigationUrl(targetPage: number, targetPageSize?: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", "review");
+
+    if (targetPage > 1) {
+      params.set("page", String(targetPage));
+    } else {
+      params.delete("page");
+    }
+
+    const pageSizeToUse = targetPageSize ?? rawPageSizeParam;
+    if (pageSizeToUse && pageSizeToUse !== "50") {
+      params.set("pageSize", pageSizeToUse);
+    } else {
+      params.delete("pageSize");
+    }
+
+    const qs = params.toString();
+    return qs ? `/admin/analytics?${qs}` : "/admin/analytics?tab=review";
+  }
+
+  function handlePageSizeChange(newSize: string) {
+    const url = buildNavigationUrl(1, newSize);
+    router.push(url, { scroll: false });
+  }
+
+  // Filtered rows
   const filteredRows = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
+
+    // If statusFilter is "selected", show all selected students across pages
+    if (statusFilter === "selected") {
+      return selectedRows.filter((row) => {
+        if (!q) return true;
+        return (
+          row.name.toLowerCase().includes(q) ||
+          row.email.toLowerCase().includes(q) ||
+          Boolean(row.studentId && row.studentId.toLowerCase().includes(q)) ||
+          Boolean(row.institution && row.institution.toLowerCase().includes(q))
+        );
+      });
+    }
+
     return rows.filter((row) => {
       const matchesSearch =
         !q ||
         row.name.toLowerCase().includes(q) ||
         row.email.toLowerCase().includes(q) ||
-        (row.studentId && row.studentId.toLowerCase().includes(q)) ||
-        (row.institution && row.institution.toLowerCase().includes(q));
+        Boolean(row.studentId && row.studentId.toLowerCase().includes(q)) ||
+        Boolean(row.institution && row.institution.toLowerCase().includes(q));
 
       const hasWorked = row.correct + row.incorrect > 0;
       const matchesStatus =
@@ -59,50 +168,57 @@ export function StudentAnswerRoster({
 
       return matchesSearch && matchesStatus;
     });
-  }, [rows, searchQuery, statusFilter]);
-
-  const selectedRows = useMemo(() => {
-    return rows.filter((r) => selectedUserIds.has(r.userId));
-  }, [rows, selectedUserIds]);
+  }, [rows, searchQuery, statusFilter, selectedRows]);
 
   const isAllVisibleSelected =
     filteredRows.length > 0 &&
-    filteredRows.every((r) => selectedUserIds.has(r.userId));
+    filteredRows.every((r) => Boolean(selectedMap[r.userId]));
 
-  function toggleSelectOne(userId: number) {
-    setSelectedUserIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(userId)) {
-        next.delete(userId);
+  const isSomeVisibleSelected =
+    filteredRows.some((r) => Boolean(selectedMap[r.userId])) &&
+    !isAllVisibleSelected;
+
+  // Sync indeterminate property on native checkbox ref
+  useEffect(() => {
+    if (headerCheckboxRef.current) {
+      headerCheckboxRef.current.indeterminate = isSomeVisibleSelected;
+    }
+  }, [isSomeVisibleSelected]);
+
+  function toggleSelectOne(row: StudentAnswerReviewRow) {
+    updateSelectedMap((prev) => {
+      const next = { ...prev };
+      if (next[row.userId]) {
+        delete next[row.userId];
       } else {
-        next.add(userId);
+        next[row.userId] = row;
       }
       return next;
     });
   }
 
   function handleSelectAllVisible() {
-    setSelectedUserIds((prev) => {
-      const next = new Set(prev);
+    updateSelectedMap((prev) => {
+      const next = { ...prev };
       if (isAllVisibleSelected) {
         for (const r of filteredRows) {
-          next.delete(r.userId);
+          delete next[r.userId];
         }
       } else {
         for (const r of filteredRows) {
-          next.add(r.userId);
+          next[r.userId] = r;
         }
       }
       return next;
     });
   }
 
-  function handleSelectWorked() {
-    setSelectedUserIds((prev) => {
-      const next = new Set(prev);
+  function handleSelectWorkedOnPage() {
+    updateSelectedMap((prev) => {
+      const next = { ...prev };
       for (const r of filteredRows) {
         if (r.correct + r.incorrect > 0) {
-          next.add(r.userId);
+          next[r.userId] = r;
         }
       }
       return next;
@@ -110,10 +226,10 @@ export function StudentAnswerRoster({
   }
 
   function handleClearSelection() {
-    setSelectedUserIds(new Set());
+    updateSelectedMap(() => ({}));
   }
 
-  if (isReportMode && selectedRows.length > 0) {
+  if (isReportMode && selectedCount > 0) {
     return (
       <StudentAnswerBatchReport
         selectedRows={selectedRows}
@@ -134,8 +250,53 @@ export function StudentAnswerRoster({
     );
   }
 
+  // Calculate range for info banner
+  const startItem = (page - 1) * rows.length + 1;
+  const endItem = startItem + rows.length - 1;
+
   return (
     <div className="space-y-4">
+      {/* Persistent Cross-Page Selection Hub / Floating Banner */}
+      {selectedCount > 0 ? (
+        <div className="sticky top-16 z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/30 bg-card p-3 shadow-md sm:p-4 print:hidden">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="default" className="gap-1.5 px-3 py-1 font-medium">
+              <Users className="size-3.5" />
+              {labels.admin.analyticsSelectedAcrossPages(
+                selectedCount,
+                selectedOnCurrentPageCount
+              )}
+            </Badge>
+            <span className="text-xs text-muted-foreground">
+              (Selections preserved across pages)
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="default"
+              className="min-h-10 gap-2 font-medium"
+              onClick={() => setIsReportMode(true)}
+            >
+              <FileText className="size-4" />
+              {labels.admin.analyticsGenerateReport(selectedCount)}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={handleClearSelection}
+              className="min-h-10 gap-1.5 text-xs text-muted-foreground"
+            >
+              <RotateCcw className="size-3.5" />
+              {labels.admin.analyticsClearSelection}
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
       <Card>
         <CardHeader className="p-4 sm:p-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -147,37 +308,21 @@ export function StudentAnswerRoster({
                 {labels.admin.analyticsStudentReviewDescription}
               </p>
             </div>
-            {selectedUserIds.size > 0 ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="secondary" className="px-3 py-1 font-medium">
-                  {labels.admin.analyticsSelectedCount(selectedUserIds.size)}
-                </Badge>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="default"
-                  className="min-h-10 gap-2"
-                  onClick={() => setIsReportMode(true)}
-                >
-                  <FileText className="size-4" />
-                  {labels.admin.analyticsGenerateReport(selectedUserIds.size)}
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={handleClearSelection}
-                  className="h-10 px-2 text-xs text-muted-foreground"
-                >
-                  <RotateCcw className="size-3.5 mr-1" />
-                  {labels.admin.analyticsClearSelection}
-                </Button>
-              </div>
-            ) : null}
+
+            {/* Showing Range Indicator */}
+            <p className="text-xs font-medium text-muted-foreground">
+              {currentPageSize === "all"
+                ? labels.admin.analyticsShowingAll(totalStudents)
+                : labels.admin.analyticsShowingRange(
+                    startItem,
+                    Math.min(endItem, totalStudents),
+                    totalStudents
+                  )}
+            </p>
           </div>
 
-          {/* Search, Filter, and Quick Selection Controls */}
-          <div className="mt-4 flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
+          {/* Search, Filter, Page Size, and Quick Selection Controls */}
+          <div className="mt-4 flex flex-col gap-3 pt-2 lg:flex-row lg:items-center lg:justify-between">
             <div className="relative flex-1 sm:max-w-xs">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -191,12 +336,21 @@ export function StudentAnswerRoster({
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              {/* Status Filter Buttons */}
               <div className="flex items-center rounded-lg border bg-muted/40 p-1 text-xs">
                 {(
                   [
                     { key: "all", label: labels.admin.analyticsFilterAll },
                     { key: "active", label: labels.admin.analyticsFilterActive },
                     { key: "unstarted", label: labels.admin.analyticsFilterUnstarted },
+                    ...(selectedCount > 0
+                      ? [
+                          {
+                            key: "selected" as const,
+                            label: labels.admin.analyticsFilterSelected(selectedCount),
+                          },
+                        ]
+                      : []),
                   ] as const
                 ).map((opt) => (
                   <button
@@ -214,11 +368,33 @@ export function StudentAnswerRoster({
                 ))}
               </div>
 
+              {/* Rows Per Page Selector (25, 50, 75, 100, All) */}
+              <div className="flex items-center gap-1 rounded-lg border bg-muted/40 p-1 text-xs">
+                <span className="px-2 text-muted-foreground font-medium">
+                  {labels.admin.analyticsPageSize}:
+                </span>
+                {PAGE_SIZE_OPTIONS.map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => handlePageSizeChange(opt)}
+                    className={`rounded-md px-2 py-1 font-medium transition-colors ${
+                      currentPageSize === opt
+                        ? "bg-background text-foreground shadow-sm font-semibold"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {opt === "all" ? labels.admin.analyticsPageSizeAll : opt}
+                  </button>
+                ))}
+              </div>
+
+              {/* Quick Select Buttons */}
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={handleSelectWorked}
+                onClick={handleSelectWorkedOnPage}
                 className="min-h-10 gap-1.5 text-xs"
               >
                 <Sparkles className="size-3.5 text-amber-500" />
@@ -242,7 +418,7 @@ export function StudentAnswerRoster({
         <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
           <ResponsiveTable
             mobile={filteredRows.map((row) => {
-              const isSelected = selectedUserIds.has(row.userId);
+              const isSelected = Boolean(selectedMap[row.userId]);
               return (
                 <ResponsiveTableCard
                   key={row.userId}
@@ -254,7 +430,7 @@ export function StudentAnswerRoster({
                     <input
                       type="checkbox"
                       checked={isSelected}
-                      onChange={() => toggleSelectOne(row.userId)}
+                      onChange={() => toggleSelectOne(row)}
                       aria-label={`Select ${row.name}`}
                       className="mt-1 size-4 rounded border-input text-primary focus-visible:ring-2 focus-visible:ring-ring"
                     />
@@ -313,6 +489,7 @@ export function StudentAnswerRoster({
                     <tr>
                       <th className="w-10 px-4 py-3">
                         <input
+                          ref={headerCheckboxRef}
                           type="checkbox"
                           checked={isAllVisibleSelected}
                           onChange={handleSelectAllVisible}
@@ -354,7 +531,7 @@ export function StudentAnswerRoster({
                       </tr>
                     ) : (
                       filteredRows.map((row) => {
-                        const isSelected = selectedUserIds.has(row.userId);
+                        const isSelected = Boolean(selectedMap[row.userId]);
                         return (
                           <tr
                             key={row.userId}
@@ -366,7 +543,7 @@ export function StudentAnswerRoster({
                               <input
                                 type="checkbox"
                                 checked={isSelected}
-                                onChange={() => toggleSelectOne(row.userId)}
+                                onChange={() => toggleSelectOne(row)}
                                 aria-label={`Select ${row.name}`}
                                 className="size-4 rounded border-input text-primary focus-visible:ring-2 focus-visible:ring-ring"
                               />
@@ -422,7 +599,8 @@ export function StudentAnswerRoster({
         </CardContent>
       </Card>
 
-      {totalPages > 1 && (
+      {/* Pagination (hidden when showing All or only 1 page) */}
+      {totalPages > 1 && currentPageSize !== "all" && (
         <div className="flex flex-col-reverse items-stretch gap-2 print:hidden sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">
             {labels.admin.analyticsPageOf(page, totalPages)}
@@ -435,11 +613,7 @@ export function StudentAnswerRoster({
               disabled={page <= 1}
             >
               <Link
-                href={
-                  page <= 2
-                    ? "/admin/analytics?tab=review"
-                    : `/admin/analytics?tab=review&page=${page - 1}`
-                }
+                href={buildNavigationUrl(page - 1)}
                 aria-disabled={page <= 1}
                 className={page <= 1 ? "pointer-events-none opacity-50" : undefined}
               >
@@ -453,7 +627,7 @@ export function StudentAnswerRoster({
               disabled={page >= totalPages}
             >
               <Link
-                href={`/admin/analytics?tab=review&page=${page + 1}`}
+                href={buildNavigationUrl(page + 1)}
                 aria-disabled={page >= totalPages}
                 className={
                   page >= totalPages

@@ -16,6 +16,9 @@ function groupHasActivity(group: AdminGroupProgressClient): boolean {
   return (
     answered > 0 ||
     group.contentHistory.length > 0 ||
+    group.pretest.answered > 0 ||
+    group.posttest.answered > 0 ||
+    group.stepProgress.completed > 0 ||
     Boolean(group.aiCompletionFeedback?.trim()) ||
     Boolean(group.testimonialText?.trim()) ||
     group.testimonialRating != null ||
@@ -59,7 +62,6 @@ export function StudentAnswerReviewDetail({
   const summary = aggregateContentAnswerStatsFromOverview(overview.levels);
   const levels = levelsWithActivity(overview.levels);
   const generatedLabel = formatAdminDateTime(generatedAt);
-  const levelNames = levels.map((level) => getLevelLabel(level.levelName));
   const pdfSlug =
     studentName
       .trim()
@@ -132,18 +134,56 @@ export function StudentAnswerReviewDetail({
                   {labels.admin.analyticsReportFieldLevels}
                 </th>
                 <td className="py-2">
-                  {levelNames.length > 0 ? (
-                    <div className="space-y-1">
-                      <p className="font-medium">
-                        {labels.admin.analyticsReportLevelsCount(
-                          levelNames.length
-                        )}
-                      </p>
-                      <p>{levelNames.join(" · ")}</p>
-                    </div>
-                  ) : (
-                    labels.admin.userProgress.listNotStarted
-                  )}
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {overview.levels.map((lvl) => {
+                      const levelName = getLevelLabel(lvl.levelName);
+                      const answeredInLevel = lvl.groups.reduce(
+                        (sum, g) =>
+                          sum +
+                          g.contentAnswers.correct +
+                          g.contentAnswers.incorrect,
+                        0
+                      );
+                      const hasActivity =
+                        lvl.completed > 0 ||
+                        answeredInLevel > 0 ||
+                        lvl.groups.some(groupHasActivity);
+                      const isCompleted =
+                        lvl.total > 0 && lvl.completed >= lvl.total;
+
+                      const statusLabel = isCompleted
+                        ? labels.status.completed
+                        : hasActivity
+                          ? labels.status.inProgress
+                          : labels.status.notStarted;
+
+                      const badgeVariant = isCompleted
+                        ? ("default" as const)
+                        : hasActivity
+                          ? ("secondary" as const)
+                          : ("outline" as const);
+
+                      return (
+                        <div
+                          key={lvl.levelId}
+                          className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-xs print:border-neutral-400"
+                        >
+                          <span className="font-semibold text-foreground print:text-black">
+                            {levelName}:
+                          </span>
+                          <Badge variant={badgeVariant} className="text-[10px] px-1.5 py-0">
+                            {statusLabel}
+                          </Badge>
+                          {hasActivity ? (
+                            <span className="text-muted-foreground print:text-neutral-700">
+                              ({lvl.completed}/{lvl.total} {labels.student.levelGroupsLabel}
+                              {answeredInLevel > 0 ? ` · ${answeredInLevel} ans` : ""}
+                            </span>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -210,9 +250,23 @@ export function StudentAnswerReviewDetail({
                 className="space-y-4 break-inside-avoid rounded-xl border border-border p-4 sm:p-5 print:border print:border-neutral-500"
               >
                 <div className="flex flex-col gap-2 border-b border-border pb-3 sm:flex-row sm:items-center sm:justify-between print:border-black">
-                  <h4 className="text-lg font-bold tracking-tight">
-                    {getLevelLabel(level.levelName)}
-                  </h4>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-lg font-bold tracking-tight">
+                      {getLevelLabel(level.levelName)}
+                    </h4>
+                    <Badge
+                      variant={
+                        level.completed >= level.total && level.total > 0
+                          ? "default"
+                          : "secondary"
+                      }
+                      className="text-xs"
+                    >
+                      {level.completed >= level.total && level.total > 0
+                        ? labels.status.completed
+                        : labels.status.inProgress}
+                    </Badge>
+                  </div>
                   <p className="text-sm text-muted-foreground print:text-neutral-700">
                     {labels.admin.userProgress.groupsInLevel(
                       level.completed,
