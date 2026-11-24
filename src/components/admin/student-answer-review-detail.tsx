@@ -60,14 +60,20 @@ export function StudentAnswerReviewDetail({
   const levels = levelsWithActivity(overview.levels);
   const generatedLabel = formatAdminDateTime(generatedAt);
   const levelNames = levels.map((level) => getLevelLabel(level.levelName));
+  const pdfSlug =
+    studentName
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "student";
 
   return (
     <div className="space-y-6">
-      <PrintReportToolbar />
+      <PrintReportToolbar pdfFileName={`student-answer-report-${pdfSlug}.pdf`} />
 
       <article
         id="student-answer-review-print"
-        className="official-report space-y-8 rounded-xl border border-border bg-card p-4 sm:p-6 md:p-8 print:rounded-none print:border-0 print:bg-white print:p-0"
+        className="admin-print-root official-report space-y-8 rounded-xl border border-border bg-card p-4 sm:p-6 md:p-8 print:rounded-none print:border-0 print:bg-white print:p-0"
       >
         <header className="space-y-3 border-b border-border pb-6 text-center print:border-black">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground print:text-black">

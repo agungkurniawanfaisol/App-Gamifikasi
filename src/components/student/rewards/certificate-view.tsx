@@ -29,7 +29,7 @@ export function CertificateView({
     <div className="space-y-6">
       <div
         id="certificate-print"
-        className="mx-auto max-w-3xl rounded-2xl border-2 border-amber-500/30 bg-gradient-to-br from-amber-50 via-white to-sky-50 p-5 text-center shadow-lg sm:p-10 dark:from-amber-950/20 dark:via-card dark:to-sky-950/20 print:border-amber-700 print:shadow-none"
+        className="admin-print-root mx-auto max-w-3xl rounded-2xl border-2 border-amber-500/30 bg-gradient-to-br from-amber-50 via-white to-sky-50 p-5 text-center shadow-lg sm:p-10 dark:from-amber-950/20 dark:via-card dark:to-sky-950/20 print:border-amber-700 print:shadow-none"
       >
         <Award className="mx-auto size-12 text-amber-600 dark:text-amber-400 sm:size-14" />
         <p className="mt-4 text-[0.65rem] font-bold uppercase tracking-[0.2em] text-muted-foreground sm:mt-6 sm:text-xs sm:tracking-[0.3em]">

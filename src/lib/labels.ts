@@ -759,10 +759,16 @@ export const labels = {
     analyticsReportSignatureDate: "Date",
     analyticsReportFooterNote:
       "This document was generated from the DeeLearn admin analytics module for the selected student only.",
-    printPreview: "Print preview",
+    printPreview: "Print",
     generatePdf: "Generate PDF",
+    downloadPdf: "Download PDF",
+    pdfPreviewTitle: "PDF preview",
+    pdfPreviewDescription:
+      "Review the generated PDF, then download it to your device.",
+    pdfGenerating: "Generating PDF…",
+    pdfError: "Could not generate PDF. Try again.",
     printHint:
-      "Use your browser print dialog. Choose Save as PDF to download a PDF.",
+      "Print opens the printer dialog. Generate PDF opens a preview you can download.",
     gamificationTitle: "Gamification",
     gamificationDescription:
       "Manage challenges, achievements, certificates, and point values.",

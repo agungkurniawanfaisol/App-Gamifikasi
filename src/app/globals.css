@@ -841,17 +841,17 @@
     margin-right: 0 !important;
   }
 
-  /* Isolate official student answer report for Print / Save as PDF */
-  body * {
+  /* Isolate admin/student print roots for Print / Save as PDF */
+  body:has(.admin-print-root) * {
     visibility: hidden !important;
   }
 
-  #student-answer-review-print,
-  #student-answer-review-print * {
+  .admin-print-root,
+  .admin-print-root * {
     visibility: visible !important;
   }
 
-  #student-answer-review-print {
+  .admin-print-root {
     position: absolute !important;
     left: 0 !important;
     top: 0 !important;
@@ -865,24 +865,24 @@
     border-radius: 0 !important;
   }
 
-  #student-answer-review-print .break-inside-avoid {
+  .admin-print-root .break-inside-avoid {
     break-inside: avoid;
     page-break-inside: avoid;
   }
 
-  #student-answer-review-print table {
+  .admin-print-root table {
     break-inside: auto;
   }
 
-  #student-answer-review-print tr {
+  .admin-print-root tr {
     break-inside: avoid;
     page-break-inside: avoid;
   }
 
-  #student-answer-review-print .rounded-lg,
-  #student-answer-review-print .rounded-xl,
-  #student-answer-review-print .shadow-lg,
-  #student-answer-review-print .shadow-md {
+  .admin-print-root .rounded-lg,
+  .admin-print-root .rounded-xl,
+  .admin-print-root .shadow-lg,
+  .admin-print-root .shadow-md {
     box-shadow: none !important;
   }
 }

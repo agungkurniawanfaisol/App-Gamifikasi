@@ -59,8 +59,8 @@ export function AnalyticsTabs({
       </div>
 
       <TabsContent value="overview" className="mt-4 space-y-4">
-        <PrintReportToolbar />
-        <div id="analytics-print-root">
+        <PrintReportToolbar pdfFileName="analytics-overview.pdf" />
+        <div id="analytics-print-root" className="admin-print-root">
           <AnalyticsDashboard data={analytics} />
         </div>
       </TabsContent>

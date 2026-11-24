@@ -14,8 +14,8 @@ export function UserProgressPanel({
 }) {
   return (
     <div className="space-y-6">
-      <PrintReportToolbar />
-      <div id="user-progress-print" className="space-y-6">
+      <PrintReportToolbar pdfFileName={`user-${userId}-progress.pdf`} />
+      <div id="user-progress-print" className="admin-print-root space-y-6">
         <UserProgressOverview overview={overview} />
         <UserProgressHistory history={overview.history} userId={userId} />
         <UserProgressSkills summary={overview.summary} />
