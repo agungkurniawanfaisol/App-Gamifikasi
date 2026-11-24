@@ -19,7 +19,7 @@ const nextConfig = {
       "style-src 'self' 'unsafe-inline'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "connect-src 'self'",
-      "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com",
+      "frame-src 'self' blob: https://www.youtube-nocookie.com https://www.youtube.com",
       "worker-src 'self' blob:",
     ].join("; ");
 
