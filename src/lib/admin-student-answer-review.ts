@@ -8,6 +8,8 @@ export type StudentAnswerReviewRow = {
   userId: number;
   name: string;
   email: string;
+  institution?: string | null;
+  studentId?: string | null;
   correct: number;
   incorrect: number;
   unanswered: number;
@@ -68,7 +70,13 @@ export async function buildStudentAnswerReviewRoster(
       orderBy: [{ name: "asc" }, { id: "asc" }],
       skip,
       take: safePageSize,
-      select: { id: true, name: true, email: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        institution: true,
+        studentId: true,
+      },
     }),
     prisma.userAnswer.groupBy({
       by: ["userId", "isCorrect"],
@@ -99,6 +107,8 @@ export async function buildStudentAnswerReviewRoster(
       userId: student.id,
       name: student.name,
       email: student.email,
+      institution: student.institution,
+      studentId: student.studentId,
       correct: counts.correct,
       incorrect: counts.incorrect,
       unanswered,

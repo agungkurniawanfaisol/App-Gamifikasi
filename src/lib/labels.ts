@@ -759,6 +759,35 @@ export const labels = {
     analyticsReportSignatureDate: "Date",
     analyticsReportFooterNote:
       "This document was generated from the DeeLearn admin analytics module for the selected student only.",
+    analyticsSelectAll: "Select all",
+    analyticsSelectActive: "Select who have worked",
+    analyticsClearSelection: "Clear selection",
+    analyticsSelectedCount: (count: number) =>
+      `${count} student${count === 1 ? "" : "s"} selected`,
+    analyticsGenerateReport: (count: number) =>
+      `Generate report (${count})`,
+    analyticsFilterAll: "All students",
+    analyticsFilterActive: "Has worked",
+    analyticsFilterUnstarted: "Not started",
+    analyticsSearchPlaceholder: "Search by student name or email…",
+    analyticsBackToRoster: "Back to student list",
+    analyticsReportBatchTitle: "Student Learning & Answer Report",
+    analyticsReportBatchSubtitle:
+      "Official learning result summary for selected students",
+    analyticsReportScope: (count: number) =>
+      `Selected: ${count} student${count === 1 ? "" : "s"}`,
+    analyticsReportAccuracy: "Accuracy",
+    analyticsReportCompletion: "Completion",
+    analyticsReportStatus: "Status",
+    analyticsReportStatusCompleted: "Completed",
+    analyticsReportStatusInProgress: "In progress",
+    analyticsReportStatusNotStarted: "Not started",
+    analyticsReportTotalStudents: "Total students",
+    analyticsReportTotalAnswered: "Total questions answered",
+    analyticsReportAverageAccuracy: "Average accuracy",
+    analyticsReportBatchFooterNote:
+      "This document was generated from DeeLearn admin analytics for the selected students.",
+    analyticsReportViewSingleDetail: "Open individual review",
     printPreview: "Print",
     generatePdf: "Generate PDF",
     downloadPdf: "Download PDF",

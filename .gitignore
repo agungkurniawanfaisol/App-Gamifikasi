@@ -48,6 +48,10 @@ prisma/*.db-journal
 # Data Penting
 DataPenting.txt
 
+# Python cache & tool artifacts
+__pycache__/
+graphify-out/
+
 # Windows / WSL file metadata artifacts
 *:Zone.Identifier
 *.TMP
