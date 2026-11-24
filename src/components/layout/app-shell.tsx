@@ -76,7 +76,10 @@ function AppShellInner({
   const showGlobalAiRail = enableAiRail;
 
   return (
-    <div className="h-dvh overflow-hidden bg-background">
+    <div
+      data-print-shell
+      className="h-dvh overflow-hidden bg-background print:h-auto print:overflow-visible"
+    >
       <div
         className={cn(
           "fixed inset-y-0 left-0 z-50 hidden transition-[width] duration-200 ease-in-out print:hidden lg:block",

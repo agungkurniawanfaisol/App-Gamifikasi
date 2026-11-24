@@ -831,8 +831,12 @@
     overflow: visible !important;
   }
 
-  .h-dvh {
+  /* Shell uses h-dvh + overflow-hidden; force printable flow */
+  .h-dvh,
+  main,
+  [data-print-shell] {
     height: auto !important;
+    max-height: none !important;
     overflow: visible !important;
   }
 
@@ -841,28 +845,20 @@
     margin-right: 0 !important;
   }
 
-  /* Isolate admin/student print roots for Print / Save as PDF */
-  body:has(.admin-print-root) * {
-    visibility: hidden !important;
-  }
-
-  .admin-print-root,
-  .admin-print-root * {
-    visibility: visible !important;
-  }
-
+  /*
+   * Do NOT use body * { visibility: hidden } — that blanks print when
+   * ancestors also use overflow clipping. Chrome is already print:hidden.
+   */
   .admin-print-root {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
     width: 100% !important;
     margin: 0 !important;
-    padding: 16mm 14mm !important;
+    padding: 12mm 10mm !important;
     background: white !important;
     color: black !important;
     box-shadow: none !important;
     border: none !important;
     border-radius: 0 !important;
+    break-inside: auto;
   }
 
   .admin-print-root .break-inside-avoid {

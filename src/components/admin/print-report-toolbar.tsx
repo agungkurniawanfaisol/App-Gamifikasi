@@ -58,18 +58,22 @@ export function PrintReportToolbar({
     }
 
     setGenerating(true);
-    setOpen(true);
     clearPreview();
 
     try {
+      // Capture before opening dialog — Radix sets aria-hidden on page content.
       const blob = await exportPrintRootToPdfBlob(root);
       const url = URL.createObjectURL(blob);
       setPdfBlob(blob);
       setPreviewUrl(url);
+      setOpen(true);
     } catch (error) {
       console.error("PDF generation failed:", error);
-      toast.error(labels.admin.pdfError);
-      setOpen(false);
+      const detail =
+        error instanceof Error && error.message
+          ? error.message
+          : labels.admin.pdfError;
+      toast.error(detail);
     } finally {
       setGenerating(false);
     }
@@ -116,7 +120,7 @@ export function PrintReportToolbar({
           ) : (
             <FileDown className="size-4" />
           )}
-          {labels.admin.generatePdf}
+          {generating ? labels.admin.pdfGenerating : labels.admin.generatePdf}
         </Button>
         <p className="text-xs text-muted-foreground sm:ml-2">
           {labels.admin.printHint}
@@ -133,7 +137,7 @@ export function PrintReportToolbar({
           </DialogHeader>
 
           <div className="min-h-0 flex-1 overflow-hidden rounded-md border bg-muted/30">
-            {generating || !previewUrl ? (
+            {!previewUrl ? (
               <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 p-6 text-sm text-muted-foreground">
                 <Loader2 className="size-6 animate-spin" />
                 <p>{labels.admin.pdfGenerating}</p>
@@ -159,7 +163,7 @@ export function PrintReportToolbar({
             <Button
               type="button"
               className="min-h-11 w-full gap-2 sm:w-auto"
-              disabled={!pdfBlob || generating}
+              disabled={!pdfBlob}
               onClick={handleDownload}
             >
               <FileDown className="size-4" />
