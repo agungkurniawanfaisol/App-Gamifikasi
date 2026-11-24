@@ -39,8 +39,20 @@ else
   echo "==> MySQL not running yet (first deploy) — no existing data to back up, skipping"
 fi
 
+echo "==> Clear stale nextjs container name conflicts (Compose recreate orphans)"
+# Docker Compose sometimes leaves renamed orphans like "<hash>_gamifikasi-nextjs"
+# that block the next recreate. Remove any container whose name contains
+# gamifikasi-nextjs before bringing the stack back up. Volumes are untouched.
+mapfile -t STALE_NEXTJS < <(
+  docker ps -aq --filter "name=gamifikasi-nextjs" 2>/dev/null || true
+)
+if [ "${#STALE_NEXTJS[@]}" -gt 0 ]; then
+  echo "==> Removing ${#STALE_NEXTJS[@]} gamifikasi-nextjs container(s)"
+  docker rm -f "${STALE_NEXTJS[@]}" >/dev/null 2>&1 || true
+fi
+
 echo "==> Build and start stack"
-docker compose $COMPOSE_FILES up --build -d
-docker compose ps
+docker compose $COMPOSE_FILES up --build -d --remove-orphans
+docker compose $COMPOSE_FILES ps
 docker image prune -f
 echo "==> Deploy complete"
